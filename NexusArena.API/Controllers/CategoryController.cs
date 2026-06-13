@@ -55,7 +55,6 @@ namespace NexusArena.API.Controllers
             var category = _context.SportCategories.FirstOrDefault(c => c.CategoryId == categoryId);
             if (category == null) return NotFound(new { message = "Category not found in the database." });
 
-            // Disable karne ki jagah seedha delete kar rahe hain
             _context.SportCategories.Remove(category);
             _context.SaveChanges();
 
