@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Login - Nexus Arena";
-    Layout = null; 
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -9,10 +9,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
             body {
-                background-color: #121212; 
+                background-color: #121212;
+                background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(18, 18, 18, 0.85)), url('https://5.imimg.com/data5/SELLER/Default/2023/10/350327019/NU/WB/TZ/38215148/7-a-side-football-turf.jpg');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
                 color: #ffffff;
                 font-family: 'Montserrat', sans-serif;
                 display: flex;
@@ -21,71 +28,135 @@
                 height: 100vh;
                 margin: 0;
             }
+        
             .login-container {
-                background-color: #1e1e1e;
+                background-color: rgba(26, 26, 26, 0.85);
+                backdrop-filter: blur(10px);
                 padding: 40px;
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0, 255, 127, 0.1);
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 127, 0.1);
                 width: 100%;
-                max-width: 400px;
+                max-width: 420px;
                 text-align: center;
+                border: 1px solid rgba(255, 255, 255, 0.05);
             }
-            /* .logo {
-                font-size: 28px;
-                font-weight: 700;
-                margin-bottom: 30px;
-                letter-spacing: 2px;
-                color: #ff3333;
-            }
-            .logo span {
-                color: #00ff7f; */
 
             .logo-img {
-                max-width: 250px;
+                max-width: 220px;
                 height: auto;
-                margin-bottom: 30px;
+                margin-bottom: 35px;
                 display: block;
                 margin-left: auto;
                 margin-right: auto;
-                filter: drop-shadow(0 0 5px rgba(0, 255, 127, 0.2));
+                mix-blend-mode: screen; 
+            }
+        
+            .input-group {
+                position: relative;
+                margin-bottom: 20px;
             }
 
-            }
-            .form-group {
-                margin-bottom: 20px;
-                text-align: left;
-            }
+                .input-group i.icon-left {
+                    position: absolute;
+                    left: 16px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #777;
+                    font-size: 16px;
+                    transition: color 0.3s;
+                }
+
+                .input-group i.icon-right {
+                    position: absolute;
+                    right: 16px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #777;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: color 0.3s;
+                }
+
+                    .input-group i.icon-right:hover {
+                        color: #00ff7f;
+                    }
+
             .form-control {
                 width: 100%;
-                padding: 12px;
-                background-color: #2a2a2a;
+                padding: 15px 45px; 
+                background-color: #222;
                 border: 1px solid #333;
-                border-radius: 6px;
+                border-radius: 8px;
                 color: white;
                 box-sizing: border-box;
-                margin-top: 5px;
+                font-family: inherit;
+                font-size: 14px;
+                transition: all 0.3s ease;
             }
-            .form-control:focus {
-                outline: none;
-                border-color: #00ff7f;
+
+                .form-control:focus {
+                    outline: none;
+                    border-color: #00ff7f;
+                    background-color: #2a2a2a;
+                }
+                    .form-control:focus ~ .icon-left {
+                        color: #00ff7f;
+                    }
+
+            .form-options {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 25px;
+                font-size: 13px;
+                font-weight: 500;
             }
+
+                .form-options label {
+                    color: #aaa;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .form-options input[type="checkbox"] {
+                    accent-color: #00ff7f;
+                    cursor: pointer;
+                }
+
+                .form-options a {
+                    color: #00ff7f;
+                    text-decoration: none;
+                    transition: color 0.3s ease;
+                }
+
+                    .form-options a:hover {
+                        color: #00cc66;
+                        text-decoration: underline;
+                    }
+
             .btn-login {
                 width: 100%;
-                padding: 14px;
+                padding: 15px;
                 background-color: #00ff7f;
-                color: #121212;
+                color: #000;
                 border: none;
-                border-radius: 6px;
-                font-weight: 600;
-                font-size: 16px;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: 15px;
+                letter-spacing: 1px;
                 cursor: pointer;
-                transition: 0.3s;
-                margin-top: 10px;
+                transition: 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0, 255, 127, 0.2);
             }
-            .btn-login:hover {
-                background-color: #00cc66;
-                box-shadow: 0 0 15px rgba(0, 255, 127, 0.4);
-            }
+
+                .btn-login:hover {
+                    background-color: #00e673;
+                    box-shadow: 0 6px 20px rgba(0, 255, 127, 0.4);
+                    transform: translateY(-2px);
+                }
+
             .error-msg {
                 color: #ff4c4c;
                 font-size: 14px;
@@ -96,26 +167,55 @@
 <body>
 
     <div class="login-container">
-        @* <div class="logo">NEXUS <span>ARENA</span></div> *@
+        
         <img src="~/images/logo.jpg" alt="Nexus Arena Logo" class="logo-img" />
         
         @if (ViewBag.Error != null)
         {
-            <div class="error-msg">@ViewBag.Error</div>
+            <div class="error-msg"><i class="fas fa-exclamation-circle"></i> @ViewBag.Error</div>
         }
 
         <form asp-controller="Account" asp-action="Login" method="post">
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" name="email" class="form-control" placeholder="Enter your email" required />
+            <div class="input-group">
+                <input type="email" name="email" class="form-control" placeholder="Email address" required autocomplete="off" />
+                <i class="fas fa-envelope icon-left"></i>
             </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control" placeholder="Enter password" required />
+            
+            <div class="input-group">
+                <input type="password" name="password" id="passwordInput" class="form-control" placeholder="Password" required />
+                <i class="fas fa-lock icon-left"></i>
+                <i class="fas fa-eye icon-right" id="togglePassword" title="Show/Hide Password"></i>
             </div>
+
+            <div class="form-options">
+                <label>
+                    <input type="checkbox" name="rememberMe" /> Remember me
+                </label>
+                <a href="#">Forgot Password?</a>
+            </div>
+
             <button type="submit" class="btn-login">SYSTEM LOGIN</button>
         </form>
     </div>
+
+    <script>
+            const togglePassword = document.querySelector('#togglePassword');
+            const passwordInput = document.querySelector('#passwordInput');
+
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+            
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+            
+                if(type === 'text'){
+                    this.style.color = '#00ff7f';
+                } else {
+                    this.style.color = '#777';
+                }
+            });
+    </script>
 
 </body>
 </html>
