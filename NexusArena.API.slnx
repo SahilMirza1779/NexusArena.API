@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="NexusArena.API/NexusArena.API.csproj" />
+  <Project Path="NexusArena.Web/NexusArena.Web.csproj" Id="01e55391-3c7b-4b5f-9e2d-d44d14856986" />
 </Solution>
