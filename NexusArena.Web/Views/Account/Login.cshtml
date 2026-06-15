@@ -20,6 +20,7 @@
                 background-position: center;
                 background-repeat: no-repeat;
                 background-attachment: fixed;
+                transition: background 1.5s ease-in-out;
                 color: #ffffff;
                 font-family: 'Montserrat', sans-serif;
                 display: flex;
@@ -27,6 +28,57 @@
                 align-items: center;
                 height: 100vh;
                 margin: 0;
+            }
+
+            body {
+                margin: 0;
+                font-family: 'Montserrat', sans-serif;
+                background-color: #121212;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                color: #ffffff;
+                overflow: hidden;
+            }
+
+            .bg-slideshow {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: -1; 
+            }
+
+            .bg-layer {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                opacity: 0;
+                transition: opacity 1.5s ease-in-out; 
+            }
+
+                .bg-layer.active {
+                    opacity: 1;
+                }
+
+            .login-container {
+                background-color: rgba(26, 26, 26, 0.85);
+                backdrop-filter: blur(10px);
+                padding: 40px;
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 127, 0.1);
+                width: 100%;
+                max-width: 420px;
+                text-align: center;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                z-index: 1; 
             }
         
             .login-container {
@@ -165,6 +217,12 @@
     </style>
 </head>
 <body>
+    <div class="bg-slideshow">
+        <div class="bg-layer active" style="background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(18, 18, 18, 0.85)), url('https://5.imimg.com/data5/SELLER/Default/2023/10/350327019/NU/WB/TZ/38215148/7-a-side-football-turf.jpg');"></div>
+        <div class="bg-layer" style="background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(18, 18, 18, 0.85)), url('https://images.unsplash.com/photo-1518605368461-1e1252220a4c?q=80&w=2070&auto=format&fit=crop');"></div>
+        <div class="bg-layer" style="background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(18, 18, 18, 0.85)), url('https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=1920&auto=format&fit=crop');"></div>
+        <div class="bg-layer" style="background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(18, 18, 18, 0.85)), url('https://images.unsplash.com/photo-1589487391730-58f20eb2c308?q=80&w=1920&auto=format&fit=crop');"></div>
+    </div>
 
     <div class="login-container">
         
@@ -216,6 +274,19 @@
                 }
             });
     </script>
+    <
+        <script>
+                const layers = document.querySelectorAll('.bg-layer');
+                let currentLayer = 0;
 
+                setInterval(() => {
+                    layers[currentLayer].classList.remove('active');
+            
+                    currentLayer = (currentLayer + 1) % layers.length;
+            
+                    layers[currentLayer].classList.add('active');
+                }, 4000);
+        </script>
 </body>
+
 </html>
