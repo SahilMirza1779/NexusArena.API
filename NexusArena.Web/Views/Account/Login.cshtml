@@ -30,14 +30,26 @@
                 max-width: 400px;
                 text-align: center;
             }
-            .logo {
+            /* .logo {
                 font-size: 28px;
                 font-weight: 700;
                 margin-bottom: 30px;
                 letter-spacing: 2px;
+                color: #ff3333;
             }
             .logo span {
-                color: #00ff7f;
+                color: #00ff7f; */
+
+            .logo-img {
+                max-width: 250px;
+                height: auto;
+                margin-bottom: 30px;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                filter: drop-shadow(0 0 5px rgba(0, 255, 127, 0.2));
+            }
+
             }
             .form-group {
                 margin-bottom: 20px;
@@ -84,7 +96,8 @@
 <body>
 
     <div class="login-container">
-        <div class="logo">NEXUS <span>ARENA</span></div>
+        @* <div class="logo">NEXUS <span>ARENA</span></div> *@
+        <img src="~/images/logo.jpg" alt="Nexus Arena Logo" class="logo-img" />
         
         @if (ViewBag.Error != null)
         {
