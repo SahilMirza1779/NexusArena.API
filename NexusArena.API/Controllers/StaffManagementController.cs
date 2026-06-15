@@ -20,9 +20,9 @@ namespace NexusArena.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class StaffManagementController : ControllerBase
-    {
+    {     
         private readonly NexusArenaDbContext _context;
-        public StaffManagementController(NexusArenaDbContext context) => _context = context;
+        public StaffManagementController(NexusArenaDbContext context) => _context = context; 
 
         [HttpPost("create-receptionist")]
         public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest input)

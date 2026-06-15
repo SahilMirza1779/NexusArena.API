@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Nexus Arena</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+            :root {
+                --bg-dark: #121212;
+                --panel-bg: #1e1e1e;
+                --accent-green: #00E676;
+                --text-main: #ffffff;
+                --text-muted: #8b92a5;
+                --border-color: #2c2c2c;
+            }
+
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-main);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                overflow-x: hidden;
+            }
+
+            /* Sidebar Styling */
+            .sidebar {
+                width: 250px;
+                height: 100vh;
+                background-color: var(--panel-bg);
+                position: fixed;
+                border-right: 1px solid var(--border-color);
+                display: flex;
+                flex-direction: column;
+            }
+
+            .logo-area {
+                padding: 20px;
+                text-align: center;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .nav-link {
+                color: var(--text-main);
+                padding: 15px 20px;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                transition: 0.3s;
+            }
+
+            .nav-link:hover, .nav-link.active {
+                background-color: rgba(0, 230, 118, 0.1);
+                color: var(--accent-green);
+                border-left: 4px solid var(--accent-green);
+            }
+
+            /* Topbar & Main Content */
+            .main-content {
+                margin-left: 250px;
+                padding: 20px 30px;
+            }
+
+            .topbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .topbar h2 { color: var(--accent-green); font-weight: bold; margin: 0; }
+
+            .user-profile {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .logout-btn {
+                color: #ff4d4d;
+                text-decoration: none;
+                font-weight: 500;
+            }
+    </style>
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-area">
+            <h4 style="color: var(--accent-green); margin:0;">Nexus <span style="color:white;">Arena</span></h4>
+        </div>
+        <nav style="margin-top: 20px;">
+            <a href="/Owner/Index" class="nav-link active"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="/Owner/Resources" class="nav-link"><i class="fas fa-futbol"></i> Manage Arenas</a>
+            <a href="/Owner/Pricing" class="nav-link"><i class="fas fa-tags"></i> Pricing & Slots</a>
+            <a href="/Owner/Staff" class="nav-link"><i class="fas fa-users"></i> Staff</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <h2>Owner Portal</h2>
+            <div class="user-profile">
+                <span><i class="fas fa-user-circle"></i> Owner Profile</span>
+                <a href="/Auth/Logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </header>
+
+        @RenderBody()
+
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
