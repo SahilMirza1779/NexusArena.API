@@ -14,31 +14,14 @@
     
     <style>
             body {
-                background-color: #121212;
-                background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(18, 18, 18, 0.85)), url('https://5.imimg.com/data5/SELLER/Default/2023/10/350327019/NU/WB/TZ/38215148/7-a-side-football-turf.jpg');
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-                transition: background 1.5s ease-in-out;
-                color: #ffffff;
+                margin: 0;
                 font-family: 'Montserrat', sans-serif;
+                background-color: #121212;
+                color: #ffffff;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 height: 100vh;
-                margin: 0;
-            }
-
-            body {
-                margin: 0;
-                font-family: 'Montserrat', sans-serif;
-                background-color: #121212;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                color: #ffffff;
                 overflow: hidden;
             }
 
@@ -48,7 +31,7 @@
                 left: 0;
                 width: 100vw;
                 height: 100vh;
-                z-index: -1; 
+                z-index: -1;
             }
 
             .bg-layer {
@@ -61,7 +44,7 @@
                 background-position: center;
                 background-repeat: no-repeat;
                 opacity: 0;
-                transition: opacity 1.5s ease-in-out; 
+                transition: opacity 1.5s ease-in-out;
             }
 
                 .bg-layer.active {
@@ -78,19 +61,7 @@
                 max-width: 420px;
                 text-align: center;
                 border: 1px solid rgba(255, 255, 255, 0.05);
-                z-index: 1; 
-            }
-        
-            .login-container {
-                background-color: rgba(26, 26, 26, 0.85);
-                backdrop-filter: blur(10px);
-                padding: 40px;
-                border-radius: 16px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 127, 0.1);
-                width: 100%;
-                max-width: 420px;
-                text-align: center;
-                border: 1px solid rgba(255, 255, 255, 0.05);
+                z-index: 1;
             }
 
             .logo-img {
@@ -100,7 +71,7 @@
                 display: block;
                 margin-left: auto;
                 margin-right: auto;
-                mix-blend-mode: screen; 
+                mix-blend-mode: screen;
             }
         
             .input-group {
@@ -135,7 +106,7 @@
 
             .form-control {
                 width: 100%;
-                padding: 15px 45px; 
+                padding: 15px 45px;
                 background-color: #222;
                 border: 1px solid #333;
                 border-radius: 8px;
@@ -151,6 +122,7 @@
                     border-color: #00ff7f;
                     background-color: #2a2a2a;
                 }
+
                     .form-control:focus ~ .icon-left {
                         color: #00ff7f;
                     }
@@ -211,6 +183,9 @@
 
             .error-msg {
                 color: #ff4c4c;
+                background-color: rgba(255, 76, 76, 0.1);
+                padding: 10px;
+                border-radius: 5px;
                 font-size: 14px;
                 margin-bottom: 15px;
             }
@@ -233,7 +208,7 @@
             <div class="error-msg"><i class="fas fa-exclamation-circle"></i> @ViewBag.Error</div>
         }
 
-        <form asp-controller="Account" asp-action="Login" method="post">
+        <form action="/Account/Login" method="post">
             <div class="input-group">
                 <input type="email" name="email" class="form-control" placeholder="Email address" required autocomplete="off" />
                 <i class="fas fa-envelope icon-left"></i>
@@ -263,30 +238,26 @@
             togglePassword.addEventListener('click', function () {
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-            
+        
                 this.classList.toggle('fa-eye');
                 this.classList.toggle('fa-eye-slash');
-            
+        
                 if(type === 'text'){
                     this.style.color = '#00ff7f';
                 } else {
                     this.style.color = '#777';
                 }
             });
+
+            // Background Slideshow Logic
+            const layers = document.querySelectorAll('.bg-layer');
+            let currentLayer = 0;
+
+            setInterval(() => {
+                layers[currentLayer].classList.remove('active');
+                currentLayer = (currentLayer + 1) % layers.length;
+                layers[currentLayer].classList.add('active');
+            }, 4000);
     </script>
-    <
-        <script>
-                const layers = document.querySelectorAll('.bg-layer');
-                let currentLayer = 0;
-
-                setInterval(() => {
-                    layers[currentLayer].classList.remove('active');
-            
-                    currentLayer = (currentLayer + 1) % layers.length;
-            
-                    layers[currentLayer].classList.add('active');
-                }, 4000);
-        </script>
 </body>
-
 </html>

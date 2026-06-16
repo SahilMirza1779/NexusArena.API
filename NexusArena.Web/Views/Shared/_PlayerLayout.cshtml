@@ -10,36 +10,30 @@
             body {
                 margin: 0;
                 font-family: 'Montserrat', sans-serif;
-                background-color: #0f0f0f; /* Ekdum dark background jaisa login me hai */
+                background-color: #0f0f0f;
                 color: #ffffff;
                 display: flex;
                 height: 100vh;
                 overflow: hidden;
             }
-
-            /* Sidebar - Matching the login card color */
             .sidebar {
                 width: 260px;
-                background-color: #1a1a1a; /* Login box jaisa dark grey */
+                background-color: #1a1a1a;
                 border-right: 1px solid #2a2a2a;
                 display: flex;
                 flex-direction: column;
                 box-shadow: 2px 0 15px rgba(0, 0, 0, 0.5);
             }
-        
             .sidebar-brand {
                 padding: 30px 20px 20px 20px;
                 text-align: center;
                 border-bottom: 1px solid #2a2a2a;
             }
-        
-            /* LOGO IMAGE STYLE */
             .sidebar-brand img {
-                max-width: 180px; /* Logo ki size adjust karein */
+                max-width: 180px;
                 height: auto;
-                filter: drop-shadow(0 0 10px rgba(0, 255, 102, 0.2)); /* Halka neon glow */
+                filter: drop-shadow(0 0 10px rgba(0, 255, 102, 0.2));
             }
-        
             .nav-links {
                 list-style: none;
                 padding: 0;
@@ -56,20 +50,16 @@
             }
             .nav-links a:hover, .nav-links a.active {
                 background-color: #252525;
-                color: #00ff66; /* Exact login button wala green */
+                color: #00ff66;
                 border-left: 5px solid #00ff66;
             }
             .nav-links i { margin-right: 15px; width: 20px; text-align: center; color: #00ff66; }
-
-            /* Main Content */
             .main-content {
                 flex-grow: 1;
                 display: flex;
                 flex-direction: column;
                 overflow-y: auto;
             }
-        
-            /* Top Navbar */
             .topbar {
                 height: 70px;
                 background-color: #1a1a1a;
@@ -104,21 +94,19 @@
                 transition: 0.3s;
             }
             .logout-btn:hover { background-color: #ff4c4c; color: white; }
-
             .page-content {
                 padding: 40px;
             }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
         <div class="sidebar-brand">
             <img src="~/images/logo.jpg" alt="Nexus Arena Logo" />
         </div>
         <ul class="nav-links">
-            <li><a href="#" class="active"><i class="fas fa-home"></i> My Dashboard</a></li>
-            <li><a href="#"><i class="fas fa-search"></i> Explore Turfs</a></li>
+            <li><a href="/Home/Index" class="active"><i class="fas fa-home"></i> My Dashboard</a></li>
+            <li><a href="/Explore/Index"><i class="fas fa-search"></i> Explore Turfs</a></li>
             <li><a href="#"><i class="fas fa-calendar-check"></i> My Bookings</a></li>
             <li><a href="#"><i class="fas fa-star"></i> Reviews</a></li>
         </ul>
@@ -140,6 +128,5 @@
             @RenderBody()
         </div>
     </div>
-
 </body>
 </html>

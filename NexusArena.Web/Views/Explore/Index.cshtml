@@ -1,0 +1,51 @@
+﻿@model List<NexusArena.Web.Controllers.ArenaViewModel>
+@{
+    ViewData["Title"] = "Explore Turfs";
+    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+}
+
+<div style="margin-bottom: 30px;">
+    <h1 style="margin: 0; font-size: 2.2rem; font-weight: 800; color: #fff;">Explore <span style="color: #00ff66;">Turfs</span> 🏟️</h1>
+    <p style="color: #888; font-size: 1rem; margin-top: 10px;">Find the best arenas near you and book your slot.</p>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div style="color: #ff4c4c; margin-bottom: 20px;">@ViewBag.Error</div>
+}
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
+    
+    @if (Model != null && Model.Any())
+    {
+        foreach (var arena in Model)
+        {
+            <div style="background-color: #1a1a1a; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                
+                <div style="height: 160px; background: linear-gradient(135deg, #2a2a2a 0%, #121212 100%); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-futbol" style="font-size: 3rem; color: #333;"></i>
+                </div>
+
+                <div style="padding: 20px;">
+                    <h2 style="margin: 0 0 10px 0; font-size: 1.4rem; color: #fff;">@arena.name</h2>
+                    <p style="margin: 0 0 15px 0; color: #aaa; font-size: 0.9rem;">
+                        <i class="fas fa-map-marker-alt" style="color: #00ff66; margin-right: 5px;"></i> @arena.location, @arena.city
+                    </p>
+                    
+                    <a href="/Booking/Index?arenaId=@arena.arenaId" style="display: block; text-align: center; background-color: #00ff66; color: #111; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 700; transition: 0.3s;" onmouseover="this.style.backgroundColor='#00cc52'" onmouseout="this.style.backgroundColor='#00ff66'">
+                        CHECK SLOTS
+                    </a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background-color: #1a1a1a; border-radius: 12px;">
+            <i class="fas fa-search-minus" style="font-size: 3rem; color: #555; margin-bottom: 15px;"></i>
+            <h3 style="color: #fff;">Koi Turf nahi mila!</h3>
+            <p style="color: #888;">Lagta hai SuperAdmin ne abhi tak koi arena add nahi kiya hai.</p>
+        </div>
+    }
+
+</div>
