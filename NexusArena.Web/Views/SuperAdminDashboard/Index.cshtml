@@ -108,6 +108,37 @@
     .action-btn:hover {
         background: #00cc66;
     }
+
+    .modal-overlay {
+        display: none; 
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(5px);
+    }
+    .modal-content {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 30px;
+        width: 400px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        color: #fff;
+    }
+    .modal-content h3 { margin-top: 0; color: #00ff7f; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    .modal-details { margin: 20px 0; font-size: 15px; color: #ccc; }
+    .modal-details p { margin: 8px 0; }
+    .modal-details strong { color: #fff; }
+    .modal-actions { display: flex; gap: 15px; margin-top: 25px; }
+    
+    .btn-approve { background: #00ff7f; color: #000; border: none; padding: 10px; flex: 1; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-approve:hover { background: #00cc66; }
+    
+    .btn-reject { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; flex: 1; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-reject:hover { background: rgba(255, 77, 77, 0.1); }
 </style>
 
 <div>
@@ -129,6 +160,14 @@
                 <p>REGISTERED OWNERS</p>
             </div>
             <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>@Model.TotalReceptionists</h3>
+                <p>TOTAL RECEPTIONISTS</p>
+            </div>
+            <div class="stat-icon"><i class="fas fa-headset"></i></div>
         </div>
 
         <div class="stat-card">
@@ -161,21 +200,90 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Spartan Box Cricket</td>
-                    <td>Sufiyan</td>
-                    <td>Box Cricket</td>
-                    <td><span class="badge pending">Pending</span></td>
-                    <td><button class="action-btn">Review</button></td>
-                </tr>
-                <tr>
-                    <td>Kickoff Football Turf</td>
-                    <td>Ali</td>
-                    <td>Football</td>
-                    <td><span class="badge active">Active</span></td>
-                    <td><button class="action-btn" style="background:#333; color:#fff;">Manage</button></td>
-                </tr>
+                @if (Model.PendingApprovals != null && Model.PendingApprovals.Count > 0)
+                {
+                    foreach (var arena in Model.PendingApprovals)
+                    {
+                        <tr>
+                            <td>@arena.ArenaName</td>
+                            <td>@arena.OwnerName</td>
+                            <td>@arena.Category</td>
+                            <td><span class="badge pending">@arena.Status</span></td>
+                            <td>
+                                <button class="action-btn" onclick="openReviewModal(@arena.Id, '@arena.ArenaName', '@arena.OwnerName', '@arena.Category')">
+                                 Review
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding: 30px; color: #888;">
+                            No new arena is pending approval.   
+                        </td>
+                    </tr>
+                }
             </tbody>
-        </table>
+            </table>
     </div>
 </div>
+<div id="reviewModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Review Arena</h3>
+        <div class="modal-details">
+            <p><strong>Arena Name:</strong> <span id="modalArenaName"></span></p>
+            <p><strong>Owner:</strong> <span id="modalOwnerName"></span></p>
+            <p><strong>Category:</strong> <span id="modalCategory"></span></p>
+        </div>
+        <div class="modal-actions">
+            <input type="hidden" id="modalArenaId" />
+            <button class="btn-approve" onclick="approveArena()">Approve <i class="fas fa-check"></i></button>
+            <button class="btn-reject" onclick="closeModal()">Close / Reject <i class="fas fa-times"></i></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openReviewModal(id, arenaName, ownerName, category) {
+        document.getElementById('modalArenaId').value = id;
+        document.getElementById('modalArenaName').innerText = arenaName;
+        document.getElementById('modalOwnerName').innerText = ownerName;
+        document.getElementById('modalCategory').innerText = category;
+        
+        document.getElementById('reviewModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('reviewModal').style.display = 'none';
+    }
+
+    function approveArena() {
+        var arenaId = document.getElementById('modalArenaId').value;
+        var approveBtn = document.querySelector('.btn-approve');
+        
+        approveBtn.disabled = true;
+        approveBtn.innerHTML = 'Approving... <i class="fas fa-spinner fa-spin"></i>';
+
+        fetch('/SuperAdminDashboard/ApproveArena/' + arenaId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                closeModal();
+                window.location.reload(); 
+            } else {
+                alert('Oops! Approval me koi issue aaya.');
+                approveBtn.disabled = false;
+                approveBtn.innerHTML = 'Approve <i class="fas fa-check"></i>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Server error!');
+        });
+    }
+</script>

@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NexusArena.API.Models;
 
 namespace NexusArena.API.Controllers
 {
@@ -7,48 +9,70 @@ namespace NexusArena.API.Controllers
     [ApiController]
     public class DashboardController : ControllerBase
     {
-        [HttpGet("superadmin-only")]
-        [Authorize(Roles = "SuperAdmin")] 
-        public IActionResult GetSuperAdminData()
+        private readonly NexusArenaDbContext _context;
+
+        public DashboardController(NexusArenaDbContext context)
         {
-            return Ok(new
-            {
-                message = "Welcome, Superadmin! Your token and access are absolutely perfect.",
-                role = "SuperAdmin"
-            });
+            _context = context;
         }
 
-        [HttpGet("owner-only")]
-        [Authorize(Roles = "Owner")] 
-        public IActionResult GetOwnerData()
+        [HttpGet("Stats")]
+        public async Task<IActionResult> GetDashboardStats()
         {
-            return Ok(new
+            var totalPlayers = await _context.Users.CountAsync(u => u.RoleId == 3);
+            var registeredOwners = await _context.Users.CountAsync(u => u.RoleId == 2);
+            var totalReceptionists = await _context.Users.CountAsync(u => u.RoleId == 4);
+
+            var activeArenas = await _context.Arenas.CountAsync(a => a.IsActive == true);
+            string formattedRevenue = "₹0L";
+
+            var stats = new
             {
-                message = "Welcome, owner! You can manage your Turfers and Brookings.",
-                role = "Owner"
-            });
+                TotalPlayers = totalPlayers,
+                RegisteredOwners = registeredOwners,
+                TotalReceptionists = totalReceptionists,
+                ActiveArenas = activeArenas,
+                PlatformRevenue = formattedRevenue
+            };
+
+            return Ok(stats);
         }
 
-        [HttpGet("receptionist-only")]
-        [Authorize(Roles = "Receptionist")]
-        public IActionResult GetReceptionistData()
+        [HttpGet("PendingArenas")]
+        public async Task<IActionResult> GetPendingArenas()
         {
-            return Ok(new
-            {
-                message = "Welcome Receptionist! Access to Walk-in bookings is verified.",
-                role = "Receptionist"
-            });
+            var pendingArenas = await _context.Arenas
+                .Where(a => a.IsActive == false || a.IsActive == null)
+                .Select(a => new
+                {
+                    Id = a.ArenaId, 
+                    ArenaName = a.Name, 
+                    OwnerName = a.Owner.FullName,
+
+                    Category = "Not Specified",
+
+                    Status = a.IsActive == true ? "Active" : "Pending"
+                })
+                .ToListAsync();
+
+            return Ok(pendingArenas);
         }
 
-        [HttpGet("user-only")]
-        [Authorize(Roles = "User")] 
-        public IActionResult GetUserData()
+        [HttpPost("ApproveArena/{id}")]
+        public async Task<IActionResult> ApproveArena(int id)
         {
-            return Ok(new
+            var arena = await _context.Arenas.FindAsync(id);
+
+            if (arena == null)
             {
-                message = "Welcome, user! You can search for and book new arenas.",
-                role = "User"
-            });
+                return NotFound(new { message = "Couldn't find the arena!" });
+            }
+
+            arena.IsActive = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Arena successfully approved!" });
         }
     }
 }
