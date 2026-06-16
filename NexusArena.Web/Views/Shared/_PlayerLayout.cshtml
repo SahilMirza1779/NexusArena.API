@@ -104,12 +104,12 @@
         <div class="sidebar-brand">
             <img src="~/images/logo.jpg" alt="Nexus Arena Logo" />
         </div>
-        <ul class="nav-links">
-            <li><a href="/Home/Index" class="active"><i class="fas fa-home"></i> My Dashboard</a></li>
-            <li><a href="/Explore/Index"><i class="fas fa-search"></i> Explore Turfs</a></li>
-            <li><a href="#"><i class="fas fa-calendar-check"></i> My Bookings</a></li>
-            <li><a href="#"><i class="fas fa-star"></i> Reviews</a></li>
-        </ul>
+       <ul class="nav-links">
+    <li><a href="/Home/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"><i class="fas fa-home"></i> My Dashboard</a></li>
+    <li><a href="/Explore/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Explore" ? "active" : "")"><i class="fas fa-search"></i> Explore Turfs</a></li>
+    <li><a href="/BookingHistory/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "BookingHistory" ? "active" : "")"><i class="fas fa-calendar-check"></i> My Bookings</a></li>
+    <li><a href="#"><i class="fas fa-star"></i> Reviews</a></li>
+</ul>
     </div>
 
     <div class="main-content">

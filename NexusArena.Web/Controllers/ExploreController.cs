@@ -34,13 +34,10 @@ namespace NexusArena.Web.Controllers
 
                     try
                     {
-                        // YAHAN CHANGE KIYA HAI: Direct List ki jagah humne nayi 'ExploreApiResponse' class use ki hai
                         var apiResult = JsonSerializer.Deserialize<ExploreApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                        // View ko sirf 'data' ke andar wali list bhej rahe hain
                         return View(apiResult?.data ?? new List<ArenaViewModel>());
                     }
-                    catch (JsonException jsonEx)
+                    catch (JsonException) // jsonEx hata diya
                     {
                         ViewBag.Error = $"JSON Format Error: Data convert nahi ho paya. API ne ye bheja tha: {jsonString}";
                         return View(new List<ArenaViewModel>());
@@ -61,19 +58,18 @@ namespace NexusArena.Web.Controllers
         }
     }
 
-    // 1. NAYA WRAPPER CLASS: Jo API ke { message, data } wale structure ko handle karega
+    // Models me '?' laga diya nullable errors hatane ke liye
     public class ExploreApiResponse
     {
-        public string message { get; set; }
-        public List<ArenaViewModel> data { get; set; }
+        public string? message { get; set; }
+        public List<ArenaViewModel>? data { get; set; }
     }
 
-    // 2. MODEL UPDATE KIYA: API me description nahi 'city' aa raha hai, toh wahi lagaya
     public class ArenaViewModel
     {
         public int arenaId { get; set; }
-        public string name { get; set; }
-        public string location { get; set; }
-        public string city { get; set; }
+        public string? name { get; set; }
+        public string? location { get; set; }
+        public string? city { get; set; }
     }
 }

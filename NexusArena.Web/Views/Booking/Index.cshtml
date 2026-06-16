@@ -1,0 +1,64 @@
+﻿@model List<NexusArena.Web.Controllers.SlotViewModel>
+@{
+    ViewData["Title"] = "Available Slots";
+    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+}
+
+<div style="margin-bottom: 30px;">
+    <h1 style="margin: 0; font-size: 2rem; font-weight: 800; color: #fff;">Book Your <span style="color: #00ff66;">Slot</span> ⏱️</h1>
+    <p style="color: #888; font-size: 1rem; margin-top: 10px;">Select a date and time for your match.</p>
+    
+    @if (ViewBag.Error != null)
+    {
+        <div style="background-color: rgba(255, 76, 76, 0.1); border-left: 4px solid #ff4c4c; padding: 15px; margin-top: 20px;">
+            <p style="color: #ff4c4c; margin: 0; font-weight: 600;">@ViewBag.Error</p>
+        </div>
+    }
+</div>
+
+<!-- Date Selection Form -->
+<div style="background-color: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    <h3 style="margin: 0; color: #fff; font-size: 1.1rem;">Select Date:</h3>
+    <form method="get" action="/Booking/Index" style="display: flex; gap: 10px;">
+        <input type="hidden" name="arenaId" value="@ViewBag.ArenaId" />
+        <input type="date" name="date" value="@ViewBag.SelectedDate" style="padding: 10px; border-radius: 5px; border: 1px solid #333; background-color: #0f0f0f; color: #fff; outline: none; font-family: 'Montserrat', sans-serif;" />
+        <button type="submit" style="background-color: #00ff66; color: #111; border: none; padding: 10px 20px; border-radius: 5px; font-weight: 700; cursor: pointer; transition: 0.3s;" onmouseover="this.style.backgroundColor='#00e65c'" onmouseout="this.style.backgroundColor='#00ff66'">
+            Check Slots
+        </button>
+    </form>
+</div>
+
+<!-- Slots Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var slot in Model)
+        {
+            <div style="background-color: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid #2a2a2a; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <h2 style="margin: 0 0 10px 0; color: #fff; font-size: 1.4rem;">@slot.startTime - @slot.endTime</h2>
+                <p style="margin: 0 0 15px 0; color: #00ff66; font-weight: 700; font-size: 1.2rem;">₹ @slot.price</p>
+                
+                @if (slot.isAvailable)
+                {
+                    <button style="width: 100%; background-color: transparent; border: 2px solid #00ff66; color: #00ff66; padding: 10px; border-radius: 5px; font-weight: 700; cursor: pointer; transition: 0.3s;" onmouseover="this.style.backgroundColor='#00ff66'; this.style.color='#111';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#00ff66';">
+                        BOOK NOW
+                    </button>
+                }
+                else
+                {
+                    <button disabled style="width: 100%; background-color: #2a2a2a; border: none; color: #888; padding: 12px; border-radius: 5px; font-weight: 700; cursor: not-allowed;">
+                        BOOKED
+                    </button>
+                }
+            </div>
+        }
+    }
+    else if (ViewBag.Error == null)
+    {
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background-color: #1a1a1a; border-radius: 8px;">
+            <i class="fas fa-calendar-times" style="font-size: 3rem; color: #333; margin-bottom: 15px;"></i>
+            <h3 style="color: #fff; margin-bottom: 10px;">No Slots Found</h3>
+            <p style="color: #888; margin: 0;">Is date par koi slot available nahi hai. Kripya Calendar me se koi aur date chunein.</p>
+        </div>
+    }
+</div>
