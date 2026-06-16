@@ -1,0 +1,168 @@
+﻿@model NexusArena.Web.Models.ArenaDetailsViewModel
+
+@{
+    ViewData["Title"] = "Manage Arena";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .details-container {
+        margin-top: 20px;
+    }
+    .back-btn {
+        background: transparent;
+        color: #aaa;
+        border: 1px solid #444;
+        padding: 8px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+        transition: 0.3s;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+    .back-btn:hover {
+        color: #fff;
+        border-color: #00ff7f;
+        background: rgba(0, 255, 127, 0.02);
+    }
+    
+    .details-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .details-header {
+        border-bottom: 1px solid #333;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .details-header h2 { margin: 0; color: #fff; font-size: 24px; }
+    
+    /* Status Badges */
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .badge.active { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
+    .badge.pending { background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid #ff9800; }
+
+    /* Info Grid Layout */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+    }
+    .info-item label {
+        display: block;
+        color: #888;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        letter-spacing: 1px;
+    }
+    .info-item span {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    /* Actions Section */
+    .actions-section {
+        margin-top: 40px;
+        border-top: 1px solid #333;
+        padding-top: 25px;
+        display: flex;
+        gap: 15px;
+    }
+    .btn-suspend {
+        background: rgba(255, 77, 77, 0.1);
+        color: #ff4d4d;
+        border: 1px solid #ff4d4d;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-suspend:hover {
+        background: #ff4d4d;
+        color: #000;
+        box-shadow: 0 4px 15px rgba(255, 77, 77, 0.2);
+    }
+</style>
+
+<div class="details-container">
+    <a href="/SuperAdminDashboard/Arenas" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Arenas</a>
+
+    <div class="details-card">
+        <div class="details-header">
+            <h2>@Model.ArenaName</h2>
+            <span class="badge @Model.Status.ToLower()">@Model.Status</span>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Arena ID</label>
+                <span>#@Model.Id</span>
+            </div>
+            <div class="info-item">
+                <label>Owner Name</label>
+                <span>@Model.OwnerName</span>
+            </div>
+            <div class="info-item">
+                <label>City</label>
+                <span>@Model.City</span>
+            </div>
+            <div class="info-item">
+                <label>Location / Address</label>
+                <span>@Model.Location</span>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            @if (Model.Status == "Active")
+            {
+                <button class="btn-suspend" onclick="suspendArena(@Model.Id)">
+                    Suspend / Deactivate Arena <i class="fas fa-ban"></i>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    function suspendArena(id) {
+        if (confirm("Do you really want to suspend (deactivate) this Arena?")) {
+            
+            var btn = document.querySelector('.btn-suspend');
+            btn.innerHTML = 'Suspending... <i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            fetch('/SuperAdminDashboard/SuspendArena/' + id, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    window.location.href = '/SuperAdminDashboard/Arenas'; 
+                } else {
+                    alert('Oops! An error occurred while suspending.');
+                    btn.innerHTML = 'Suspend / Deactivate Arena <i class="fas fa-ban"></i>';
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+</script>

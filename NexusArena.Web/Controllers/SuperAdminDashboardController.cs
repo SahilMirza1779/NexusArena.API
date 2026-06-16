@@ -98,5 +98,87 @@ namespace NexusArena.Web.Controllers
 
             return Json(new { success = false });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Arenas()
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            string apiUrl = "http://localhost:5092/api/Arena/GetAll";
+
+            var arenaList = new List<ArenaListViewModel>();
+
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonData = await response.Content.ReadAsStringAsync();
+
+                    var fetchedList = JsonSerializer.Deserialize<List<ArenaListViewModel>>(jsonData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (fetchedList != null)
+                    {
+                        arenaList = fetchedList;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return View(arenaList);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Manage(int id)
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            string apiUrl = $"http://localhost:5092/api/Arena/GetDetails/{id}";
+
+            var arenaDetails = new ArenaDetailsViewModel();
+
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonData = await response.Content.ReadAsStringAsync();
+                    arenaDetails = JsonSerializer.Deserialize<ArenaDetailsViewModel>(jsonData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                else
+                {
+                    return RedirectToAction("Arenas");
+                }
+            }
+            catch (Exception)
+            {
+                return RedirectToAction("Arenas");
+            }
+
+            return View(arenaDetails);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SuspendArena(int id)
+        {
+            var client = _httpClientFactory.CreateClient();
+            string apiUrl = $"http://localhost:5092/api/Arena/Suspend/{id}";
+            var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+
+            try
+            {
+                HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true });
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return Json(new { success = false });
+        }
     }
 }
