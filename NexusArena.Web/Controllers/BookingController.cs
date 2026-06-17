@@ -14,33 +14,25 @@ namespace NexusArena.Web.Controllers
             _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
-        // Ye action arenaId (Turf ka ID) aur date lega. string? ka matlab hai ye null bhi ho sakta hai.
+        [HttpGet]
         public async Task<IActionResult> Index(int arenaId, string? date = null)
         {
             var token = Request.Cookies["JWToken"];
-            if (string.IsNullOrEmpty(token))
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            // Agar user ne koi date select nahi ki hai, toh aaj ki date (Today) set kar do
             string selectedDate = string.IsNullOrEmpty(date) ? DateTime.Today.ToString("yyyy-MM-dd") : date;
 
-            // View me data bhejne ke liye ViewBag use kar rahe hain
             ViewBag.ArenaId = arenaId;
             ViewBag.SelectedDate = selectedDate;
 
             try
             {
-                // Query parameter banakar API call kar rahe hain
                 var response = await _httpClient.GetAsync($"api/Booking/available-slots?arenaId={arenaId}&date={selectedDate}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-
                     try
                     {
                         var apiResult = JsonSerializer.Deserialize<SlotApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -48,12 +40,10 @@ namespace NexusArena.Web.Controllers
                     }
                     catch (JsonException)
                     {
-                        // JSON fail hone par error catch karega
-                        ViewBag.Error = $"JSON Format Error: Data convert nahi ho paya. API ne ye bheja tha: {jsonString}";
+                        ViewBag.Error = "JSON Format Error.";
                         return View(new List<SlotViewModel>());
                     }
                 }
-                // Agar 404 Not Found aaye toh error mat dikhao, bas empty list bhej do
                 else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     return View(new List<SlotViewModel>());
@@ -71,16 +61,65 @@ namespace NexusArena.Web.Controllers
 
             return View(new List<SlotViewModel>());
         }
+
+        [HttpGet]
+        public IActionResult Review(int arenaId, string date, int slotId, string startTime, string endTime, decimal price)
+        {
+            ViewBag.ArenaId = arenaId;
+            ViewBag.Date = date;
+            ViewBag.SlotId = slotId;
+            ViewBag.StartTime = startTime;
+            ViewBag.EndTime = endTime;
+            ViewBag.Price = price;
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Confirm(int arenaId, int slotId, string playDate)
+        {
+            var token = Request.Cookies["JWToken"];
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var bookingPayload = new
+            {
+                ResourceId = arenaId,
+                SlotId = slotId,
+                PlayDate = playDate
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(bookingPayload), System.Text.Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await _httpClient.PostAsync("api/Booking/create", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index", "Home"); // Success hone par Dashboard pe jayega
+                }
+                else
+                {
+                    TempData["Error"] = "Sorry, booking nahi ho payi. Shayad ye slot book ho chuka hai.";
+                    return RedirectToAction("Index", new { arenaId = arenaId, date = playDate });
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"API Error: {ex.Message}";
+                return RedirectToAction("Index", new { arenaId = arenaId, date = playDate });
+            }
+        }
     }
 
-    // Wrapper Class API Response ke liye (Nullable warnings hatane ke liye '?' lagaya hai)
     public class SlotApiResponse
     {
         public string? message { get; set; }
         public List<SlotViewModel>? data { get; set; }
     }
 
-    // Har ek slot ki details
     public class SlotViewModel
     {
         public int slotId { get; set; }

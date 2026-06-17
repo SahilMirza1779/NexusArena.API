@@ -19,7 +19,7 @@ namespace NexusArena.API.Controllers
 
         // 1. API: Kisi specific date aur turf ke slots check karna
         [HttpGet("available-slots")]
-        public async Task<IActionResult> GetAvailableSlots(int resourceId, string date)
+        public async Task<IActionResult> GetAvailableSlots(int arenaId, string date) // Yahan ResourceId ki jagah ArenaId kar diya hai
         {
             try
             {
@@ -28,6 +28,14 @@ namespace NexusArena.API.Controllers
                 {
                     return BadRequest(new { message = "Invalid date format. Use yyyy-MM-dd." });
                 }
+
+                // NAYA LOGIC: Pehle ArenaId se us turf ka ResourceId nikalo
+                var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ArenaId == arenaId);
+                if (resource == null)
+                {
+                    return NotFound(new { message = "Is Turf me koi ground/resource set nahi hai." });
+                }
+                int resourceId = resource.ResourceId;
 
                 // Us turf (resource) ke saare slots nikalna
                 var allSlots = await _context.TimeSlots
@@ -117,5 +125,7 @@ namespace NexusArena.API.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
+
     }
+
 }
