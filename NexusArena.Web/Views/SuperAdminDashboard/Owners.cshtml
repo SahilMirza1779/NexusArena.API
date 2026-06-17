@@ -1,0 +1,164 @@
+﻿@model List<NexusArena.Web.Models.ManageOwnerViewModel>
+
+@{
+    ViewData["Title"] = "Turf Owners";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .owners-container {
+        margin-top: 20px;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    .page-header h2 { margin: 0; color: #fff; font-size: 24px; }
+    .page-header p { margin: 5px 0 0; color: #aaa; font-size: 14px; }
+
+    .table-container {
+        background-color: #1a1a1a;
+        border-radius: 12px;
+        padding: 25px;
+        border: 1px solid #333;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #2a2a2a;
+        color: #cccccc;
+        font-size: 14px;
+    }
+    th {
+        color: #00ff7f;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 1px;
+    }
+    tr:hover td {
+        background-color: #222;
+    }
+
+    /* Status Badges */
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: bold;
+        display: inline-block;
+    }
+    .badge.active { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
+    .badge.blocked { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
+
+    /* Block / Unblock Buttons */
+    .btn-block {
+        background: transparent;
+        color: #ff4d4d;
+        border: 1px solid #ff4d4d;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    .btn-block:hover { background: rgba(255, 77, 77, 0.1); }
+
+    .btn-unblock {
+        background: transparent;
+        color: #00ff7f;
+        border: 1px solid #00ff7f;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    .btn-unblock:hover { background: rgba(0, 255, 127, 0.1); }
+</style>
+
+<div class="owners-container">
+    <div class="page-header">
+        <div>
+            <h2>Manage Turf Owners</h2>
+            <p>A list of all owners registered on the platform, their total turnovers, and live status.</p>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">ID</th>
+                    <th style="width: 20%;">Owner Name</th>
+                    <th style="width: 30%;">Contact Info</th>
+                    <th style="width: 15%;">Total Arenas</th>
+                    <th style="width: 13%;">Status</th>
+                    <th style="width: 12%;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Count > 0)
+                {
+                    foreach (var owner in Model)
+                    {
+                        <tr>
+                            <td>#@owner.Id</td>
+                            <td style="font-weight:600; color:#fff; font-size: 15px;">@owner.Name</td>
+                            <td>
+                                <div style="color: #fff;"><i class="fas fa-envelope" style="color: #888; font-size: 12px; margin-right: 5px;"></i> @owner.Email</div>
+                                <div style="color: #aaa; font-size: 13px; margin-top: 4px;"><i class="fas fa-phone" style="color: #888; font-size: 12px; margin-right: 5px;"></i> @owner.Phone</div>
+                            </td>
+                            <td style="font-weight: bold; color: #00ff7f; font-size: 15px; padding-left: 30px;">@owner.TotalArenas</td>
+                            <td>
+                                @if (owner.IsActive)
+                                {
+                                    <span class="badge active">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge blocked">Blocked</span>
+                                }
+                            </td>
+                            <td>
+                                @if (owner.IsActive)
+                                {
+                                    <button class="btn-block" onclick="toggleOwnerStatus(@owner.Id, 'Block')">
+                                        <i class="fas fa-user-slash"></i> Block
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn-unblock" onclick="toggleOwnerStatus(@owner.Id, 'Unblock')">
+                                        <i class="fas fa-user-check"></i> Unblock
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 40px; color: #888;">
+                            No turf owner found in the database!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function toggleOwnerStatus(id, action) {
+        alert("The flow for Owner Eid to perform " + action + " on " + id + " will run soon!");
+    }
+</script>

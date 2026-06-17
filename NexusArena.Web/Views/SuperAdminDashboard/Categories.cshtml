@@ -1,0 +1,354 @@
+﻿@model List<NexusArena.Web.Models.CategoryViewModel>
+
+@{
+    ViewData["Title"] = "Sports Categories";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .category-container {
+        margin-top: 20px;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    .page-header h2 { margin: 0; color: #fff; font-size: 24px; }
+    .page-header p { margin: 5px 0 0; color: #aaa; font-size: 14px; }
+
+    .btn-add-category {
+        background: #00ff7f;
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        transition: 0.3s;
+        display: inline-block;
+    }
+    .btn-add-category:hover {
+        background: #00cc66;
+        box-shadow: 0 4px 15px rgba(0, 255, 127, 0.3);
+    }
+
+    .table-container {
+        background-color: #1a1a1a;
+        border-radius: 12px;
+        padding: 25px;
+        border: 1px solid #333;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #2a2a2a;
+        color: #cccccc;
+        font-size: 14px;
+    }
+    th {
+        color: #00ff7f;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 1px;
+    }
+    tr:hover td {
+        background-color: #222;
+    }
+
+    .category-icon-box {
+        background: rgba(255, 255, 255, 0.05);
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        color: #00ff7f;
+        font-size: 16px;
+        border: 1px solid #333;
+    }
+    
+    .btn-edit {
+        background: transparent;
+        color: #00bfff;
+        border: 1px solid #00bfff;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        margin-right: 8px;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-edit:hover { background: rgba(0, 191, 255, 0.1); }
+
+    .btn-delete {
+        background: transparent;
+        color: #ff4d4d;
+        border: 1px solid #ff4d4d;
+        padding: 5px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+        display: inline-block;
+    }
+    .btn-delete:hover { background: rgba(255, 77, 77, 0.1); }
+</style>
+
+<div class="category-container">
+    <div class="page-header">
+        <div>
+            <h2>Manage Sports Categories</h2>
+            <p>All the sports categories and their sub-categories available on the platform.</p>
+        </div>
+        <button class="btn-add-category" onclick="openCreateModal()">
+            <i class="fas fa-plus"></i> Add New Category
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">ID</th>
+                    <th style="width: 15%;">Icon</th>
+                    <th style="width: 45%;">Category Name</th>
+                    <th style="width: 30%;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Count > 0)
+                {
+                    foreach (var cat in Model)
+                    {
+                        <tr>
+                            <td>#@cat.Id</td>
+                            <td>
+                                <div class="category-icon-box">
+                                    <i class="@cat.Icon"></i>
+                                </div>
+                            </td>
+                            <td style="font-weight:600; color:#fff; font-size: 15px;">@cat.Name</td>
+                            <td>
+                                <button class="btn-edit" onclick="openEditModal(@cat.Id, '@cat.Name', '@cat.Icon')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn-delete" onclick="deleteCategory(@cat.Id)">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding: 40px; color: #888;">
+                            No category found in the database. Add a new category!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="categoryModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1a1a1a; padding: 25px; border-radius: 12px; width: 400px; border: 1px solid #333;">
+        <h3 style="color: #fff; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Add New Category</h3>
+        
+        <div style="margin-top: 15px;">
+            <label style="color: #aaa; font-size: 13px;">Category Name</label>
+            <input type="text" id="catName" placeholder="e.g., Box Cricket" style="width: 100%; padding: 10px; margin-top: 5px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px;">
+        </div>
+
+        <div style="margin-top: 15px;">
+            <label style="color: #aaa; font-size: 13px;">Select Sport Icon</label>
+            <select id="catIcon" style="width: 100%; padding: 10px; margin-top: 5px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer;">
+                <option value="" disabled selected>-- Select an icon. --</option>
+                <option value="fas fa-baseball-bat-ball">🏏 Cricket / Baseball</option>
+                <option value="fas fa-futbol">⚽ Football / Futsal</option>
+                <option value="fas fa-volleyball-ball">🏐 Volleyball</option>
+                <option value="fas fa-basketball-ball">🏀 Basketball</option>
+                <option value="fas fa-table-tennis">🏓 Table Tennis</option>
+                <option value="fas fa-bullseye">🎯 Paintball / Shooting</option>
+                <option value="fas fa-flag-checkered">🏁 Go-Karting / Racing</option>
+                <option value="fas fa-swimmer">🏊 Swimming Pool</option>
+                <option value="fas fa-dumbbell">🏋️ Gym / Fitness</option>
+                <option value="fas fa-gamepad">🎮 E-Sports / Gaming</option>
+            </select>
+        </div>
+
+        <div style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button onclick="closeModal()" style="padding: 8px 15px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 6px; cursor: pointer;">Cancel</button>
+            <button onclick="saveCategory()" id="saveBtn" style="padding: 8px 15px; background: #00ff7f; color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="editCategoryModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1a1a1a; padding: 25px; border-radius: 12px; width: 400px; border: 1px solid #333;">
+        <h3 style="color: #fff; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Edit Category</h3>
+
+        <input type="hidden" id="editCatId" />
+
+        <div style="margin-top: 15px;">
+            <label style="color: #aaa; font-size: 13px;">Category Name</label>
+            <input type="text" id="editCatName" style="width: 100%; padding: 10px; margin-top: 5px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px;">
+        </div>
+
+        <div style="margin-top: 15px;">
+            <label style="color: #aaa; font-size: 13px;">Select Sport Icon</label>
+            <select id="editCatIcon" style="width: 100%; padding: 10px; margin-top: 5px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer;">
+                <option value="" disabled>-- Select an icon --</option>
+                <option value="fas fa-baseball-bat-ball">🏏 Cricket / Baseball</option>
+                <option value="fas fa-futbol">⚽ Football / Futsal</option>
+                <option value="fas fa-volleyball-ball">🏐 Volleyball</option>
+                <option value="fas fa-basketball-ball">🏀 Basketball</option>
+                <option value="fas fa-table-tennis">🏓 Table Tennis</option>
+                <option value="fas fa-bullseye">🎯 Paintball / Shooting</option>
+                <option value="fas fa-flag-checkered">🏁 Go-Karting / Racing</option>
+                <option value="fas fa-swimmer">🏊 Swimming Pool</option>
+                <option value="fas fa-dumbbell">🏋️ Gym / Fitness</option>
+                <option value="fas fa-gamepad">🎮 E-Sports / Gaming</option>
+            </select>
+        </div>
+
+        <div style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button onclick="closeEditModal()" style="padding: 8px 15px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 6px; cursor: pointer;">Cancel</button>
+            <button onclick="updateCategory()" id="updateBtn" style="padding: 8px 15px; background: #00bfff; color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Update</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openCreateModal() {
+        document.getElementById('catName').value = '';
+        document.getElementById('catIcon').value = '';
+        document.getElementById('categoryModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('categoryModal').style.display = 'none';
+    }
+
+    function saveCategory() {
+        var name = document.getElementById('catName').value;
+        var icon = document.getElementById('catIcon').value;
+        var btn = document.getElementById('saveBtn');
+
+        if (!name || !icon) {
+            alert("It is mandatory to enter both the name and the icon!");
+            return;
+        }
+
+        btn.innerHTML = 'Saving...';
+        btn.disabled = true;
+
+        var data = { Name: name, Icon: icon };
+
+        fetch('/SuperAdminDashboard/CreateCategory', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                window.location.reload(); 
+            } else {
+                alert("Error saving category.");
+                btn.innerHTML = 'Save';
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Server error!");
+            btn.innerHTML = 'Save';
+            btn.disabled = false;
+        });
+    }
+
+    function openEditModal(id, name, icon) {
+        document.getElementById('editCatId').value = id;
+        document.getElementById('editCatName').value = name;
+        document.getElementById('editCatIcon').value = icon;
+        document.getElementById('editCategoryModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editCategoryModal').style.display = 'none';
+    }
+
+    function updateCategory() {
+        var id = document.getElementById('editCatId').value;
+        var name = document.getElementById('editCatName').value;
+        var icon = document.getElementById('editCatIcon').value;
+        var btn = document.getElementById('updateBtn');
+
+        if (!name || !icon) {
+            alert("Name and Icon are required!");
+            return;
+        }
+
+        btn.innerHTML = 'Updating...';
+        btn.disabled = true;
+
+        var data = { Name: name, Icon: icon };
+
+        fetch('/SuperAdminDashboard/EditCategory/' + id, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                window.location.reload(); 
+            } else {
+                alert("Error updating category.");
+                btn.innerHTML = 'Update';
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Server error!");
+            btn.innerHTML = 'Update';
+            btn.disabled = false;
+        });
+    }
+
+    function deleteCategory(id) {
+        if (confirm("Do you really want to delete this category permanently?")) {
+            fetch('/SuperAdminDashboard/DeleteCategory/' + id, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.reload(); 
+                } else {
+                    alert("An error occurred while deleting!");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Server error!");
+            });
+        }
+    }
+</script>

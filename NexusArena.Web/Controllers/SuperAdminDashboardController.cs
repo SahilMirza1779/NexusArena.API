@@ -180,5 +180,130 @@ namespace NexusArena.Web.Controllers
             }
             return Json(new { success = false });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Categories()
+        {
+            var client = _httpClientFactory.CreateClient();
+            string apiUrl = "http://localhost:5092/api/SportCategory/GetAll";
+            var categoryList = new List<CategoryViewModel>();
+
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonData = await response.Content.ReadAsStringAsync();
+                    var fetchedList = System.Text.Json.JsonSerializer.Deserialize<List<CategoryViewModel>>(jsonData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true});
+                    if (fetchedList != null)
+                    {
+                        categoryList = fetchedList;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+
+            return View(categoryList);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateCategory([FromBody] CategoryViewModel newCategory)
+        {
+            var client = _httpClientFactory.CreateClient();
+            string apiUrl = "http://localhost:5092/api/SportCategory/Create";
+            var jsonContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(newCategory), System.Text.Encoding.UTF8, "application/json");
+
+            try
+            {
+                HttpResponseMessage response = await client.PostAsync(apiUrl, jsonContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true });
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            return Json(new { success = false });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var client = _httpClientFactory.CreateClient();
+            string apiUrl = $"http://localhost:5092/api/SportCategory/Delete/{id}";
+            
+            try
+            {
+                HttpResponseMessage response = await client.DeleteAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true });
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            return Json(new { success = false });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditCategory(int id, [FromBody] CategoryViewModel upadatedCategory)
+        {
+            var client = _httpClientFactory.CreateClient();
+            string apiUrl = $"http://localhost:5092/api/SportCategory/Update/{id}";
+            var jsonContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(upadatedCategory), System.Text.Encoding.UTF8, "application/json");
+
+            try
+            {
+                HttpResponseMessage response = await client.PutAsync(apiUrl, jsonContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true });
+                }
+            }
+            catch(Exception)
+            {
+
+            }
+            return Json(new { success = false });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Owners()
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            string apiUrl = "http://localhost:5092/api/ManageOwners/GetAll";
+
+            var ownerList = new List<ManageOwnerViewModel>();
+
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonData = await response.Content.ReadAsStringAsync();
+
+                    var fetchedList = System.Text.Json.JsonSerializer.Deserialize<List<ManageOwnerViewModel>>(jsonData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (fetchedList != null)
+                    {
+                        ownerList = fetchedList;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+
+            return View(ownerList);
+        }
     }
 }
