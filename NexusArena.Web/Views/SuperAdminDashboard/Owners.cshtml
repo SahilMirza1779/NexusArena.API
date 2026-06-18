@@ -159,6 +159,28 @@
 
 <script>
     function toggleOwnerStatus(id, action) {
-        alert("The flow for Owner Eid to perform " + action + " on " + id + " will run soon!");
+        let confirmMsg = action === 'Block' 
+            ? "Do you really want to block this owner? They will not be able to log in after this." 
+            : "Do you want to unblock this owner?";
+
+        if (confirm(confirmMsg)) {
+            
+            fetch('/SuperAdminDashboard/ToggleOwnerStatus/' + id, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.reload(); 
+                } else {
+                    alert("An error occurred while updating the status!");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Server error!");
+            });
+        }
     }
 </script>
