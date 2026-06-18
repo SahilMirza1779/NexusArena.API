@@ -12,7 +12,7 @@ namespace NexusArena.Web.Controllers
         public ReviewController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
+            _httpClient.BaseAddress = new Uri("http://localhost:5092/"); // API ka port check kar lena
         }
 
         [HttpGet]
@@ -64,19 +64,54 @@ namespace NexusArena.Web.Controllers
             var response = await _httpClient.PostAsync("api/Review/add", content);
 
             if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Aapka Review successfully submit ho gaya!";
-            }
+                TempData["Success"] = "Aapka Review successfully submit ho gaya!";
             else
-            {
-                TempData["ErrorMessage"] = "Review add karne mein koi problem aayi.";
-            }
+                TempData["Error"] = "Review add karne mein koi problem aayi.";
+
+            return RedirectToAction("Index");
+        }
+
+        // YAHAN HAIN NAYE EDIT AUR DELETE METHODS (Jinpe 405 error aa raha tha) 👇
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(int reviewId, int arenaId, int rating, string comment)
+        {
+            var token = Request.Cookies["JWToken"];
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var reviewData = new { ArenaId = arenaId, Rating = rating, Comment = comment };
+            var content = new StringContent(JsonSerializer.Serialize(reviewData), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PutAsync($"api/Review/update/{reviewId}", content);
+
+            if (response.IsSuccessStatusCode)
+                TempData["Success"] = "Review successfully update ho gaya!";
+            else
+                TempData["Error"] = "Review update nahi ho paya.";
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Delete(int reviewId)
+        {
+            var token = Request.Cookies["JWToken"];
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _httpClient.DeleteAsync($"api/Review/delete/{reviewId}");
+
+            if (response.IsSuccessStatusCode)
+                TempData["Success"] = "Review successfully delete ho gaya!";
+            else
+                TempData["Error"] = "Review delete nahi ho paya.";
 
             return RedirectToAction("Index");
         }
     }
 
-    // YAHAN HAIN WO CLASSES JO MISSING THI
+    // --- VIEW MODELS ---
     public class ReviewPageViewModel
     {
         public List<ReviewItemViewModel>? MyReviews { get; set; }

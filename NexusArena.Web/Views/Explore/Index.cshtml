@@ -4,36 +4,46 @@
     Layout = "~/Views/Shared/_PlayerLayout.cshtml";
 }
 
-<div style="margin-bottom: 30px;">
-    <h1 style="margin: 0; font-size: 2.2rem; font-weight: 800; color: #fff;">Explore <span style="color: #00ff66;">Turfs</span> 🏟️</h1>
-    <p style="color: #888; font-size: 1rem; margin-top: 10px;">Find the best arenas near you and book your slot.</p>
+<div style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+    <div>
+        <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Explore <span style="color: #00ff66;">Turfs</span> 🏟️</h1>
+        <p style="color: #888; font-size: 1.1rem; margin-top: 10px;">Find the best premium arenas near you and lock your slot.</p>
+    </div>
 </div>
 
 @if (ViewBag.Error != null)
 {
-    <div style="color: #ff4c4c; margin-bottom: 20px;">@ViewBag.Error</div>
+    <div style="background-color: rgba(255, 76, 76, 0.1); color: #ff4c4c; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-weight: bold; border: 1px solid rgba(255, 76, 76, 0.3); display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-exclamation-circle"></i> @ViewBag.Error
+    </div>
 }
 
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px;">
     
     @if (Model != null && Model.Any())
     {
         foreach (var arena in Model)
         {
-            <div style="background-color: #1a1a1a; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="background: linear-gradient(145deg, #161616, #1a1a1a); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid #2a2a2a; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column;" onmouseover="this.style.transform='translateY(-10px)'; this.style.borderColor='#00ff66'; this.style.boxShadow='0 15px 35px rgba(0, 255, 102, 0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#2a2a2a'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.4)';">
                 
-                <div style="height: 160px; background: linear-gradient(135deg, #2a2a2a 0%, #121212 100%); display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-futbol" style="font-size: 3rem; color: #333;"></i>
+                <div style="height: 180px; background: linear-gradient(to bottom, rgba(0,255,102,0.05), transparent), #111; display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid #222;">
+                    <div style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #00ff66; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid rgba(0,255,102,0.3); backdrop-filter: blur(5px);">
+                        <i class="fas fa-star" style="margin-right: 4px;"></i> Premium
+                    </div>
+                    <i class="fas fa-futbol" style="font-size: 6rem; color: #00ff66; opacity: 0.05; position: absolute; right: -20px; bottom: -20px; transform: rotate(-20deg);"></i>
+                    <i class="fas fa-map-marked-alt" style="font-size: 3.5rem; color: #333; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));"></i>
                 </div>
 
-                <div style="padding: 20px;">
-                    <h2 style="margin: 0 0 10px 0; font-size: 1.4rem; color: #fff;">@arena.name</h2>
-                    <p style="margin: 0 0 15px 0; color: #aaa; font-size: 0.9rem;">
-                        <i class="fas fa-map-marker-alt" style="color: #00ff66; margin-right: 5px;"></i> @arena.location, @arena.city
-                    </p>
+                <div style="padding: 25px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h2 style="margin: 0 0 12px 0; font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 0.5px;">@arena.name</h2>
+                        <p style="margin: 0 0 25px 0; color: #888; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-map-marker-alt" style="color: #00c3ff;"></i> @arena.location, @arena.city
+                        </p>
+                    </div>
                     
-                    <a href="/Booking/Index?arenaId=@arena.arenaId" style="display: block; text-align: center; background-color: #00ff66; color: #111; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 700; transition: 0.3s;" onmouseover="this.style.backgroundColor='#00cc52'" onmouseout="this.style.backgroundColor='#00ff66'">
-                        CHECK SLOTS
+                    <a href="/Booking/Index?arenaId=@arena.arenaId" style="display: block; width: 100%; text-align: center; box-sizing: border-box; background-color: transparent; color: #00ff66; border: 2px solid #00ff66; padding: 12px 0; border-radius: 8px; text-decoration: none; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#00ff66'; this.style.color='#111'; this.style.boxShadow='0 4px 15px rgba(0, 255, 102, 0.3)';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#00ff66'; this.style.boxShadow='none';">
+                        Check Slots <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
                     </a>
                 </div>
             </div>
@@ -41,11 +51,12 @@
     }
     else
     {
-        <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background-color: #1a1a1a; border-radius: 12px;">
-            <i class="fas fa-search-minus" style="font-size: 3rem; color: #555; margin-bottom: 15px;"></i>
-            <h3 style="color: #fff;">Koi Turf nahi mila!</h3>
-            <p style="color: #888;">Lagta hai SuperAdmin ne abhi tak koi arena add nahi kiya hai.</p>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: linear-gradient(145deg, #161616, #1a1a1a); border-radius: 16px; border: 1px dashed #333;">
+            <div style="width: 80px; height: 80px; background: rgba(255, 76, 76, 0.05); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto; border: 1px solid rgba(255, 76, 76, 0.2);">
+                <i class="fas fa-search-minus" style="font-size: 2.5rem; color: #ff4c4c;"></i>
+            </div>
+            <h3 style="color: #fff; margin: 0 0 10px 0; font-size: 1.5rem;">No Arenas Found!</h3>
+            <p style="color: #888; margin: 0; font-size: 1.1rem;">Lagta hai abhi tak koi turf register nahi hua hai. Thodi der baad try karein.</p>
         </div>
     }
-
 </div>

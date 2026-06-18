@@ -88,6 +88,55 @@ namespace NexusArena.API.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
+
+        // 3. API: Review Update (Edit) karna
+        [HttpPut("update/{reviewId}")]
+        public async Task<IActionResult> UpdateReview(int reviewId, [FromBody] CreateReviewDto request)
+        {
+            try
+            {
+                var userIdString = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+                int userId = int.Parse(userIdString);
+
+                var review = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewId == reviewId && r.UserId == userId);
+                if (review == null) return NotFound(new { message = "Review nahi mila." });
+
+                review.Rating = request.Rating;
+                review.Comment = request.Comment;
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Review successfully update ho gaya!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        // 4. API: Review Delete karna
+        [HttpDelete("delete/{reviewId}")]
+        public async Task<IActionResult> DeleteReview(int reviewId)
+        {
+            try
+            {
+                var userIdString = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+                int userId = int.Parse(userIdString);
+
+                var review = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewId == reviewId && r.UserId == userId);
+                if (review == null) return NotFound(new { message = "Review nahi mila." });
+
+                _context.Reviews.Remove(review);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Review delete ho gaya!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
     }
 
     // DTO: Frontend se data lene ke liye

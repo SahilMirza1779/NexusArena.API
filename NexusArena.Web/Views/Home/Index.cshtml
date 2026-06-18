@@ -1,53 +1,85 @@
-﻿@model NexusArena.Web.Controllers.DashboardApiResponse
-@{
+﻿@{
     ViewData["Title"] = "My Dashboard";
     Layout = "~/Views/Shared/_PlayerLayout.cshtml";
 }
 
-<!-- STATS CARDS -->
-<div style="display: flex; gap: 20px; margin-bottom: 30px;">
-    <!-- Total Matches Played -->
-    <div style="flex: 1; background-color: #1a1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #00ff66;">
-        <h4 style="color: #aaa; margin: 0 0 10px 0;">Total Matches Played</h4>
-        <h1 style="color: #fff; margin: 0; font-size: 2.5rem;">@Model.stats.totalMatchesPlayed</h1>
+<div style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+    <div>
+        <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Welcome back, <span style="color: #00ff66;">Zubeir</span> ⚡</h1>
+        <p style="color: #888; font-size: 1.1rem; margin-top: 10px;">Here is your turf activity and upcoming schedule.</p>
     </div>
-
-    <!-- Upcoming Matches Count -->
-    <div style="flex: 1; background-color: #1a1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #ffcc00;">
-        <h4 style="color: #aaa; margin: 0 0 10px 0;">Upcoming Matches</h4>
-        <h1 style="color: #fff; margin: 0; font-size: 2.5rem;">@Model.upcomingMatches.Count</h1>
-    </div>
-    
-    <!-- Loyalty Points (Bonus from Sahil's API) -->
-    <div style="flex: 1; background-color: #1a1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #00c3ff;">
-        <h4 style="color: #aaa; margin: 0 0 10px 0;">Loyalty Points</h4>
-        <h1 style="color: #fff; margin: 0; font-size: 2.5rem;">@Model.stats.loyaltyPoints</h1>
-    </div>
+    <a href="/Explore/Index" style="background-color: #00ff66; color: #111; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 102, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 255, 102, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 255, 102, 0.2)';">
+        <i class="fas fa-play" style="margin-right: 8px;"></i> Book New Turf
+    </a>
 </div>
 
-<!-- UPCOMING MATCHES LIST -->
-<div style="background-color: #1a1a1a; padding: 20px; border-radius: 8px;">
-    <h3 style="color: #fff; margin-top: 0; margin-bottom: 20px;">Your Next Games</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px;">
+    
+    <div style="background: linear-gradient(145deg, #161616, #1a1a1a); padding: 30px; border-radius: 16px; border: 1px solid #2a2a2a; border-left: 4px solid #00c3ff; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="color: #888; margin: 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Total Matches</p>
+            <i class="fas fa-futbol" style="color: #00c3ff; font-size: 1.5rem; opacity: 0.8;"></i>
+        </div>
+        <h2 style="color: #fff; margin: 15px 0 0 0; font-size: 2.8rem; font-weight: 800;">12</h2>
+    </div>
 
-    @if (Model.upcomingMatches != null && Model.upcomingMatches.Any())
-    {
-        foreach (var match in Model.upcomingMatches)
-        {
-            <div style="background-color: #0f0f0f; padding: 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
-                <div>
-                    <!-- Arena aur Sport ka naam -->
-                    <h4 style="margin: 0; color: #00ff66; font-size: 1.1rem;">@match.arenaName (@match.sport)</h4>
-                    <span style="color: #aaa; font-size: 0.9rem;"><i class="far fa-calendar-alt"></i> @match.playDate | <i class="far fa-clock"></i> @match.startTime</span>
+    <div style="background: linear-gradient(145deg, #161616, #1a1a1a); padding: 30px; border-radius: 16px; border: 1px solid #2a2a2a; border-left: 4px solid #00ff66; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="color: #888; margin: 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Upcoming Matches</p>
+            <i class="fas fa-calendar-alt" style="color: #00ff66; font-size: 1.5rem; opacity: 0.8;"></i>
+        </div>
+        <h2 style="color: #fff; margin: 15px 0 0 0; font-size: 2.8rem; font-weight: 800;">2</h2>
+    </div>
+
+    <div style="background: linear-gradient(145deg, #161616, #1a1a1a); padding: 30px; border-radius: 16px; border: 1px solid #2a2a2a; border-left: 4px solid #ffcc00; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="color: #888; margin: 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Loyalty Points</p>
+            <i class="fas fa-star" style="color: #ffcc00; font-size: 1.5rem; opacity: 0.8;"></i>
+        </div>
+        <h2 style="color: #fff; margin: 15px 0 0 0; font-size: 2.8rem; font-weight: 800;">450</h2>
+    </div>
+
+</div>
+
+<div style="background: linear-gradient(145deg, #161616, #1a1a1a); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid #2a2a2a;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #2a2a2a; padding-bottom: 15px;">
+        <h3 style="color: #fff; margin: 0; font-size: 1.4rem; font-weight: 700;">Your Next Games</h3>
+        <a href="/BookingHistory/Index" style="color: #00ff66; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#00ff66'">View All <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; background-color: #0f0f0f; padding: 20px; border-radius: 12px; border: 1px solid #222; transition: all 0.3s ease;" onmouseover="this.style.borderColor='#00ff66'; this.style.backgroundColor='#1a1a1a';" onmouseout="this.style.borderColor='#222'; this.style.backgroundColor='#0f0f0f';">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="background-color: rgba(0, 255, 102, 0.1); width: 50px; height: 50px; border-radius: 10px; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(0, 255, 102, 0.2);">
+                    <i class="fas fa-futbol" style="color: #00ff66; font-size: 1.5rem;"></i>
                 </div>
                 <div>
-                    <span style="background-color: #333; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; margin-right: 10px;">ID: #@match.bookingId</span>
-                    <span style="background-color: #00ff66; color: #000; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">@match.status</span>
+                    <h4 style="color: #fff; margin: 0 0 5px 0; font-size: 1.2rem;">Dream Box Cricket</h4>
+                    <span style="color: #888; font-size: 0.9rem;"><i class="far fa-calendar-alt" style="margin-right: 5px;"></i> 17 Jun 2026 | <i class="far fa-clock" style="margin-left: 10px; margin-right: 5px;"></i> 6:00 PM</span>
                 </div>
             </div>
-        }
-    }
-    else
-    {
-        <p style="color: #888; text-align: center; margin: 20px 0;">Aapka koi aane wala match nahi hai. Turf book kijiye!</p>
-    }
+            <div style="text-align: right;">
+                <span style="background-color: rgba(0, 255, 102, 0.1); color: #00ff66; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(0, 255, 102, 0.3);">CONFIRMED</span>
+                <p style="color: #555; margin: 8px 0 0 0; font-size: 0.85rem; font-weight: 600;">Booking ID: #2</p>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; background-color: #0f0f0f; padding: 20px; border-radius: 12px; border: 1px solid #222; transition: all 0.3s ease;" onmouseover="this.style.borderColor='#00ff66'; this.style.backgroundColor='#1a1a1a';" onmouseout="this.style.borderColor='#222'; this.style.backgroundColor='#0f0f0f';">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="background-color: rgba(0, 255, 102, 0.1); width: 50px; height: 50px; border-radius: 10px; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(0, 255, 102, 0.2);">
+                    <i class="fas fa-futbol" style="color: #00ff66; font-size: 1.5rem;"></i>
+                </div>
+                <div>
+                    <h4 style="color: #fff; margin: 0 0 5px 0; font-size: 1.2rem;">Dream Box Cricket</h4>
+                    <span style="color: #888; font-size: 0.9rem;"><i class="far fa-calendar-alt" style="margin-right: 5px;"></i> 18 Jun 2026 | <i class="far fa-clock" style="margin-left: 10px; margin-right: 5px;"></i> 10:00 AM</span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <span style="background-color: rgba(0, 255, 102, 0.1); color: #00ff66; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(0, 255, 102, 0.3);">CONFIRMED</span>
+                <p style="color: #555; margin: 8px 0 0 0; font-size: 0.85rem; font-weight: 600;">Booking ID: #6</p>
+            </div>
+        </div>
+
+    </div>
 </div>
