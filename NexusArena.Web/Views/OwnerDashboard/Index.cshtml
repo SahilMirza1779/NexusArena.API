@@ -1,11 +1,6 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model NexusArena.MVC.Models.OwnerDashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
-    // Master Page ko yahan link kiya hai
     Layout = "~/Views/Shared/_OwnerLayout.cshtml";
 }
 
@@ -88,13 +83,18 @@
 <div>
     <h4 class="mb-1 text-white">Overview</h4>
     <p class="text-muted" style="font-size: 14px;">Real-time statistics of your arenas and bookings.</p>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger mt-2">@ViewBag.Error</div>
+    }
 </div>
 
 <div class="row mt-4">
     <div class="col-md-4">
         <div class="stat-card">
             <div>
-                <h3 id="todayRevenueVal">₹0</h3>
+                <h3>₹ @(Model?.TodayRevenue ?? 0)</h3>
                 <p>Today's Revenue</p>
             </div>
             <div class="icon-box"><i class="fas fa-wallet"></i></div>
@@ -104,7 +104,7 @@
     <div class="col-md-4">
         <div class="stat-card">
             <div>
-                <h3 id="occupancyVal">0%</h3>
+                <h3>@(string.IsNullOrEmpty(Model?.LiveOccupancy) ? "0%" : Model.LiveOccupancy)</h3>
                 <p>Live Occupancy</p>
             </div>
             <div class="icon-box"><i class="fas fa-users"></i></div>
@@ -114,7 +114,7 @@
     <div class="col-md-4">
         <div class="stat-card">
             <div>
-                <h3 id="upcomingCountVal">0</h3>
+                <h3>@(Model?.UpcomingBookings?.Count ?? 0)</h3>
                 <p>Upcoming Bookings</p>
             </div>
             <div class="icon-box"><i class="fas fa-calendar-check"></i></div>
@@ -133,56 +133,23 @@
                 <th>Status</th>
             </tr>
         </thead>
-        <tbody id="bookingsTableBody">
-            <tr><td colspan="4" class="text-center">Loading data...</td></tr>
+        <tbody>
+            @if (Model != null && Model.UpcomingBookings != null && Model.UpcomingBookings.Any())
+            {
+                foreach (var booking in Model.UpcomingBookings)
+                {
+                    <tr>
+                        <td>@booking.CustomerName</td>
+                        <td>@booking.FacilityName</td>
+                        <td>@booking.TimeSlot</td>
+                        <td><span class="badge-active">@booking.Status</span></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="4" class="text-center text-muted">No upcoming bookings today.</td></tr>
+            }
         </tbody>
     </table>
 </div>
-
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-
-            // ⚠️ Apne Web API ka exact URL yahan daalna
-            const apiUrl = "https://localhost:5092/api/OwnerDashboard/stats";
-
-            // Testing ke liye apna JWT token yahan daal do
-            const token = "TUMHARA_JWT_TOKEN_YAHAN_AAYEGA";
-
-            fetch(apiUrl, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("todayRevenueVal").innerText = "₹" + data.todayRevenue;
-                document.getElementById("occupancyVal").innerText = data.liveOccupancy;
-                document.getElementById("upcomingCountVal").innerText = data.upcomingBookings.length;
-
-                const tableBody = document.getElementById("bookingsTableBody");
-                tableBody.innerHTML = "";
-
-                if (data.upcomingBookings.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No upcoming bookings today.</td></tr>`;
-                } else {
-                    data.upcomingBookings.forEach(booking => {
-                        const row = `<tr>
-                            <td>${booking.customerName}</td>
-                            <td>${booking.facilityName}</td>
-                            <td>${booking.timeSlot}</td>
-                            <td><span class="badge-active">${booking.status}</span></td>
-                        </tr>`;
-                        tableBody.innerHTML += row;
-                    });
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching data:", error);
-                document.getElementById("bookingsTableBody").innerHTML = `<tr><td colspan="4" class="text-center text-danger">Failed to load API data.</td></tr>`;
-            });
-        });
-    </script>
-}

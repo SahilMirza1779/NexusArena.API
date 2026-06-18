@@ -1,0 +1,136 @@
+﻿@model NexusArena.MVC.Models.ResourceViewModel
+
+@{
+    ViewData["Title"] = "Manage Resources";
+    Layout = "_OwnerLayout";
+}
+<div class="container-fluid">
+    <h2 style="color: var(--accent-green);">Manage Arenas & Resources</h2>
+    <hr style="border-color: #333;" />
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <div class="card p-4" style="background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 8px;">
+        <h4 class="mb-4">Add New Turf / Table</h4>
+
+        <form asp-action="AddResource" asp-controller="OwnerDashboard" method="post">
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ResourceName" class="form-label text-light">Resource Name</label>
+                    <input asp-for="ResourceName" class="form-control bg-dark text-white" style="border-color: var(--border-color);" placeholder="e.g. Dream Box Cricket 1" required />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ResourceType" class="form-label text-light">Type (Sport)</label>
+                    <select asp-for="ResourceType" class="form-control bg-dark text-white" style="border-color: var(--border-color);">
+                        <option value="Box Cricket">Box Cricket</option>
+                        <option value="Pool">Pool Table</option>
+                        <option value="Bowling">Bowling Alley</option>
+                        <option value="Snooker">Snooker</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="BasePricePerHour" class="form-label text-light">Price Per Hour (₹)</label>
+                    <input asp-for="BasePricePerHour" type="number" class="form-control bg-dark text-white" style="border-color: var(--border-color);" required />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Capacity" class="form-label text-light">Max Players (Capacity)</label>
+                    <input asp-for="Capacity" type="number" class="form-control bg-dark text-white" style="border-color: var(--border-color);" placeholder="e.g. 12" required />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Dimensions" class="form-label text-light">Dimensions / Format</label>
+                    <input asp-for="Dimensions" type="text" class="form-control bg-dark text-white" style="border-color: var(--border-color);" placeholder="e.g. 5v5 or 8ft x 4ft" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="IncludedEquipment" class="form-label text-light">Included Equipment (Free with booking)</label>
+                <input asp-for="IncludedEquipment" type="text" class="form-control bg-dark text-white" style="border-color: var(--border-color);" placeholder="e.g. 2 Bats, 1 Ball, Stumps" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label text-light">Description & Rules</label>
+                <textarea asp-for="Description" class="form-control bg-dark text-white" style="border-color: var(--border-color);" rows="3" placeholder="Add details like 'Premium grass, non-marking shoes required...'"></textarea>
+            </div>
+
+            <div class="form-check mb-4">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
+                <label asp-for="IsActive" class="form-check-label text-light">Available for Booking immediately?</label>
+            </div>
+
+            <button type="submit" class="btn" style="background-color: var(--accent-green); color: black; font-weight: bold;">
+                <i class="fas fa-plus"></i> Add Resource
+            </button>
+        </form>
+    </div>
+
+    <div class="mt-5">
+        <h3 style="color: var(--accent-green);"><i class="fas fa-list"></i> Existing Turfs & Tables</h3>
+
+        <div class="table-responsive mt-3">
+            <table class="table table-dark table-hover" style="border: 1px solid var(--border-color);">
+                <thead style="background-color: var(--panel-bg);">
+                    <tr>
+                        <th>Resource Name</th>
+                        <th>Type</th>
+                        <th>Price/Hr</th>
+                        <th>Capacity</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.ResourceList != null)
+                    {
+                        var list = (List<NexusArena.MVC.Models.ResourceViewModel>)ViewBag.ResourceList;
+                        if (list.Count > 0)
+                        {
+                            foreach (var item in list)
+                            {
+                                <tr>
+                                    <td><strong>@item.ResourceName</strong></td>
+                                    <td>@item.ResourceType</td>
+                                    <td>₹@item.BasePricePerHour</td>
+                                    <td>@item.Capacity Players</td>
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No resources added yet.</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

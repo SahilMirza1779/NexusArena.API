@@ -11,6 +11,7 @@ namespace NexusArena.API.Controllers
     public class OwnerDashboardController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
+
         public OwnerDashboardController(NexusArenaDbContext context) => _context = context;
 
         [HttpGet("stats")]
@@ -19,13 +20,13 @@ namespace NexusArena.API.Controllers
             var todayDate = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentTime = TimeOnly.FromDateTime(DateTime.UtcNow);
 
-            
+            // 1. Today's Revenue
             var todayRevenue = await _context.Bookings
                 .Where(b => b.BookingDate == todayDate && b.Status != "Cancelled")
                 .SelectMany(b => b.Payments)
                 .SumAsync(p => p.TotalAmount);
 
-            
+            // 2. Live Occupancy
             var totalResources = await _context.Resources.CountAsync();
             var activeBookings = await _context.Bookings
                 .Include(b => b.Slot)
@@ -37,7 +38,7 @@ namespace NexusArena.API.Controllers
 
             double occupancyPercent = totalResources > 0 ? ((double)activeBookings / totalResources) * 100 : 0;
 
-            
+            // 3. Top Sports
             var topSports = await _context.Bookings
                 .Include(b => b.Resource)
                     .ThenInclude(r => r.Category)
@@ -50,7 +51,7 @@ namespace NexusArena.API.Controllers
                 .OrderByDescending(x => x.TotalEarnings)
                 .ToListAsync();
 
-            
+            // 4. Upcoming Bookings
             var upcomingBookings = await _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Resource)
@@ -60,19 +61,33 @@ namespace NexusArena.API.Controllers
                 .Select(b => new {
                     b.BookingId,
                     CustomerName = b.User.FullName,
-                    FacilityName = b.Resource.ResourceName, 
+                    FacilityName = b.Resource.ResourceName,
                     TimeSlot = b.Slot.StartTime.ToString() + " - " + b.Slot.EndTime.ToString(),
                     Status = b.Status
                 })
                 .Take(5)
                 .ToListAsync();
 
+            // 5. Active Receptionists (Naya Add Kiya Hai)
+            var activeReceptionists = await _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.Role.RoleName == "Receptionist" && u.IsActive == true)
+                .Select(u => new {
+                    UserId = u.UserId,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    Phone = u.Phone
+                })
+                .ToListAsync();
+
+            // Final Response (Sab data ek sath pack)
             return Ok(new
             {
                 TodayRevenue = todayRevenue,
                 LiveOccupancy = $"{Math.Round(occupancyPercent, 1)}% Booked",
                 TopSports = topSports,
-                UpcomingBookings = upcomingBookings
+                UpcomingBookings = upcomingBookings,
+                Receptionists = activeReceptionists // Receptionist ka data bhi isi JSON me jayega
             });
         }
 

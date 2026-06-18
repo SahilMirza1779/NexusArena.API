@@ -51,11 +51,11 @@
                 transition: 0.3s;
             }
 
-            .nav-link:hover, .nav-link.active {
-                background-color: rgba(0, 230, 118, 0.1);
-                color: var(--accent-green);
-                border-left: 4px solid var(--accent-green);
-            }
+                .nav-link:hover, .nav-link.active {
+                    background-color: rgba(0, 230, 118, 0.1);
+                    color: var(--accent-green);
+                    border-left: 4px solid var(--accent-green);
+                }
 
             /* Topbar & Main Content */
             .main-content {
@@ -72,7 +72,11 @@
                 border-bottom: 1px solid var(--border-color);
             }
 
-            .topbar h2 { color: var(--accent-green); font-weight: bold; margin: 0; }
+                .topbar h2 {
+                    color: var(--accent-green);
+                    font-weight: bold;
+                    margin: 0;
+                }
 
             .user-profile {
                 display: flex;
@@ -95,10 +99,10 @@
             <h4 style="color: var(--accent-green); margin:0;">Nexus <span style="color:white;">Arena</span></h4>
         </div>
         <nav style="margin-top: 20px;">
-            <a href="/Owner/Index" class="nav-link active"><i class="fas fa-chart-pie"></i> Dashboard</a>
-            <a href="/Owner/Resources" class="nav-link"><i class="fas fa-futbol"></i> Manage Arenas</a>
-            <a href="/Owner/Pricing" class="nav-link"><i class="fas fa-tags"></i> Pricing & Slots</a>
-            <a href="/Owner/Staff" class="nav-link"><i class="fas fa-users"></i> Staff</a>
+            <a href="/OwnerDashboard/Index" class="nav-link"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="/OwnerDashboard/ManageResources" class="nav-link"><i class="fas fa-futbol"></i> Manage Arenas</a>
+            <a href="/OwnerDashboard/PricingAndSlots" class="nav-link"><i class="fas fa-tags"></i> Pricing & Slots</a>
+            <a href="/OwnerDashboard/Staff" class="nav-link"><i class="fas fa-users"></i> Staff</a>
         </nav>
     </aside>
 
@@ -107,7 +111,7 @@
             <h2>Owner Portal</h2>
             <div class="user-profile">
                 <span><i class="fas fa-user-circle"></i> Owner Profile</span>
-                <a href="/Auth/Logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="/Account/Logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </header>
 
