@@ -11,10 +11,11 @@ namespace NexusArena.Web.Controllers
         public ExploreController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
+            _httpClient.BaseAddress = new Uri("http://localhost:5092/"); // API ka port
         }
 
-        public async Task<IActionResult> Index()
+        // Search aur Area filters ke sath complete Index method
+        public async Task<IActionResult> Index(string? searchTerm, string? area)
         {
             var token = Request.Cookies["JWToken"];
             if (string.IsNullOrEmpty(token))
@@ -26,26 +27,34 @@ namespace NexusArena.Web.Controllers
 
             try
             {
-                var response = await _httpClient.GetAsync("api/Explore/arenas");
+                // API ka dynamic URL ban raha hai
+                var apiUrl = "api/Explore/arenas?";
+                if (!string.IsNullOrEmpty(searchTerm)) apiUrl += $"searchTerm={Uri.EscapeDataString(searchTerm)}&";
+                if (!string.IsNullOrEmpty(area)) apiUrl += $"area={Uri.EscapeDataString(area)}";
+
+                var response = await _httpClient.GetAsync(apiUrl);
+
+                // UI form mein value wapas dikhane ke liye
+                ViewBag.CurrentSearch = searchTerm;
+                ViewBag.CurrentArea = area;
 
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-
                     try
                     {
                         var apiResult = JsonSerializer.Deserialize<ExploreApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         return View(apiResult?.data ?? new List<ArenaViewModel>());
                     }
-                    catch (JsonException) // jsonEx hata diya
+                    catch (JsonException)
                     {
-                        ViewBag.Error = $"JSON Format Error: Data convert nahi ho paya. API ne ye bheja tha: {jsonString}";
+                        ViewBag.Error = "JSON Format Error: Data convert nahi ho paya.";
                         return View(new List<ArenaViewModel>());
                     }
                 }
                 else
                 {
-                    ViewBag.Error = $"API Error: Status Code {response.StatusCode}";
+                    ViewBag.Error = "No arenas found matching your search.";
                     return View(new List<ArenaViewModel>());
                 }
             }
@@ -58,7 +67,7 @@ namespace NexusArena.Web.Controllers
         }
     }
 
-    // Models me '?' laga diya nullable errors hatane ke liye
+    // API ka response map karne ke liye Models
     public class ExploreApiResponse
     {
         public string? message { get; set; }

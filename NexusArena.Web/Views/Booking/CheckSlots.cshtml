@@ -1,0 +1,120 @@
+﻿@model List<NexusArena.Web.Controllers.SlotViewModel>
+@{
+    ViewData["Title"] = "Available Slots";
+    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+}
+
+<style>
+    /* Main Layout */
+    .slots-wrapper { max-width: 1100px; margin: 30px auto; padding-bottom: 50px; }
+    
+    .page-header { margin-bottom: 30px; }
+    .page-header h1 { color: #fff; font-size: 36px; font-weight: 800; margin: 0; }
+    .page-header h1 span { color: #00ff7f; }
+    .page-header p { color: #888; margin-top: 10px; font-size: 16px; }
+
+    /* Date Filter Card */
+    .filter-card { background-color: #1a1a1a; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); margin-bottom: 30px; border: 1px solid #333; }
+    .filter-form { display: flex; align-items: center; gap: 20px; width: 100%; flex-wrap: wrap; }
+    .filter-label { color: #fff; font-weight: 700; font-size: 16px; }
+    
+    .date-input { padding: 12px 15px; border-radius: 8px; border: 1px solid #444; background-color: #0f0f0f; color: #fff; font-size: 16px; outline: none; transition: 0.3s; font-family: inherit; }
+    .date-input:focus { border-color: #00ff7f; box-shadow: 0 0 10px rgba(0,255,127,0.1); }
+    
+    .btn-check { background-color: #00ff7f; color: #000; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.3s; letter-spacing: 0.5px; }
+    .btn-check:hover { background-color: #00cc66; box-shadow: 0 4px 15px rgba(0, 255, 127, 0.3); transform: translateY(-2px); }
+
+    /* Error Message */
+    .error-alert { background-color: rgba(255, 76, 76, 0.1); border-left: 4px solid #ff4c4c; color: #ff4c4c; padding: 15px; border-radius: 6px; margin-bottom: 25px; font-weight: 600; font-size: 15px; }
+
+    /* Slots Grid System */
+    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; }
+    
+    /* Individual Slot Card */
+    .slot-card { background-color: #1a1a1a; border: 1px solid #333; padding: 25px 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.3s ease, border-color 0.3s ease; }
+    .slot-card:hover { transform: translateY(-5px); border-color: #555; }
+    
+    .slot-time { color: #fff; font-size: 18px; font-weight: 700; margin: 0 0 10px 0; }
+    .slot-price { color: #00ff7f; font-size: 26px; font-weight: 800; margin: 0 0 20px 0; }
+
+    /* Buttons inside Card */
+    .btn-book { display: block; background-color: transparent; color: #00ff7f; border: 2px solid #00ff7f; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 700; transition: 0.3s; }
+    .btn-book:hover { background-color: #00ff7f; color: #000; box-shadow: 0 4px 15px rgba(0, 255, 127, 0.3); }
+
+    .btn-booked { width: 100%; display: block; background-color: #222; color: #666; border: 2px solid #333; padding: 12px; border-radius: 8px; font-weight: 700; cursor: not-allowed; }
+    
+    /* No Slots Found Box */
+    .no-slots { grid-column: 1 / -1; background-color: #1a1a1a; padding: 50px; text-align: center; border-radius: 12px; border: 1px dashed #444; }
+    .no-slots i { font-size: 45px; margin-bottom: 15px; color: #444; }
+    .no-slots p { color: #888; font-size: 16px; margin: 0; }
+</style>
+
+<div class="slots-wrapper">
+    
+    <div class="page-header">
+        <h1>Book Your <span>Slot</span> ⏱️</h1>
+        <p>Select a date and time for your match.</p>
+    </div>
+
+    <div class="filter-card">
+        <form method="get" action="/Booking/CheckSlots/@ViewBag.ArenaId" class="filter-form">
+            
+            <label class="filter-label"><i class="far fa-calendar-alt" style="color: #00ff7f; margin-right: 8px;"></i> Select Date:</label>
+            
+            <input type="date" name="date" value="@ViewBag.SelectedDate" required class="date-input" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+            
+            <button type="submit" class="btn-check">
+                Check Slots <i class="fas fa-search" style="margin-left: 5px;"></i>
+            </button>
+        </form>
+    </div>
+
+  @if (ViewBag.Error != null)
+    {
+        <div class="error-alert">
+            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> @ViewBag.Error
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-alert" style="background-color: rgba(255, 100, 100, 0.1); border-left: 4px solid #ff4c4c; color: #ff4c4c; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+            <i class="fas fa-times-circle" style="margin-right: 8px;"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="slots-grid">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var slot in Model)
+            {
+                <div class="slot-card">
+                    <h3 class="slot-time">@slot.startTime - @slot.endTime</h3>
+                    <h2 class="slot-price">₹ @slot.price</h2>
+
+                    @if (slot.isAvailable)
+                    {
+                        <a href="/Booking/Review?arenaId=@ViewBag.ArenaId&date=@ViewBag.SelectedDate&slotId=@slot.slotId&startTime=@slot.startTime&endTime=@slot.endTime&price=@slot.price" class="btn-book">
+                            BOOK NOW
+                        </a>
+                    }
+                    else
+                    {
+                        <button disabled class="btn-booked">
+                            BOOKED <i class="fas fa-lock" style="margin-left: 5px; font-size: 12px;"></i>
+                        </button>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="no-slots">
+                <i class="far fa-calendar-times"></i>
+                <h3 style="color: #ccc; margin: 0 0 10px 0;">No Slots Available</h3>
+                <p>Is date par koi slot available nahi hai. Kripya doosri date try karein.</p>
+            </div>
+        }
+    </div>
+
+</div>

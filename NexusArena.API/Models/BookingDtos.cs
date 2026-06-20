@@ -2,7 +2,8 @@
 {
     public class CreateBookingRequest
     {
-        public int ResourceId { get; set; }
+        // ResourceId hata kar ArenaId kar diya hai
+        public int ArenaId { get; set; }
         public int SlotId { get; set; }
         public string PlayDate { get; set; } = null!; // Format: "yyyy-MM-dd"
     }

@@ -17,14 +17,31 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // Saare active complexes/arenas dikhane ke liye
+        // 🌟 STEP 1: Upgraded API with Search and Area Filter
         [HttpGet("arenas")]
-        public async Task<IActionResult> GetAllArenas()
+        public async Task<IActionResult> GetAllArenas([FromQuery] string? searchTerm, [FromQuery] string? area)
         {
             try
             {
-                var arenas = await _context.Arenas
-                    .Where(a => a.IsActive == true)
+                // Pehle sirf Active arenas uthao (Sahil ne approve kiye hue)
+                var query = _context.Arenas.Where(a => a.IsActive == true).AsQueryable();
+
+                // Agar Search bar me kuch type kiya hai
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    var term = searchTerm.ToLower();
+                    query = query.Where(a => a.Name.ToLower().Contains(term) || a.City.ToLower().Contains(term));
+                }
+
+                // Agar Dropdown se Area select kiya hai
+                if (!string.IsNullOrWhiteSpace(area))
+                {
+                    var areaTerm = area.ToLower();
+                    query = query.Where(a => !string.IsNullOrEmpty(a.Location) && a.Location.ToLower().Contains(areaTerm));
+                }
+
+                // Data ko format karke return karo
+                var arenas = await query
                     .Select(a => new
                     {
                         ArenaId = a.ArenaId,
@@ -45,7 +62,7 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // Kisi ek arena ke andar ke turfs/tables dikhane ke liye
+        // Yeh aapka purana method as-it-is rahega
         [HttpGet("arena/{arenaId}/resources")]
         public async Task<IActionResult> GetArenaResources(int arenaId)
         {

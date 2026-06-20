@@ -7,7 +7,7 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "User")] // Sirf login kiya hua player hi book kar sakta hai
+    [Authorize(Roles = "User")]
     public class BookingController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
@@ -17,115 +17,82 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // 1. API: Kisi specific date aur turf ke slots check karna
         [HttpGet("available-slots")]
-        public async Task<IActionResult> GetAvailableSlots(int arenaId, string date) // Yahan ResourceId ki jagah ArenaId kar diya hai
+        public async Task<IActionResult> GetAvailableSlots(int arenaId, string date)
         {
             try
             {
-                // String date ko DateOnly me convert karna ("2026-06-15")
                 if (!DateOnly.TryParse(date, out DateOnly playDate))
-                {
-                    return BadRequest(new { message = "Invalid date format. Use yyyy-MM-dd." });
-                }
+                    return BadRequest(new { message = "Invalid date format." });
 
-                // NAYA LOGIC: Pehle ArenaId se us turf ka ResourceId nikalo
                 var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ArenaId == arenaId);
-                if (resource == null)
-                {
-                    return NotFound(new { message = "Is Turf me koi ground/resource set nahi hai." });
-                }
-                int resourceId = resource.ResourceId;
+                if (resource == null) return NotFound(new { message = "Turf resource not found." });
 
-                // Us turf (resource) ke saare slots nikalna
                 var allSlots = await _context.TimeSlots
-                    .Where(ts => ts.ResourceId == resourceId)
+                    .Where(ts => ts.ResourceId == resource.ResourceId)
                     .ToListAsync();
 
-                if (!allSlots.Any())
-                {
-                    return NotFound(new { message = "Is turf ke liye koi time slots set nahi hain." });
-                }
-
-                // Us din ki saari active bookings nikalna
                 var bookedSlotIds = await _context.Bookings
-                    .Where(b => b.ResourceId == resourceId && b.BookingDate == playDate && b.Status != "Cancelled")
+                    .Where(b => b.ResourceId == resource.ResourceId && b.BookingDate == playDate && b.Status != "Cancelled")
                     .Select(b => b.SlotId)
                     .ToListAsync();
 
-                // DTO map karna: Har slot ko check karna ki wo book hai ya available
                 var availabilityList = allSlots.Select(slot => new SlotAvailabilityDto
                 {
                     SlotId = slot.SlotId,
-                    StartTime = slot.StartTime.ToString(), // TimeOnly to string
-                    EndTime = slot.EndTime.ToString(),
+                    StartTime = slot.StartTime.ToString("hh:mm tt"),
+                    EndTime = slot.EndTime.ToString("hh:mm tt"),
                     Price = slot.BasePrice,
-                    IsAvailable = !bookedSlotIds.Contains(slot.SlotId) // Agar booked list me nahi hai, toh available hai
+                    IsAvailable = !bookedSlotIds.Contains(slot.SlotId)
                 }).ToList();
 
-                return Ok(new { message = "Slots fetched successfully", data = availabilityList });
+                return Ok(new { message = "Slots fetched", data = availabilityList });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
-        // 2. API: Nayi Booking Create Karna
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {
             try
             {
-                // Token se User ID nikalna
-                var userIdString = User.FindFirst("UserId")?.Value;
+                var userIdString = User.FindFirst("UserId")?.Value ?? User.FindFirst("id")?.Value;
                 if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+
                 int userId = int.Parse(userIdString);
 
                 if (!DateOnly.TryParse(request.PlayDate, out DateOnly playDate))
-                {
-                    return BadRequest(new { message = "Invalid date format. Use yyyy-MM-dd." });
-                }
+                    return BadRequest(new { message = "Invalid date format." });
 
-                // Check: Kya ye slot pehle se book toh nahi ho gaya? (Double Booking Prevention)
+                var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ArenaId == request.ArenaId);
+                if (resource == null) return NotFound(new { message = "Turf not found." });
+
                 var isAlreadyBooked = await _context.Bookings
-                    .AnyAsync(b => b.ResourceId == request.ResourceId
-                                && b.SlotId == request.SlotId
-                                && b.BookingDate == playDate
-                                && b.Status != "Cancelled");
+                    .AnyAsync(b => b.ResourceId == resource.ResourceId && b.SlotId == request.SlotId && b.BookingDate == playDate && b.Status != "Cancelled");
 
-                if (isAlreadyBooked)
-                {
-                    return BadRequest(new { message = "Sorry, ye slot already book ho chuka hai." });
-                }
+                if (isAlreadyBooked) return BadRequest(new { message = "Slot already booked." });
 
-                // Slot ki details fetch karna bill calculate karne ke liye
-                var slotInfo = await _context.TimeSlots.FindAsync(request.SlotId);
-                if (slotInfo == null) return NotFound(new { message = "Slot nahi mila." });
-
-                // Nayi Booking database me save karna
                 var newBooking = new Booking
                 {
                     UserId = userId,
-                    ResourceId = request.ResourceId,
+                    ResourceId = resource.ResourceId,
                     SlotId = request.SlotId,
-                    BookingDate = playDate, // Khelne ki date
+                    BookingDate = playDate,
                     Status = "Confirmed"
                 };
 
                 _context.Bookings.Add(newBooking);
                 await _context.SaveChangesAsync();
 
-                // Note: Payments table aur Equipments logic hum aage payment module me add karenge
-
                 return Ok(new { message = "Booking successful!", bookingId = newBooking.BookingId });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
-
     }
-
 }
