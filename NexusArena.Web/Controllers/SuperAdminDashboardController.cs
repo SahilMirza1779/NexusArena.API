@@ -6,6 +6,8 @@ using NexusArena.Web.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 
 namespace NexusArena.Web.Controllers
 {
@@ -480,6 +482,145 @@ namespace NexusArena.Web.Controllers
             }
 
             return Json(new { success = false });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Revenue()
+        {
+            var client = _httpClientFactory.CreateClient();
+            string apiUrl = "http://localhost:5092/api/ManageRevenue/GetAll";
+            var transactionList = new List<ManageRevenueViewModel>();
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonData = await response.Content.ReadAsStringAsync();
+                    var fetchedList = System.Text.Json.JsonSerializer.Deserialize<List<ManageRevenueViewModel>>(jsonData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (fetchedList != null)
+                    {
+                        transactionList = fetchedList;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            return View(transactionList);
+        }
+
+        [HttpGet]
+        public IActionResult Broadcast()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendPlatformBroadcast(string targetAudience, string message)
+        {
+            var client = _httpClientFactory.CreateClient();
+            string apiUrl = "http://localhost:5092/api/ManageNotifications/SendBroadcast";
+            var payload = new
+            {
+                TargetAudience = targetAudience,
+                Message = message
+            };
+            var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+
+            try
+            {
+                HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true, message = "Broadcast sent Successfully!" });
+                }
+            }
+            catch(Exception)
+            {
+
+            }
+
+            return Json(new { success = false, message = "Failed to send broadcast." });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AdminDetails()
+        {
+            int currentAdminId = GetLoggedInUserId();
+            if (currentAdminId == 0) return RedirectToAction("Login", "Account"); 
+
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync($"http://localhost:5092/api/AdminProfile/GetAdmin/{currentAdminId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var profile = System.Text.Json.JsonSerializer.Deserialize<NexusArena.Web.Models.AdminProfileViewModel>(
+                    jsonString, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return View(profile);
+            }
+
+            return View(new NexusArena.Web.Models.AdminProfileViewModel());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> UpdateDetails()
+        {
+            int currentAdminId = GetLoggedInUserId();
+            if (currentAdminId == 0) return RedirectToAction("Login", "Account");
+
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync($"http://localhost:5092/api/AdminProfile/GetAdmin/{currentAdminId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var profile = System.Text.Json.JsonSerializer.Deserialize<NexusArena.Web.Models.AdminProfileViewModel>(
+                    jsonString, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return View(profile);
+            }
+
+            return View(new NexusArena.Web.Models.AdminProfileViewModel());
+        }
+
+        [HttpPatch]
+        public async Task<IActionResult> UpdateDetails(NexusArena.Web.Models.AdminProfileViewModel model)
+        {
+            int currentAdminId = GetLoggedInUserId();
+            if (currentAdminId == 0) return RedirectToAction("Login", "Account");
+
+            var client = _httpClientFactory.CreateClient();
+            var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
+
+            var response = await client.PutAsync($"http://localhost:5092/api/AdminProfile/UpdateAdmin/{currentAdminId}", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToAction("AdminDetails");
+            }
+
+            return View(model);
+        }
+
+        private int GetLoggedInUserId()
+        {
+            var token = Request.Cookies["JWToken"];
+            if (string.IsNullOrEmpty(token))
+            {
+                return 0;
+            }
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "UserId");
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            return 0;
         }
     }
 }

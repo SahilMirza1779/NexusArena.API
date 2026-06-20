@@ -1,0 +1,98 @@
+﻿@model List<NexusArena.Web.Models.ManageRevenueViewModel>
+
+@{
+    ViewData["Title"] = "Platform Revenue";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .revenue-container { margin-top: 20px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .page-header h2 { margin: 0; color: #fff; font-size: 24px; }
+    .page-header p { margin: 5px 0 0; color: #aaa; font-size: 14px; }
+
+    .table-container { background-color: #1a1a1a; border-radius: 12px; padding: 25px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #2a2a2a; color: #cccccc; font-size: 14px; }
+    th { color: #00ff7f; font-weight: 600; text-transform: uppercase; font-size: 13px; letter-spacing: 1px; }
+    tr:hover td { background-color: #222; }
+
+    .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; display: inline-block; }
+    .badge.confirmed { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
+    .badge.cancelled { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
+    .badge.pending { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid #ffc107; }
+
+    .amount-text { color: #00bfff; font-weight: bold; font-size: 16px; }
+</style>
+
+<div class="revenue-container">
+    <div class="page-header">
+        <div>
+            <h2>Transactions & Revenue</h2>
+            <p>Records of all bookings and their payments received on the platform.</p>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Txn ID</th>
+                    <th style="width: 25%;">User Name</th>
+                    <th style="width: 15%;">Amount</th>
+                    <th style="width: 20%;">Date</th>
+                    <th style="width: 15%;">Method</th>
+                    <th style="width: 15%;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Count > 0)
+                {
+                    foreach (var txn in Model)
+                    {
+                        <tr>
+                            <td>#@txn.Id</td>
+                            <td style="font-weight:600; color:#fff;">@txn.UserName</td>
+                            <td class="amount-text">₹@txn.Amount.ToString("N0")</td>
+                            <td style="font-size: 13px; color: #aaa;">
+                                <i class="far fa-calendar-alt" style="margin-right: 5px;"></i> @txn.Date.ToString("dd MMM yyyy")
+                            </td>
+                            <td>
+                                @if (txn.Method.ToLower() == "online")
+                                {
+                                    <span style="color: #00bfff;"><i class="fas fa-credit-card"></i> Online</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #888;"><i class="fas fa-money-bill"></i> Cash</span>
+                                }
+                            </td>
+                            <td>
+                                @if (txn.Status.ToLower() == "confirmed" || txn.Status.ToLower() == "completed")
+                                {
+                                    <span class="badge confirmed"><i class="fas fa-check"></i> Confirmed</span>
+                                }
+                                else if (txn.Status.ToLower() == "cancelled")
+                                {
+                                    <span class="badge cancelled"><i class="fas fa-times"></i> Cancelled</span>
+                                }
+                                else
+                                {
+                                    <span class="badge pending"><i class="fas fa-clock"></i> @txn.Status</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 40px; color: #888;">
+                            No transactions have taken place on the platform so far!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

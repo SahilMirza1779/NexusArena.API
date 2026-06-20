@@ -1,0 +1,60 @@
+﻿@model NexusArena.Web.Models.AdminProfileViewModel
+
+@{
+    ViewData["Title"] = "Admin Details";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .profile-container { max-width: 800px; margin: 30px auto; }
+    .profile-card { background-color: #1a1a1a; border-radius: 15px; padding: 40px; border: 1px solid #333; box-shadow: 0 8px 20px rgba(0,0,0,0.3); text-align: center; }
+    
+    .profile-avatar { width: 120px; height: 120px; border-radius: 50%; background: #222; border: 3px solid #00ff7f; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 50px; color: #00ff7f; box-shadow: 0 0 15px rgba(0, 255, 127, 0.2); }
+    
+    .profile-name { color: #fff; font-size: 28px; margin-bottom: 5px; font-weight: bold; }
+    .profile-role { color: #00ff7f; font-size: 16px; letter-spacing: 1px; margin-bottom: 30px; text-transform: uppercase; font-weight: 600; }
+    
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; margin-top: 20px; }
+    .info-box { background: #222; padding: 20px; border-radius: 10px; border: 1px solid #2a2a2a; transition: transform 0.3s; }
+    .info-box:hover { transform: translateY(-5px); border-color: #444; }
+    
+    .info-label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+    .info-value { color: #ddd; font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+    .info-value i { color: #00ff7f; width: 20px; }
+
+    .btn-edit { background: #00ff7f; color: #000; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s; margin-top: 35px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-edit:hover { background: #00cc66; color: #000; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 255, 127, 0.3); text-decoration: none; }
+</style>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-avatar">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        <h2 class="profile-name">@Model.FullName</h2>
+        <div class="profile-role"><i class="fas fa-crown" style="margin-right: 5px;"></i> @Model.Role</div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <span class="info-label">Display Name</span>
+                <span class="info-value"><i class="fas fa-user"></i> @Model.DisplayName</span>
+            </div>
+            <div class="info-box">
+                <span class="info-label">Email Address</span>
+                <span class="info-value"><i class="fas fa-envelope"></i> @Model.Email</span>
+            </div>
+            <div class="info-box">
+                <span class="info-label">Phone Number</span>
+                <span class="info-value"><i class="fas fa-phone-alt"></i> @Model.Phone</span>
+            </div>
+            <div class="info-box">
+                <span class="info-label">Location</span>
+                <span class="info-value"><i class="fas fa-map-marker-alt"></i> @Model.Location</span>
+            </div>
+        </div>
+
+        <a href="/SuperAdminDashboard/UpdateDetails" class="btn-edit">
+            <i class="fas fa-pen"></i> Edit Profile
+        </a>
+    </div>
+</div>

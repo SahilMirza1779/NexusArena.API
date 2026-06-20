@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NexusArena.API.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
@@ -24,7 +26,15 @@ namespace NexusArena.API.Controllers
             var totalReceptionists = await _context.Users.CountAsync(u => u.RoleId == 4);
 
             var activeArenas = await _context.Arenas.CountAsync(a => a.IsActive == true);
-            string formattedRevenue = "₹0L";
+
+            decimal totalRevenue = await _context.Payments
+                .Include(p => p.Booking)
+                .Where(p => p.Booking.Status != "Cancelled")
+                .SumAsync(p => p.TotalAmount);
+
+            string formattedRevenue = totalRevenue >= 100000
+                ? $"₹{(totalRevenue / 100000).ToString("0.##")}L"
+                : $"₹{totalRevenue:N0}";
 
             var stats = new
             {
@@ -45,8 +55,8 @@ namespace NexusArena.API.Controllers
                 .Where(a => a.IsActive == false || a.IsActive == null)
                 .Select(a => new
                 {
-                    Id = a.ArenaId, 
-                    ArenaName = a.Name, 
+                    Id = a.ArenaId,
+                    ArenaName = a.Name,
                     OwnerName = a.Owner.FullName,
 
                     Category = "Not Specified",
