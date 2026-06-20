@@ -54,6 +54,7 @@
             border-left: 5px solid #00ff66;
         }
         .nav-links i { margin-right: 15px; width: 20px; text-align: center; color: #00ff66; }
+        
         .main-content {
             flex-grow: 1;
             display: flex;
@@ -104,11 +105,13 @@
         <div class="sidebar-brand">
             <img src="~/images/logo.jpg" alt="Nexus Arena Logo" />
         </div>
-        <ul class="nav-links">
+        <ul class="nav-links">  
             <li><a href="/Home/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"><i class="fas fa-home"></i> My Dashboard</a></li>
             <li><a href="/Explore/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Explore" ? "active" : "")"><i class="fas fa-search"></i> Explore Turfs</a></li>
             <li><a href="/BookingHistory/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "BookingHistory" ? "active" : "")"><i class="fas fa-calendar-check"></i> My Bookings</a></li>
             <li><a href="/Review/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Review" ? "active" : "")"><i class="fas fa-star"></i> Reviews</a></li>
+            
+            <li><a href="/Profile/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Profile" ? "active" : "")"><i class="fas fa-user-cog"></i> My Profile</a></li>
         </ul>
     </div>
 
@@ -119,7 +122,12 @@
             </div>
             <div class="user-profile">
                 <div class="wallet-badge"><i class="fas fa-wallet"></i> ₹ 1,200</div>
-                <span style="color: #fff;"><i class="fas fa-user-circle" style="font-size: 24px; color: #00ff66; vertical-align: middle;"></i> Zubeir</span>
+                
+                <!-- 🔥 YAHAN UPDATE KIYA HAI: Ab yeh clickable link ban gaya hai 🔥 -->
+                <a href="/Profile/Index" style="color: #fff; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#00ff66'" onmouseout="this.style.color='#fff'">
+                    <i class="fas fa-user-circle" style="font-size: 24px; color: #00ff66; vertical-align: middle;"></i> Zubeir
+                </a>
+
                 <a href="/Account/Login" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
@@ -129,19 +137,19 @@
         </div>
     </div>
 
-    <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Global SweetAlert Logic for Success and Error (Light Theme) -->
     @if (TempData["Success"] != null)
     {
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 Swal.fire({
-                    title: 'Good job!',
+                    title: 'Success!',
                     text: '@TempData["Success"]',
                     icon: 'success',
-                    confirmButtonColor: '#3085d6'
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    confirmButtonColor: '#00ff66'
                 });
             });
         </script>
@@ -155,7 +163,9 @@
                     title: 'Oops...',
                     text: '@TempData["Error"]',
                     icon: 'error',
-                    confirmButtonColor: '#d33'
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    confirmButtonColor: '#ff4c4c'
                 });
             });
         </script>
