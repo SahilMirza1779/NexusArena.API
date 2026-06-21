@@ -20,11 +20,6 @@
     .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; display: inline-block; }
     .badge.active { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
     .badge.blocked { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
-
-    .btn-block { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-    .btn-block:hover { background: rgba(255, 77, 77, 0.1); }
-    .btn-unblock { background: transparent; color: #00ff7f; border: 1px solid #00ff7f; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-    .btn-unblock:hover { background: rgba(0, 255, 127, 0.1); }
 </style>
 
 <div class="receptionist-container">
@@ -40,10 +35,9 @@
             <thead>
                 <tr>
                     <th style="width: 10%;">ID</th>
-                    <th style="width: 30%;">Name</th>
-                    <th style="width: 35%;">Contact Info</th>
-                    <th style="width: 10%;">Status</th>
-                    <th style="width: 15%;">Action</th>
+                    <th style="width: 35%;">Name</th>
+                    <th style="width: 40%;">Contact Info</th>
+                    <th style="width: 15%;">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -68,27 +62,13 @@
                                     <span class="badge blocked">Blocked</span>
                                 }
                             </td>
-                            <td>
-                                @if (rec.IsActive)
-                                {
-                                    <button class="btn-block" onclick="toggleStatus(@rec.Id, 'Block')">
-                                        <i class="fas fa-user-slash"></i> Block
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button class="btn-unblock" onclick="toggleStatus(@rec.Id, 'Unblock')">
-                                        <i class="fas fa-user-check"></i> Unblock
-                                    </button>
-                                }
-                            </td>
                         </tr>
                     }
                 }
                 else
                 {
                     <tr>
-                        <td colspan="5" style="text-align:center; padding: 40px; color: #888;">
+                        <td colspan="4" style="text-align:center; padding: 40px; color: #888;">
                             No receptionist was found in the database!
                         </td>
                     </tr>
@@ -97,30 +77,3 @@
         </table>
     </div>
 </div>
-
-<script>
-    function toggleStatus(id, action) {
-        let confirmMsg = action === 'Block' 
-            ? "Do you want to block this receptionist?" 
-            : "Do you want to unblock this receptionist?";
-
-        if (confirm(confirmMsg)) {
-            fetch('/SuperAdminDashboard/ToggleReceptionistStatus/' + id, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    window.location.reload(); 
-                } else {
-                    alert("An error occurred while updating the status!");
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Server error!");
-            });
-        }
-    }
-</script>

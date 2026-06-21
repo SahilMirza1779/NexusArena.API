@@ -18,25 +18,41 @@
             overflow: hidden;
         }
 
+        .sidebar {
+            width: 260px;
+            background-color: #1a1a1a;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            background: linear-gradient(180deg, rgba(0, 255, 127, 0.05) 0%, rgba(26, 26, 26, 1) 100%);
+        }
+        
         .sidebar-logo {
             max-width: 160px; 
             height: auto;
             display: inline-block;
-            filter: drop-shadow(0 0 3px rgba(0, 255, 127, 0.2));
+            border-radius: 12px; 
+            box-shadow: 0 0 10px rgba(0, 255, 127, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
-        .sidebar-brand {
-            padding: 20px;
-            font-size: 24px;
-            font-weight: 700;
-            text-align: center;
-            border-bottom: 1px solid #333;
-        }
-        .sidebar-brand span { color: #00ff7f; }
         
+        .sidebar-logo:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 127, 0.8), 0 0 40px rgba(0, 255, 127, 0.4); 
+            transform: scale(1.08) translateY(-3px);
+            filter: brightness(1.1);
+        }
+
         .nav-links {
             list-style: none;
             padding: 0;
             margin: 20px 0;
+            overflow-y: auto;
         }
         .nav-links li { margin-bottom: 10px; }
         .nav-links a {
@@ -86,14 +102,56 @@
             padding: 30px;
         }
 
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 45px;
+            background-color: #1a1a1a;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            border-radius: 8px;
+            z-index: 1000;
+            overflow: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
 
+        .dropdown-content.show {
+            display: block;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            color: #ddd;
+            padding: 12px 18px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item i { width: 18px; color: #00ff7f; text-align: center; }
+
+        .dropdown-item:hover { background-color: #2a2a2a; color: #fff; text-decoration: none; }
+
+        .dropdown-divider { height: 1px; background-color: #333; margin: 0; }
+
+        .logout-text { color: #ff4d4d !important; }
+        .logout-text i { color: #ff4d4d !important; }
+        .logout-text:hover { background-color: rgba(255, 77, 77, 0.1) !important; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-brand" style="padding: 15px 0; border-bottom: 1px solid #333; text-align: center;">
-            <img src="~/images/logo.jpg" alt="Nexus Arena Logo" class="sidebar-logo" />
+        <div class="sidebar-brand">
+            <a href="/SuperAdminDashboard/Index">
+                <img src="~/images/logo.jpg" alt="Nexus Arena Logo" class="sidebar-logo" />
+            </a>
         </div>
         <ul class="nav-links">
             <li class="nav-item">
@@ -101,10 +159,10 @@
                     <i class="fas fa-tachometer-alt"></i> Dashboard
                 </a>
             </li>
-            <a href="/SuperAdminDashboard/Arenas"><i class="fas fa-building"></i> Arenas</a>
-            <a href="/SuperAdminDashboard/Owners"><i class="fas fa-user-tie"></i> Owners</a>
-            <a href="/SuperAdminDashboard/Categories"><i class="fas fa-list"></i> Categories</a>
-            <a href="/SuperAdminDashboard/Users"><i class="fas fa-users"></i> Users</a>
+            <li class="nav-item"><a class="nav-link" href="/SuperAdminDashboard/Arenas"><i class="fas fa-building"></i> Arenas</a></li>
+            <li class="nav-item"><a class="nav-link" href="/SuperAdminDashboard/Owners"><i class="fas fa-user-tie"></i> Owners</a></li>
+            <li class="nav-item"><a class="nav-link" href="/SuperAdminDashboard/Categories"><i class="fas fa-list"></i> Categories</a></li>
+            <li class="nav-item"><a class="nav-link" href="/SuperAdminDashboard/Users"><i class="fas fa-users"></i> Users</a></li>
             <li class="nav-item">
                 <a class="nav-link" href="/SuperAdminDashboard/Receptionists">
                     <i class="fas fa-id-badge"></i> Receptionists
@@ -158,89 +216,44 @@
         </div>
     </div>
 
-    <style>
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        right: 0;
-        top: 45px;
-        background-color: #1a1a1a;
-        min-width: 200px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-        border: 1px solid #333;
-        border-radius: 8px;
-        z-index: 1000;
-        overflow: hidden;
-        transform: translateY(-10px);
-        transition: all 0.3s ease;
-    }
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function toggleProfileDropdown() {
+            document.getElementById("profileMenu").classList.toggle("show");
+        }
 
-    .dropdown-content.show {
-        display: block;
-        transform: translateY(0);
-    }
+        function confirmLogout() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you really want to log out?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff4d4d', 
+                cancelButtonColor: '#444',     
+                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, Logout',
+                cancelButtonText: 'Cancel',
+                background: '#1a1a1a',         
+                color: '#ffffff',              
+                iconColor: '#ffc107',          
+                borderRadius: '12px'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/Account/Login';
+                }
+            });
+        }
 
-    .dropdown-item {
-        color: #ddd;
-        padding: 12px 18px;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        transition: background 0.2s;
-    }
-
-    .dropdown-item i { width: 18px; color: #00ff7f; text-align: center; }
-
-    .dropdown-item:hover { background-color: #2a2a2a; color: #fff; text-decoration: none; }
-
-    .dropdown-divider { height: 1px; background-color: #333; margin: 0; }
-
-    .logout-text { color: #ff4d4d !important; }
-    .logout-text i { color: #ff4d4d !important; }
-    .logout-text:hover { background-color: rgba(255, 77, 77, 0.1) !important; }
-</style>
-
-<script>
-    function toggleProfileDropdown() {
-        document.getElementById("profileMenu").classList.toggle("show");
-    }
-
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "Do you really want to log out?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ff4d4d', 
-            cancelButtonColor: '#444',     
-            confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, Logout',
-            cancelButtonText: 'Cancel',
-            background: '#1a1a1a',         
-            color: '#ffffff',              
-            iconColor: '#ffc107',          
-            borderRadius: '12px'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '/Account/Login';
-            }
-        });
-    }
-
-    window.onclick = function(event) {
-        if (!event.target.closest('.profile-btn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
+        window.onclick = function(event) {
+            if (!event.target.closest('.profile-btn')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
                 }
             }
         }
-    }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    </script>
 </body>
 </html>
