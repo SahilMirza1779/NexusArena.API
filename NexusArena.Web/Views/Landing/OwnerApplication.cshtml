@@ -8,44 +8,205 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Owner Registration - Nexus Arena</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <style>
-        body { font-family: 'Montserrat', sans-serif; background-color: #080808; color: #fff; display: flex; justify-content: center; padding: 50px 20px; }
-        .form-container { background: #111; padding: 40px; border-radius: 16px; border: 1px solid #222; width: 100%; max-width: 700px; }
-        h2 { color: #00ff7f; margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #aaa; font-size: 14px; }
-        input, textarea { width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; }
-        .btn-submit { background: #00ff7f; color: #000; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px; }
-        .map-placeholder { height: 200px; background: #1a1a1a; border: 2px dashed #333; display: flex; align-items: center; justify-content: center; color: #555; margin-bottom: 20px; border-radius: 8px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            color: #fff; 
+            background-color: #050505;
+            position: relative;
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px; z-index: -2;
+        }
+
+        .bg-glow-1, .bg-glow-2 {
+            position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1;
+            animation: floatGlow 12s infinite alternate ease-in-out;
+        }
+        .bg-glow-1 { width: 400px; height: 400px; background: rgba(0, 255, 127, 0.15); top: -100px; left: -100px; }
+        .bg-glow-2 { width: 500px; height: 500px; background: rgba(0, 255, 127, 0.1); bottom: -150px; right: -100px; animation-delay: -6s; }
+
+        @@keyframes floatGlow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.2); }
+        }
+
+        .form-container {
+            background: rgba(17, 17, 17, 0.75); 
+            backdrop-filter: blur(15px);
+            padding: 45px 40px; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%; 
+            max-width: 750px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 127, 0.05);
+            animation: slideUpFade 0.6s ease-out forwards;
+        }
+
+        @@keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .anim-item { opacity: 0; animation: slideUpFade 0.5s ease-out forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+        .delay-6 { animation-delay: 0.6s; }
+
+        h2 { color: #00ff7f; margin-bottom: 8px; font-weight: 700; font-size: 28px; }
+        p.subtitle { color: #888; margin-bottom: 30px; font-size: 14px; }
+
+        .form-group { margin-bottom: 22px; }
+        label { display: block; margin-bottom: 8px; color: #ccc; font-size: 13px; font-weight: 500; }
+        
+        input[type="text"], input[type="email"] {
+            width: 100%; padding: 14px; background: rgba(26, 26, 26, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;
+            color: #fff; font-family: inherit; font-size: 14px; transition: 0.3s;
+        }
+        input:focus { border-color: #00ff7f; outline: none; background: rgba(34, 34, 34, 0.9); box-shadow: 0 0 10px rgba(0, 255, 127, 0.15); }
+
+        #map { height: 250px; width: 100%; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 15px; z-index: 1; }
+
+        .file-upload-wrapper { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
+        .custom-file-upload {
+            background: rgba(26, 26, 26, 0.8); border: 1px dashed #00ff7f; color: #00ff7f;
+            padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.3s; display: inline-block;
+        }
+        .custom-file-upload:hover { background: rgba(0, 255, 127, 0.1); box-shadow: 0 0 15px rgba(0, 255, 127, 0.2); }
+        #file-count { color: #888; font-size: 13px; }
+
+        .btn-submit {
+            background: #00ff7f; color: #000; border: none; padding: 16px; width: 100%;
+            border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 15px;
+            transition: 0.3s; letter-spacing: 1px; box-shadow: 0 0 15px rgba(0, 255, 127, 0.2);
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 255, 127, 0.4); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .leaflet-tile-pane {
+            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+        }
     </style>
 </head>
 <body>
 
-<div class="form-container">
-    <h2>Arena Owner Registration</h2>
-    <p style="color: #666; margin-bottom: 30px;">Fill in the details to request your partnership with Nexus Arena.</p>
-    
-    <form action="/Landing/SubmitApplication" method="post" enctype="multipart/form-data">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="form-group"><label>Owner Name</label><input type="text" name="Name" required /></div>
-            <div class="form-group"><label>Arena Name</label><input type="text" name="ArenaName" required /></div>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="form-container">
+        <div class="anim-item delay-1">
+            <h2>Arena Owner Registration</h2>
+            <p class="subtitle">Fill in the details to request your partnership with Nexus Arena.</p>
         </div>
         
-        <div class="form-group"><label>Email Address</label><input type="email" name="Email" required /></div>
-        
-        <div class="form-group">
-            <label>Turf Location (Click on Map)</label>
-            <div class="map-placeholder"><i class="fas fa-map-marked-alt" style="font-size: 30px;"></i> &nbsp; Map Placeholder</div>
-            <input type="text" name="Address" placeholder="Enter full address" required />
-        </div>
+        <form action="/Landing/SubmitApplication" method="post" enctype="multipart/form-data">
+            
+            <div class="grid-2 anim-item delay-2">
+                <div class="form-group">
+                    <label>Owner Name</label>
+                    <input type="text" name="Name" placeholder="John Doe" required />
+                </div>
+                <div class="form-group">
+                    <label>Arena Name</label>
+                    <input type="text" name="ArenaName" placeholder="e.g. Kickoff Turf" required />
+                </div>
+            </div>
+            
+            <div class="form-group anim-item delay-3">
+                <label>Email Address</label>
+                <input type="email" name="Email" placeholder="partner@example.com" required />
+            </div>
+            
+            <div class="form-group anim-item delay-4">
+                <label>Pinpoint Turf Location (Click on Map)</label>
+                <div id="map"></div>
+                
+                <input type="hidden" name="Latitude" id="lat" />
+                <input type="hidden" name="Longitude" id="lng" />
+                
+                <input type="text" name="Address" placeholder="Enter full address manually" required />
+            </div>
 
-        <div class="form-group"><label>Upload Turf Photos</label><input type="file" name="Photos" multiple /></div>
+            <div class="form-group anim-item delay-5">
+                <label>Upload Turf Photos (Multiple allowed)</label>
+                <div class="file-upload-wrapper">
+                    <label for="file-upload" class="custom-file-upload">
+                        <i class="fas fa-cloud-upload-alt"></i> Browse Photos
+                    </label>
+                    <input id="file-upload" type="file" name="Photos" multiple accept="image/*" style="display: none;" onchange="updateFileText(this)" />
+                    <span id="file-count">No files selected</span>
+                </div>
+            </div>
 
-        <button type="submit" class="btn-submit">SUBMIT APPLICATION</button>
-    </form>
-</div>
+            <div class="anim-item delay-6">
+                <button type="submit" class="btn-submit">SUBMIT APPLICATION</button>
+            </div>
+        </form>
+    </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([21.1702, 72.8311], 12); 
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        var marker;
+
+        var neonIcon = L.divIcon({
+            className: 'custom-neon-marker',
+            html: "<div style='background:#00ff7f; width:18px; height:18px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 15px #00ff7f, 0 0 30px #00ff7f;'></div>",
+            iconSize: [18, 18],
+            iconAnchor: [9, 9] 
+        });
+
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker([lat, lng], {icon: neonIcon}).addTo(map);
+
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+        });
+
+        function updateFileText(input) {
+            var fileCountSpan = document.getElementById('file-count');
+            if (input.files && input.files.length > 0) {
+                if(input.files.length === 1) {
+                    fileCountSpan.innerHTML = "<span style='color: #00ff7f; font-weight:600;'>" + input.files[0].name + "</span> selected";
+                } else {
+                    fileCountSpan.innerHTML = "<span style='color: #00ff7f; font-weight:600;'>" + input.files.length + " files</span> selected";
+                }
+            } else {
+                fileCountSpan.innerHTML = "No files selected";
+            }
+        }
+    </script>
 </body>
 </html>

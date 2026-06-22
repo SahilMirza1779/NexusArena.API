@@ -1,0 +1,39 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application Submitted - Nexus Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+            body { font-family: 'Montserrat', sans-serif; background-color: #080808; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .success-box { background: #111; padding: 50px 40px; border-radius: 16px; border: 1px solid #222; text-align: center; max-width: 500px; box-shadow: 0 10px 40px rgba(0, 255, 127, 0.1); }
+            .success-icon { font-size: 60px; color: #00ff7f; margin-bottom: 20px; animation: bounce 1s ease; }
+            h2 { margin-bottom: 15px; font-weight: 700; }
+            p { color: #aaa; line-height: 1.6; margin-bottom: 30px; }
+            .btn-home { background: transparent; color: #00ff7f; border: 1px solid #00ff7f; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: 0.3s; }
+            .btn-home:hover { background: rgba(0, 255, 127, 0.1); }
+        
+            @@keyframes bounce {
+                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-20px); }
+                60% { transform: translateY(-10px); }
+            }
+    </style>
+</head>
+<body>
+
+    <div class="success-box">
+        <i class="fas fa-check-circle success-icon"></i>
+        <h2>Application Received!</h2>
+        <p>Thank you for showing interest in partnering with Nexus Arena. Our Admin team will verify your turf details and contact you via email shortly.</p>
+        <a href="/Landing/Index" class="btn-home">Return to Homepage</a>
+    </div>
+
+</body>
+</html>
