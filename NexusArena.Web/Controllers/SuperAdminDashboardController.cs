@@ -8,27 +8,30 @@ using System.Threading.Tasks;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using NexusArena.API.Models;
+using System.Net.Mail;
+using System.Net;
 
 namespace NexusArena.Web.Controllers
 {
     public class SuperAdminDashboardController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly NexusArenaDbContext _context;
 
-        public SuperAdminDashboardController(IHttpClientFactory httpClientFactory)
+        public SuperAdminDashboardController(IHttpClientFactory httpClientFactory, NexusArenaDbContext context)
         {
             _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public async Task<IActionResult> Index()
         {
             var client = _httpClientFactory.CreateClient();
             var dashboardData = new DashboardStatsViewModel();
-
             dashboardData.PendingApprovals = new List<PendingArenaViewModel>();
 
             string statsApiUrl = "http://localhost:5092/api/Dashboard/Stats";
-            string arenasApiUrl = "http://localhost:5092/api/Dashboard/PendingArenas";
 
             try
             {
@@ -36,7 +39,12 @@ namespace NexusArena.Web.Controllers
                 if (statsResponse.IsSuccessStatusCode)
                 {
                     string jsonData = await statsResponse.Content.ReadAsStringAsync();
-                    dashboardData = JsonSerializer.Deserialize<DashboardStatsViewModel>(jsonData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var parsedData = JsonSerializer.Deserialize<DashboardStatsViewModel>(jsonData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (parsedData != null)
+                    {
+                        dashboardData = parsedData;
+                    }
 
                     if (dashboardData.PendingApprovals == null)
                     {
@@ -48,24 +56,40 @@ namespace NexusArena.Web.Controllers
                     ViewBag.Error = "Failed to fetch stats from the API. Status code: " + statsResponse.StatusCode;
                     SetDefaultStats(dashboardData);
                 }
+            }
+            catch (Exception)
+            {
+                ViewBag.Error = "The API is completely inaccessible.";
+                SetDefaultStats(dashboardData);
+            }
 
-                HttpResponseMessage arenasResponse = await client.GetAsync(arenasApiUrl);
-                if (arenasResponse.IsSuccessStatusCode)
+            try
+            {
+                var pendingListDb = _context.PendingArenas
+                                            .Where(a => a.Status == "Pending")
+                                            .OrderByDescending(a => a.AppliedOn)
+                                            .ToList();
+
+                if (pendingListDb != null && pendingListDb.Count > 0)
                 {
-                    string arenasJson = await arenasResponse.Content.ReadAsStringAsync();
-                    var pendingList = JsonSerializer.Deserialize<List<PendingArenaViewModel>>(arenasJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    if (pendingList != null)
+                    dashboardData.PendingApprovals = pendingListDb.Select(p => new PendingArenaViewModel
                     {
-                        dashboardData.PendingApprovals = pendingList;
-                    }
+                        Id = p.Id,
+                        ArenaName = p.ArenaName,
+                        OwnerName = p.OwnerName,
+                        Status = p.Status,
+
+                        Category = "Sports Turf",
+                        Address = p.Address,
+                        Latitude = p.Latitude,
+                        Longitude = p.Longitude,
+                        ImagePaths = p.ImagePaths
+                    }).ToList();
                 }
             }
             catch (Exception)
             {
-                ViewBag.Error = "The API is completely inaccessible. Please check if API project is running.";
-                SetDefaultStats(dashboardData);
-                dashboardData.PendingApprovals = new List<PendingArenaViewModel>();
+                ViewBag.Error = "Failed to load Pending Approvals from database.";
             }
 
             return View(dashboardData);
@@ -81,35 +105,102 @@ namespace NexusArena.Web.Controllers
         }
 
         [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> ApproveArena(int id)
         {
-            var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/Dashboard/ApproveArena/{id}";
+            var pendingArena = await _context.PendingArenas.FindAsync(id);
+            if (pendingArena == null)
+                return Json(new { success = false, message = "Arena not found." });
 
-            var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+            string rawPassword = "Nex" + new Random().Next(1000, 9999).ToString() + "@Ar";
 
+            var newOwner = new User
+            {
+                RoleId = 2,
+                FullName = pendingArena.OwnerName,
+                Email = pendingArena.Email,
+                PasswordHash = rawPassword, 
+                Phone = "9999999999",
+                IsActive = true
+            };
+
+            _context.Users.Add(newOwner);
+            await _context.SaveChangesAsync();
+
+            var newArena = new Arena
+            {
+                OwnerId = newOwner.UserId,
+                Name = pendingArena.ArenaName,
+                City = "Surat",
+                Location = pendingArena.Address,
+                IsActive = true
+            };
+            _context.Arenas.Add(newArena);
+
+            pendingArena.Status = "Approved";
+            await _context.SaveChangesAsync();
+
+            bool mailSent = SendApprovalEmail(pendingArena.Email, pendingArena.OwnerName, pendingArena.Email, rawPassword);
+
+            return Json(new { success = true, emailSent = mailSent });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteArena(int id)
+        {
+            var arena = await _context.PendingArenas.FindAsync(id);
+            if (arena == null) return Json(new { success = false });
+            _context.PendingArenas.Remove(arena);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        private bool SendApprovalEmail(string toEmail, string ownerName, string userId, string password)
+        {
             try
             {
-                HttpResponseMessage response = await client.PostAsync(apiUrl, content);
-                if (response.IsSuccessStatusCode)
+                string senderEmail = "sahilmirza01779@gmail.com";
+                string senderAppPassword = "xumb xpgu rrbd aimt";
+
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(senderEmail, "Nexus Arena Admin");
+                mail.To.Add(toEmail);
+                mail.Subject = "🎉 Nexus Arena - Partnership Approved!";
+
+                mail.Body = $@"
+            <div style='font-family: Arial, sans-serif; background-color: #111; color: #fff; padding: 30px; border-radius: 12px; border: 1px solid #333; max-width: 600px; margin: auto;'>
+                <h2 style='color: #00ff7f; margin-top: 0;'>Welcome to Nexus Arena, {ownerName}!</h2>
+                <p style='color: #ccc; font-size: 15px;'>Your turf application has been successfully approved by the SuperAdmin.</p>
+                <div style='background: #1a1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #00ff7f;'>
+                    <p style='margin: 0 0 10px 0; color: #fff; font-weight: bold;'>Your Dashboard Login Credentials:</p>
+                    <p style='margin: 5px 0;'>Login ID: <strong style='color: #00ff7f;'>{userId}</strong></p>
+                    <p style='margin: 5px 0;'>Password: <strong style='color: #00ff7f;'>{password}</strong></p>
+                </div>
+                <p style='font-size: 13px; color: #888; margin-top: 20px;'>Please login and change your password immediately for security.</p>
+                <p style='color: #aaa; font-size: 12px;'>Best Regards,<br/>Nexus Arena Team</p>
+            </div>";
+
+                mail.IsBodyHtml = true;
+
+                using (SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587))
                 {
-                    return Json(new { success = true });
+                    smtp.Credentials = new NetworkCredential(senderEmail, senderAppPassword);
+                    smtp.EnableSsl = true;
+                    smtp.Send(mail);
                 }
+                return true;
             }
             catch (Exception)
             {
+                return false;
             }
-
-            return Json(new { success = false });
         }
 
         [HttpGet]
         public async Task<IActionResult> Arenas()
         {
             var client = _httpClientFactory.CreateClient();
-
             string apiUrl = "http://localhost:5092/api/Arena/GetAll";
-
             var arenaList = new List<ArenaListViewModel>();
 
             try
@@ -118,7 +209,6 @@ namespace NexusArena.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     string jsonData = await response.Content.ReadAsStringAsync();
-
                     var fetchedList = JsonSerializer.Deserialize<List<ArenaListViewModel>>(jsonData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                     if (fetchedList != null)
@@ -138,9 +228,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Manage(int id)
         {
             var client = _httpClientFactory.CreateClient();
-
             string apiUrl = $"http://localhost:5092/api/Arena/GetDetails/{id}";
-
             var arenaDetails = new ArenaDetailsViewModel();
 
             try
@@ -207,7 +295,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
 
             return View(categoryList);
@@ -230,7 +317,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return Json(new { success = false });
         }
@@ -251,7 +337,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return Json(new { success = false });
         }
@@ -273,7 +358,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return Json(new { success = false });
         }
@@ -282,9 +366,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Owners()
         {
             var client = _httpClientFactory.CreateClient();
-
             string apiUrl = "http://localhost:5092/api/ManageOwners/GetAll";
-
             var ownerList = new List<ManageOwnerViewModel>();
 
             try
@@ -293,9 +375,7 @@ namespace NexusArena.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     string jsonData = await response.Content.ReadAsStringAsync();
-
                     var fetchedList = System.Text.Json.JsonSerializer.Deserialize<List<ManageOwnerViewModel>>(jsonData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
                     if (fetchedList != null)
                     {
                         ownerList = fetchedList;
@@ -304,7 +384,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
 
             return View(ownerList);
@@ -327,7 +406,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return Json(new { success = false });
         }
@@ -354,7 +432,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
 
             return View(userList);
@@ -377,7 +454,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return Json(new { success = false });
         }
@@ -386,7 +462,6 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Receptionists()
         {
             var client = _httpClientFactory.CreateClient();
-
             string apiUrl = "http://localhost:5092/api/ManageReceptionists/GetAll";
             var receptionistList = new List<ManageReceptionistViewModel>();
 
@@ -405,7 +480,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return View(receptionistList);
         }
@@ -427,7 +501,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return Json(new { success = false });
         }
@@ -437,7 +510,6 @@ namespace NexusArena.Web.Controllers
         {
             var client = _httpClientFactory.CreateClient();
             string apiUrl = "http://localhost:5092/api/ManageReviews/GetAll";
-
             var reviewList = new List<ManageReviewViewModel>();
 
             try
@@ -456,7 +528,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
 
             return View(reviewList);
@@ -478,7 +549,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
 
             return Json(new { success = false });
@@ -505,7 +575,6 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
             return View(transactionList);
         }
@@ -536,9 +605,8 @@ namespace NexusArena.Web.Controllers
                     return Json(new { success = true, message = "Broadcast sent Successfully!" });
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
-
             }
 
             return Json(new { success = false, message = "Failed to send broadcast." });
@@ -548,7 +616,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> AdminDetails()
         {
             int currentAdminId = GetLoggedInUserId();
-            if (currentAdminId == 0) return RedirectToAction("Login", "Account"); 
+            if (currentAdminId == 0) return RedirectToAction("Login", "Account");
 
             var client = _httpClientFactory.CreateClient();
             var response = await client.GetAsync($"http://localhost:5092/api/AdminProfile/GetAdmin/{currentAdminId}");

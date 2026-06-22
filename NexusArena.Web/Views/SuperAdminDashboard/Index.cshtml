@@ -28,117 +28,49 @@
         border-color: #00ff7f;
         box-shadow: 0 8px 25px rgba(0, 255, 127, 0.1);
     }
-    .stat-info h3 {
-        margin: 0;
-        font-size: 32px;
-        color: #ffffff;
-        letter-spacing: 1px;
-    }
-    .stat-info p {
-        margin: 5px 0 0;
-        color: #aaaaaa;
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: 1px;
-    }
-    .stat-icon {
-        font-size: 38px;
-        color: #00ff7f;
-        background: rgba(0, 255, 127, 0.05);
-        padding: 15px;
-        border-radius: 12px;
-    }
+    .stat-info h3 { margin: 0; font-size: 32px; color: #ffffff; letter-spacing: 1px; }
+    .stat-info p { margin: 5px 0 0; color: #aaaaaa; font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+    .stat-icon { font-size: 38px; color: #00ff7f; background: rgba(0, 255, 127, 0.05); padding: 15px; border-radius: 12px; }
 
     .recent-section {
-        margin-top: 40px;
-        background-color: #1a1a1a;
-        border-radius: 12px;
-        padding: 25px;
-        border: 1px solid #333;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        margin-top: 40px; background-color: #1a1a1a; border-radius: 12px; padding: 25px;
+        border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
-    .recent-section h4 {
-        margin-top: 0;
-        color: #ffffff;
-        border-bottom: 1px solid #333;
-        padding-bottom: 15px;
-        font-size: 18px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-    th, td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #2a2a2a;
-        color: #cccccc;
-        font-size: 14px;
-    }
-    th {
-        color: #00ff7f;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 13px;
-        letter-spacing: 1px;
-    }
-    tr:hover td {
-        background-color: #222;
-    }
-    .badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-    }
+    .recent-section h4 { margin-top: 0; color: #ffffff; border-bottom: 1px solid #333; padding-bottom: 15px; font-size: 18px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #2a2a2a; color: #cccccc; font-size: 14px; }
+    th { color: #00ff7f; font-weight: 600; text-transform: uppercase; font-size: 13px; letter-spacing: 1px; }
+    tr:hover td { background-color: #222; }
+    .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
     .badge.pending { background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid #ff9800; }
     .badge.active { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
     
-    .action-btn {
-        background: #00ff7f;
-        color: #000;
-        border: none;
-        padding: 6px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: 0.3s;
-    }
-    .action-btn:hover {
-        background: #00cc66;
-    }
+    .action-btn { background: #00ff7f; color: #000; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+    .action-btn:hover { background: #00cc66; }
 
     .modal-overlay {
-        display: none; 
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(5px);
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);
     }
     .modal-content {
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 12px;
-        padding: 30px;
-        width: 400px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        color: #fff;
+        background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff;
+        width: 90%; max-width: 850px; max-height: 90vh; overflow-y: auto;
     }
-    .modal-content h3 { margin-top: 0; color: #00ff7f; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    .modal-content h3 { margin-top: 0; color: #00ff7f; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 22px; }
     .modal-details { margin: 20px 0; font-size: 15px; color: #ccc; }
     .modal-details p { margin: 8px 0; }
     .modal-details strong { color: #fff; }
-    .modal-actions { display: flex; gap: 15px; margin-top: 25px; }
+    .modal-actions { display: flex; gap: 15px; margin-top: 25px; justify-content: flex-end; }
     
-    .btn-approve { background: #00ff7f; color: #000; border: none; padding: 10px; flex: 1; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    .btn-approve:hover { background: #00cc66; }
+    .btn-approve { background: #00ff7f; color: #000; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-approve:hover { background: #00cc66; box-shadow: 0 0 10px rgba(0,255,127,0.3); }
     
-    .btn-reject { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; flex: 1; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-reject { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
     .btn-reject:hover { background: rgba(255, 77, 77, 0.1); }
+
+    .btn-close { background: transparent; color: #888; border: 1px solid #555; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-close:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 </style>
 
 <div>
@@ -207,10 +139,19 @@
                         <tr>
                             <td>@arena.ArenaName</td>
                             <td>@arena.OwnerName</td>
-                            <td>@arena.Category</td>
+                            <td>@(!string.IsNullOrEmpty(arena.Category) ? arena.Category : "Sports Turf")</td>
                             <td><span class="badge pending">@arena.Status</span></td>
                             <td>
-                                <button class="action-btn" onclick="openReviewModal(@arena.Id, '@arena.ArenaName', '@arena.OwnerName', '@arena.Category')">
+                                <button class="action-btn" 
+                                        data-id="@arena.Id"
+                                        data-name="@arena.ArenaName"
+                                        data-owner="@arena.OwnerName"
+                                        data-category="@(!string.IsNullOrEmpty(arena.Category) ? arena.Category : "Sports Turf")"
+                                        data-address="@arena.Address"
+                                        data-lat="@arena.Latitude"
+                                        data-lng="@arena.Longitude"
+                                        data-images="@arena.ImagePaths"
+                                        onclick="openReviewModal(this)">
                                  Review
                                 </button>
                             </td>
@@ -226,32 +167,79 @@
                     </tr>
                 }
             </tbody>
-            </table>
+        </table>
     </div>
 </div>
+
 <div id="reviewModal" class="modal-overlay">
     <div class="modal-content">
-        <h3>Review Arena</h3>
-        <div class="modal-details">
-            <p><strong>Arena Name:</strong> <span id="modalArenaName"></span></p>
-            <p><strong>Owner:</strong> <span id="modalOwnerName"></span></p>
-            <p><strong>Category:</strong> <span id="modalCategory"></span></p>
+        <h3>Review Arena Details</h3>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:25px; margin-top:20px;">
+            <div class="modal-details" style="margin: 0;">
+                <p><strong>Arena Name:</strong> <span id="modalArenaName"></span></p>
+                <p><strong>Owner:</strong> <span id="modalOwnerName"></span></p>
+                <p><strong>Category:</strong> <span id="modalCategory"></span></p>
+                <p><strong>Full Address:</strong> <span id="modalAddress"></span></p>
+            </div>
+
+            <div>
+                <strong style="color:#fff; font-size:14px; display:block; margin-bottom:8px;">Live Location:</strong>
+                <a id="modalGoogleMapLink" href="#" target="_blank" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:150px; width:100%; border-radius:8px; border:1px dashed #00ff7f; background:rgba(0, 255, 127, 0.05); text-decoration:none; color:#00ff7f; transition:0.3s;">
+                    <i class="fas fa-map-marked-alt" style="font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,255,127,0.5));"></i>
+                    <span style="font-weight: 600; font-size: 15px; letter-spacing: 0.5px;">Open in Google Maps ↗</span>
+                </a>
+            </div>
         </div>
+
+        <div style="margin-top:25px;">
+            <strong style="color:#fff; font-size:14px; display:block; margin-bottom:10px;">Uploaded Photos:</strong>
+            <div id="modalImages" style="display:flex; gap:15px; overflow-x:auto; padding-bottom:10px;">
+            </div>
+        </div>
+
         <div class="modal-actions">
             <input type="hidden" id="modalArenaId" />
-            <button class="btn-approve" onclick="approveArena()">Approve <i class="fas fa-check"></i></button>
-            <button class="btn-reject" onclick="closeModal()">Close / Reject <i class="fas fa-times"></i></button>
+            <button class="btn-close" onclick="closeModal()">Close</button>
+            <button class="btn-reject" onclick="deleteArenaAction()"><i class="fas fa-trash-alt"></i> Delete</button>
+            <button class="btn-approve" onclick="approveArena()"><i class="fas fa-check"></i> Approve & Mail</button>
         </div>
     </div>
 </div>
 
 <script>
-    function openReviewModal(id, arenaName, ownerName, category) {
+    function openReviewModal(btn) {
+        var id = btn.getAttribute('data-id');
+        var arenaName = btn.getAttribute('data-name');
+        var ownerName = btn.getAttribute('data-owner');
+        var category = btn.getAttribute('data-category');
+        var address = btn.getAttribute('data-address');
+        var lat = parseFloat(btn.getAttribute('data-lat')) || 21.1702;
+        var lng = parseFloat(btn.getAttribute('data-lng')) || 72.8311;
+        var images = btn.getAttribute('data-images');
+
         document.getElementById('modalArenaId').value = id;
         document.getElementById('modalArenaName').innerText = arenaName;
         document.getElementById('modalOwnerName').innerText = ownerName;
         document.getElementById('modalCategory').innerText = category;
-        
+        document.getElementById('modalAddress').innerText = address;
+
+        var googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        document.getElementById('modalGoogleMapLink').href = googleMapsUrl;
+
+        var imgContainer = document.getElementById('modalImages');
+        imgContainer.innerHTML = ''; 
+        if (images && images.trim() !== '') {
+            var imgArray = images.split(',');
+            imgArray.forEach(function(src) {
+                if (src.trim() !== '') {
+                    imgContainer.innerHTML += `<img src="${src}" style="height:120px; width:160px; object-fit:cover; border-radius:8px; border:1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);" alt="Turf Photo" />`;
+                }
+            });
+        } else {
+            imgContainer.innerHTML = '<span style="color:#666; font-style:italic;">No photos uploaded.</span>';
+        }
+
         document.getElementById('reviewModal').style.display = 'flex';
     }
 
@@ -264,9 +252,44 @@
         var approveBtn = document.querySelector('.btn-approve');
         
         approveBtn.disabled = true;
-        approveBtn.innerHTML = 'Approving... <i class="fas fa-spinner fa-spin"></i>';
+        approveBtn.innerHTML = 'Mailing... <i class="fas fa-spinner fa-spin"></i>';
 
         fetch('/SuperAdminDashboard/ApproveArena/' + arenaId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alert('Success! Arena approved ' + (data.emailSent ? 'and Email sent!' : 'but failed to send Email. Please check your App Password.'));
+                closeModal();
+                window.location.reload(); 
+            } else {
+                alert('Oops! ' + (data.message || 'Approval issue.'));
+                approveBtn.disabled = false;
+                approveBtn.innerHTML = '<i class="fas fa-check"></i> Approve & Mail';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Server error!');
+            approveBtn.disabled = false;
+            approveBtn.innerHTML = '<i class="fas fa-check"></i> Approve & Mail';
+        });
+    }
+
+    function deleteArenaAction() {
+        if(!confirm("Are you sure? Yeh data database se permanently delete ho jayega!")) {
+            return;
+        }
+
+        var arenaId = document.getElementById('modalArenaId').value;
+        var deleteBtn = document.querySelector('.btn-reject');
+
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = 'Deleting... <i class="fas fa-spinner fa-spin"></i>';
+
+        fetch('/SuperAdminDashboard/DeleteArena/' + arenaId, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         })
@@ -276,14 +299,72 @@
                 closeModal();
                 window.location.reload(); 
             } else {
-                alert('Oops! Approval me koi issue aaya.');
-                approveBtn.disabled = false;
-                approveBtn.innerHTML = 'Approve <i class="fas fa-check"></i>';
+                alert('Error deleting the data!');
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('Server error!');
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+        });
+    }
+
+    function approveArena() {
+        var arenaId = document.getElementById('modalArenaId').value;
+        
+        Swal.fire({
+            title: 'Approve Arena?',
+            text: "This will create a user account and send credentials to the owner.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#00ff7f',
+            cancelButtonColor: '#333',
+            confirmButtonText: 'Yes, Approve!',
+            background: '#1a1a1a',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/SuperAdminDashboard/ApproveArena/' + arenaId, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        Swal.fire({ title: 'Approved!', text: 'Owner account created and email sent.', icon: 'success', background: '#1a1a1a', color: '#fff' })
+                        .then(() => window.location.reload());
+                    } else {
+                        Swal.fire({ title: 'Error!', text: data.message, icon: 'error', background: '#1a1a1a', color: '#fff' });
+                    }
+                });
+            }
+        });
+    }
+
+    function deleteArenaAction() {
+        var arenaId = document.getElementById('modalArenaId').value;
+        
+        Swal.fire({
+            title: 'Permanent Delete?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff4d4d',
+            cancelButtonColor: '#333',
+            confirmButtonText: 'Delete Forever',
+            background: '#1a1a1a',
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/SuperAdminDashboard/DeleteArena/' + arenaId, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        Swal.fire({ title: 'Deleted!', text: 'Data has been wiped.', icon: 'success', background: '#1a1a1a', color: '#fff' })
+                        .then(() => window.location.reload());
+                    }
+                });
+            }
         });
     }
 </script>

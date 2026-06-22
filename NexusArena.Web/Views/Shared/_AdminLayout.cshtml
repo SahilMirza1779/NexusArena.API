@@ -7,6 +7,8 @@
     <link rel="icon" type="image/jpg" href="~/images/logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             margin: 0;
@@ -253,6 +255,42 @@
                     }
                 }
             }
+        }
+
+        function confirmSuspend(arenaId) {
+            Swal.fire({
+            title: 'Deactivate Arena?',
+            text: "Are you sure you want to suspend this arena?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff4d4d',
+            cancelButtonColor: '#333',
+            confirmButtonText: 'Yes, Suspend it!',
+            background: '#1a1a1a', 
+            color: '#fff',
+            iconColor: '#ff4d4d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performSuspend(arenaId);
+                }
+            });
+        }
+
+        function performSuspend(id) {
+            fetch('/SuperAdminDashboard/SuspendArena/' + id, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+            if(data.success) {
+                Swal.fire({
+                    title: 'Suspended!',
+                    text: 'Arena has been deactivated.',
+                    icon: 'success',
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    confirmButtonColor: '#00ff7f'
+                }).then(() => window.location.reload());
+            }
+            }); 
         }
     </script>
 </body>

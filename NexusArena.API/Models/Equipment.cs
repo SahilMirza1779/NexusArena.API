@@ -23,4 +23,3 @@ public partial class Equipment
 
     public virtual SportCategory Category { get; set; } = null!;
 }
-
