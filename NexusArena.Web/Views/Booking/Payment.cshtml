@@ -1,0 +1,69 @@
+﻿@{
+    ViewData["Title"] = "Complete Payment";
+    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+}
+
+<style>
+    .payment-loader-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 60vh;
+        text-align: center;
+    }
+    .payment-loader-wrapper h2 { color: #fff; font-weight: 800; margin-top: 20px; }
+    .payment-loader-wrapper p { color: #888; font-size: 16px; }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(0, 255, 127, 0.2);
+        border-top-color: #00ff7f;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="payment-loader-wrapper">
+    <div class="spinner"></div>
+    <h2>Initiating Payment...</h2>
+    <p>Please do not refresh the page. Opening secure payment gateway.</p>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var options = {
+            "key": "rzp_test_YOUR_KEY_HERE", // 🔴 Yahan bhi apni Razorpay Test Key daalni hai
+            "amount": "@(ViewBag.Amount * 100)", 
+            "currency": "INR",
+            "name": "Nexus Arena",
+            "description": "Turf Booking Payment",
+            "image": "https://cdn-icons-png.flaticon.com/512/53/53283.png", // Aapka logo yahan aa sakta hai
+            "order_id": "@ViewBag.OrderId", 
+            "handler": function (response) {
+                // Payment successful hone ke baad kya karna hai?
+                // Hum ek naye URL par bhejenge payment verify karne ke liye
+                window.location.href = "/BookingHistory/Index?paymentSuccess=true";
+            },
+            "prefill": {
+                "name": "Player Name", 
+                "email": "player@nexusarena.com",
+                "contact": "9999999999"
+            },
+            "theme": {
+                "color": "#00ff7f" // Aapki website ka theme color
+            },
+            "modal": {
+                "ondismiss": function() {
+                    // Agar user popup cancel kar de
+                    window.location.href = "/BookingHistory/Index?paymentCancelled=true";
+                }
+            }
+        };
+
+        var rzp1 = new Razorpay(options);
+        rzp1.open(); // Page load hote hi popup open kar dega
+    });
+</script>

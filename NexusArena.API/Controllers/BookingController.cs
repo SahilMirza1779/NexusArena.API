@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NexusArena.API.Models;
+using Razorpay.Api; // 🌟 RAZORPAY NAMESPACE (Package install karne ke baad error chala jayega)
+using System.Collections.Generic;
 
 namespace NexusArena.API.Controllers
 {
@@ -17,6 +19,7 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
+        // 1. GET AVAILABLE SLOTS (As it is, perfectly working)
         [HttpGet("available-slots")]
         public async Task<IActionResult> GetAvailableSlots(int arenaId, string date)
         {
@@ -54,6 +57,7 @@ namespace NexusArena.API.Controllers
             }
         }
 
+        // 2. CREATE BOOKING WITH RAZORPAY LOGIC 🌟
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {
@@ -70,24 +74,86 @@ namespace NexusArena.API.Controllers
                 var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ArenaId == request.ArenaId);
                 if (resource == null) return NotFound(new { message = "Turf not found." });
 
+                // Check double booking
                 var isAlreadyBooked = await _context.Bookings
                     .AnyAsync(b => b.ResourceId == resource.ResourceId && b.SlotId == request.SlotId && b.BookingDate == playDate && b.Status != "Cancelled");
 
                 if (isAlreadyBooked) return BadRequest(new { message = "Slot already booked." });
 
+                // 🌟 PRICE CALCULATION
+                var slotInfo = await _context.TimeSlots.FindAsync(request.SlotId);
+                if (slotInfo == null) return NotFound(new { message = "Slot details not found." });
+
+                decimal amountToPay = 0;
+                string paymentStatus = "Pending";
+
+                if (request.PaymentMode == "Full")
+                {
+                    amountToPay = slotInfo.BasePrice;
+                }
+                else if (request.PaymentMode == "Advance50")
+                {
+                    amountToPay = slotInfo.BasePrice / 2;
+                }
+
+                // 🌟 SAVE BOOKING IN DATABASE (Initial Pending Status)
                 var newBooking = new Booking
                 {
                     UserId = userId,
                     ResourceId = resource.ResourceId,
                     SlotId = request.SlotId,
                     BookingDate = playDate,
-                    Status = "Confirmed"
+                    Status = "Confirmed", // Booking ground par confirm ho gayi hai
+                    PaymentMode = request.PaymentMode,
+                    PaymentStatus = paymentStatus, // Par paisa aana baaki hai
+                    AmountPaid = 0
                 };
 
                 _context.Bookings.Add(newBooking);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Booking successful!", bookingId = newBooking.BookingId });
+                // 🌟 RAZORPAY ORDER CREATION
+                if (amountToPay > 0)
+                {
+                    // NOTE: Apne Razorpay account ki asli Test Keys yahan daalni hain
+                    string key = "rzp_test_YOUR_KEY_HERE";
+                    string secret = "YOUR_SECRET_HERE";
+
+                    try
+                    {
+                        RazorpayClient client = new RazorpayClient(key, secret);
+
+                        Dictionary<string, object> options = new Dictionary<string, object>();
+                        options.Add("amount", amountToPay * 100); // Amount paise me hota hai isliye * 100
+                        options.Add("currency", "INR");
+                        options.Add("receipt", "rcpt_" + newBooking.BookingId);
+
+                        Order order = client.Order.Create(options);
+                        string razorpayOrderId = order["id"].ToString();
+
+                        return Ok(new
+                        {
+                            message = "Razorpay order created",
+                            bookingId = newBooking.BookingId,
+                            requiresPayment = true,
+                            razorpayOrderId = razorpayOrderId,
+                            amount = amountToPay
+                        });
+                    }
+                    catch (Exception rzpEx)
+                    {
+                        // Agar Razorpay order fail ho jaye
+                        return StatusCode(500, new { message = "Payment Gateway Error: " + rzpEx.Message });
+                    }
+                }
+
+                // 🌟 Agar PayAtTurf chuna hai (AmountToPay == 0)
+                return Ok(new
+                {
+                    message = "Booking successful!",
+                    bookingId = newBooking.BookingId,
+                    requiresPayment = false
+                });
             }
             catch (Exception ex)
             {

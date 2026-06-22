@@ -14,7 +14,6 @@ namespace NexusArena.Web.Controllers
             _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
-        // 1. Saari bookings dikhane ke liye
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -36,7 +35,7 @@ namespace NexusArena.Web.Controllers
                 }
                 else
                 {
-                    ViewBag.Error = "History fetch karne me problem aayi.";
+                    ViewBag.Error = "Failed to fetch booking history.";
                 }
             }
             catch (Exception ex)
@@ -47,7 +46,6 @@ namespace NexusArena.Web.Controllers
             return View(viewModel);
         }
 
-        // 2. Booking Cancel karne ke liye
         [HttpPost]
         public async Task<IActionResult> Cancel(int bookingId)
         {
@@ -58,17 +56,16 @@ namespace NexusArena.Web.Controllers
 
             try
             {
-                // API me Cancel ka route PUT hai, isliye PutAsync use kiya
                 var response = await _httpClient.PutAsync($"api/BookingHistory/cancel/{bookingId}", null);
 
+                // Proper English Cancel Messages
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Booking successfully cancel ho gayi.";
+                    TempData["Success"] = "Your booking has been successfully cancelled.";
                 }
                 else
                 {
-                    var errorData = await response.Content.ReadAsStringAsync();
-                    TempData["Error"] = "Booking cancel nahi ho payi.";
+                    TempData["Error"] = "Failed to cancel the booking. Please try again.";
                 }
             }
             catch (Exception ex)
@@ -80,20 +77,6 @@ namespace NexusArena.Web.Controllers
         }
     }
 
-    // --- VIEW MODELS ---
-    public class BookingHistoryApiResponse
-    {
-        public string? message { get; set; }
-        public List<BookingHistoryViewModel>? data { get; set; }
-    }
-
-    public class BookingHistoryViewModel
-    {
-        public int bookingId { get; set; }
-        public string? arenaName { get; set; }
-        public string? sport { get; set; }
-        public string? playDate { get; set; }
-        public string? startTime { get; set; }
-        public string? status { get; set; }
-    }
+    public class BookingHistoryApiResponse { public string? message { get; set; } public List<BookingHistoryViewModel>? data { get; set; } }
+    public class BookingHistoryViewModel { public int bookingId { get; set; } public string? arenaName { get; set; } public string? sport { get; set; } public string? playDate { get; set; } public string? startTime { get; set; } public string? status { get; set; } }
 }

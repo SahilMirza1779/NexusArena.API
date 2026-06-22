@@ -4,102 +4,135 @@
     Layout = "~/Views/Shared/_PlayerLayout.cshtml";
 }
 
-<div style="margin-bottom: 40px;">
-    <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">My <span style="color: #00ff66;">Bookings</span> 📅</h1>
-    <p style="color: #888; font-size: 1.1rem; margin-top: 10px;">Track your past matches and manage upcoming turf reservations.</p>
+<style>
+    /* ... (Keep all your existing CSS exactly the same as before) ... */
+    .history-container { max-width: 1100px; margin: 30px auto; padding-bottom: 50px; }
+    .header-section { margin-bottom: 40px; }
+    .header-section h1 { color: #fff; font-size: 34px; font-weight: 800; margin: 0; }
+    .header-section h1 span { color: #00ff7f; }
+    .header-section p { color: #aaa; margin-top: 8px; font-size: 16px; }
+    .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+    .ticket-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; display: flex; flex-direction: column; }
+    .ticket-card:hover { transform: translateY(-5px); border-color: #555; }
+    .ticket-top { background: #0f0f0f; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #333; }
+    .booking-id { color: #888; font-weight: 700; font-size: 14px; }
+    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .status-confirmed { background: rgba(0, 255, 127, 0.15); color: #00ff7f; }
+    .status-cancelled { background: rgba(255, 76, 76, 0.15); color: #ff4c4c; }
+    .ticket-mid { padding: 25px 20px; flex-grow: 1; }
+    .arena-title { color: #fff; font-size: 20px; font-weight: 800; margin: 0 0 5px 0; }
+    .sport-text { color: #00bfff; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+    .info-row { display: flex; align-items: center; gap: 12px; color: #ccc; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+    .info-row i { color: #00ff7f; font-size: 18px; width: 20px; text-align: center; }
+    .ticket-bot { padding: 15px 20px; background: #111; border-top: 1px solid #222; }
+    .btn-cancel { width: 100%; background: transparent; color: #ff4c4c; border: 1px solid #ff4c4c; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; }
+    .btn-cancel:hover { background: rgba(255, 76, 76, 0.1); }
+</style>
+
+<div class="history-container">
+    
+    <div class="header-section">
+        <h1>My <span>Bookings</span> 🎫</h1>
+        <p>Manage your upcoming matches and view past history.</p>
+    </div>
+
+    <div class="ticket-grid">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var ticket in Model)
+            {
+                <div class="ticket-card">
+                    <div class="ticket-top">
+                        <span class="booking-id">ID: #@ticket.bookingId</span>
+                        <span class="status-badge @(ticket.status == "Confirmed" ? "status-confirmed" : "status-cancelled")">
+                            @ticket.status
+                        </span>
+                    </div>
+                    
+                    <div class="ticket-mid">
+                        <h3 class="arena-title">@ticket.arenaName</h3>
+                        <div class="sport-text">@ticket.sport</div>
+                        
+                        <div class="info-row"><i class="fas fa-calendar-day"></i> @ticket.playDate</div>
+                        <div class="info-row"><i class="far fa-clock"></i> @ticket.startTime</div>
+                    </div>
+
+                    @if (ticket.status == "Confirmed")
+                    {
+                        <div class="ticket-bot">
+                            <form method="post" action="/BookingHistory/Cancel">
+                                <input type="hidden" name="bookingId" value="@ticket.bookingId" />
+                                <button type="button" class="btn-cancel" onclick="confirmCancel(this)">CANCEL BOOKING</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: #1a1a1a; border-radius: 12px; border: 1px dashed #444;">
+                <i class="fas fa-ticket-alt" style="font-size: 50px; color: #444; margin-bottom: 20px;"></i>
+                <h3 style="color: #fff; margin: 0 0 10px 0;">No Bookings Found</h3>
+                <p style="color: #888; margin-bottom: 20px;">You haven't booked any slots yet.</p>
+                <a href="/Explore/Index" style="background: #00ff7f; color: #000; padding: 10px 25px; border-radius: 6px; font-weight: 800; text-decoration: none;">Explore Turfs</a>
+            </div>
+        }
+    </div>
+
 </div>
 
-<div style="background: linear-gradient(145deg, #161616, #1a1a1a); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid #2a2a2a; overflow-x: auto;">
-    @if (Model != null && Model.Any())
-    {
-        <table style="width: 100%; border-collapse: separate; border-spacing: 0; color: #fff; text-align: left; min-width: 800px;">
-            <thead>
-                <tr style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
-                    <th style="padding: 15px 20px; border-bottom: 2px solid #2a2a2a;">Booking ID</th>
-                    <th style="padding: 15px 20px; border-bottom: 2px solid #2a2a2a;">Turf & Sport</th>
-                    <th style="padding: 15px 20px; border-bottom: 2px solid #2a2a2a;">Date & Time</th>
-                    <th style="padding: 15px 20px; border-bottom: 2px solid #2a2a2a;">Status</th>
-                    <th style="padding: 15px 20px; border-bottom: 2px solid #2a2a2a; text-align: right;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr style="transition: all 0.3s ease; background-color: transparent;" onmouseover="this.style.backgroundColor='#1c1c1c'; this.style.transform='scale(1.01)';" onmouseout="this.style.backgroundColor='transparent'; this.style.transform='scale(1)';">
-                        <td style="padding: 20px; border-bottom: 1px solid #222; color: #777; font-weight: 700; font-size: 1.1rem;">#@item.bookingId</td>
-                        <td style="padding: 20px; border-bottom: 1px solid #222;">
-                            <strong style="color: #fff; display: block; font-size: 1.15rem; letter-spacing: 0.5px;">@item.arenaName</strong>
-                            <span style="color: #00ff66; font-size: 0.85rem; font-weight: 600;">@item.sport</span>
-                        </td>
-                        <td style="padding: 20px; border-bottom: 1px solid #222;">
-                            <span style="display: block; color: #ddd; font-weight: 600; font-size: 1.05rem;">@item.playDate</span>
-                            <span style="color: #888; font-size: 0.9rem;"><i class="far fa-clock" style="margin-right: 5px;"></i>@item.startTime</span>
-                        </td>
-                        <td style="padding: 20px; border-bottom: 1px solid #222;">
-                            @if (item.status == "Confirmed")
-                            {
-                                <span style="background-color: rgba(0, 255, 102, 0.1); color: #00ff66; padding: 8px 16px; border-radius: 30px; font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(0, 255, 102, 0.3); display: inline-block; box-shadow: 0 0 10px rgba(0, 255, 102, 0.1);">
-                                    <i class="fas fa-check-circle" style="margin-right: 5px;"></i> CONFIRMED
-                                </span>
-                            }
-                            else if (item.status == "Cancelled")
-                            {
-                                <span style="background-color: rgba(255, 76, 76, 0.1); color: #ff4c4c; padding: 8px 16px; border-radius: 30px; font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(255, 76, 76, 0.3); display: inline-block;">
-                                    <i class="fas fa-times-circle" style="margin-right: 5px;"></i> CANCELLED
-                                </span>
-                            }
-                            else
-                            {
-                                <span style="background-color: #333; color: #fff; padding: 8px 16px; border-radius: 30px; font-size: 0.85rem;">@item.status</span>
-                            }
-                        </td>
-                        <td style="padding: 20px; border-bottom: 1px solid #222; text-align: right;">
-                            @if (item.status == "Confirmed" && DateTime.TryParse(item.playDate, out DateTime playDt) && playDt >= DateTime.Today)
-                            {
-                                <form id="cancelForm_@item.bookingId" method="post" action="/BookingHistory/Cancel" style="margin: 0;">
-                                    <input type="hidden" name="bookingId" value="@item.bookingId" />
-                                    <button type="button" onclick="confirmCancel(@item.bookingId)" style="background-color: transparent; color: #ff4c4c; border: 1px solid #ff4c4c; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; font-weight: 600; font-size: 0.9rem;" onmouseover="this.style.backgroundColor='#ff4c4c'; this.style.color='#fff'; this.style.boxShadow='0 4px 10px rgba(255, 76, 76, 0.3)';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ff4c4c'; this.style.boxShadow='none';">
-                                        Cancel Match
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <span style="color: #444; font-size: 0.9rem; font-weight: 600; background: #111; padding: 8px 16px; border-radius: 6px; border: 1px solid #222;">Closed</span>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div style="text-align: center; padding: 50px 20px;">
-            <i class="fas fa-calendar-times" style="font-size: 4rem; color: #2a2a2a; margin-bottom: 20px;"></i>
-            <h3 style="color: #aaa; margin: 0 0 10px 0; font-size: 1.5rem;">No bookings found</h3>
-            <p style="color: #666; margin: 0; font-size: 1.1rem;">Head over to the Explore section and lock in your first match!</p>
-            <a href="/Explore/Index" style="display: inline-block; margin-top: 25px; background-color: #00ff66; color: #111; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.3s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">Explore Turfs</a>
-        </div>
-    }
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function confirmCancel(bookingId) {
+    // 1. Function for Custom Cancel Confirmation
+    function confirmCancel(buttonElement) {
         Swal.fire({
-            title: 'Cancel Booking?',
-            text: "Refunds will be processed as per policy. This action cannot be undone.",
+            title: 'Are you sure?',
+            text: "Do you really want to cancel this booking?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ff4c4c',
             cancelButtonColor: '#333',
-            confirmButtonText: 'Yes, cancel it!',
+            confirmButtonText: 'Yes, Cancel it!',
             background: '#1a1a1a',
             color: '#fff'
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('cancelForm_' + bookingId).submit();
+                // Submit the form if user clicks Yes
+                buttonElement.closest('form').submit();
             }
-        });
+        })
     }
-</script>   
+
+    // 2. Notifications for Success/Error
+    document.addEventListener("DOMContentLoaded", function() {
+        @if (TempData["Success"] != null)
+        {
+            <text>
+            Swal.fire({
+                title: 'Success!',
+                text: '@Html.Raw(TempData["Success"])',
+                icon: 'success',
+                confirmButtonColor: '#00ff7f',
+                background: '#1a1a1a',
+                color: '#fff',
+                iconColor: '#00ff7f'
+            });
+            </text>
+        }
+
+        @if (TempData["Error"] != null || ViewBag.Error != null)
+        {
+            <text>
+            Swal.fire({
+                title: 'Oops!',
+                text: '@Html.Raw(TempData["Error"] ?? ViewBag.Error)',
+                icon: 'error',
+                confirmButtonColor: '#ff4c4c',
+                background: '#1a1a1a',
+                color: '#fff'
+            });
+            </text>
+        }
+    });
+</script>

@@ -2,10 +2,12 @@
 {
     public class CreateBookingRequest
     {
-        // ResourceId hata kar ArenaId kar diya hai
         public int ArenaId { get; set; }
         public int SlotId { get; set; }
         public string PlayDate { get; set; } = null!; // Format: "yyyy-MM-dd"
+
+        // 🌟 NAYA FIELD: Payment ka tarika
+        public string PaymentMode { get; set; } = "PayAtTurf";
     }
 
     public class SlotAvailabilityDto
