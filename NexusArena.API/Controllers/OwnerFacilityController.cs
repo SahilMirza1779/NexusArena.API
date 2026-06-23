@@ -1,42 +1,42 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using System.Collections.Generic;
-// using NexusArena.API.Data; // Apne DbContext ka namespace add kar lena
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NexusArena.API.Models; // Apne Models ka namespace
 
 namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize(Roles = "Owner")] 
+    [Authorize(Roles = "Owner")]
     public class OwnerFacilityController : ControllerBase
     {
-        // private readonly NexusArenaDbContext _context;
-        // public OwnerFacilityController(NexusArenaDbContext context) { _context = context; }
-
-        [HttpPost("AddFacility")]
-        public IActionResult AddFacility([FromBody] object model)
+        private readonly NexusArenaDbContext _context;
+        public OwnerFacilityController(NexusArenaDbContext context)
         {
-            // TODO: EF Core logic to save in database
-            // _context.Facilities.Add(model);
-            // _context.SaveChanges();
+            _context = context;
+        }
+
+        // 1. DATA ADD KARNE WALA METHOD
+        [HttpPost("AddFacility")]
+        public async Task<IActionResult> AddFacility([FromBody] Resource model)
+        {
+            if (model == null) return BadRequest("Invalid data.");
+
+            // Database me save karo
+            _context.Resources.Add(model);
+            await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Nayi facility successfully add ho gayi!" });
         }
 
+        // 2. DATABASE SE DATA FETCH KARNE WALA METHOD
         [HttpGet("GetAllFacilities")]
-        public IActionResult GetAllFacilities()
+        public async Task<IActionResult> GetAllFacilities()
         {
-            // TODO: Yahan database se list fetch karne ka code aayega
-            // var list = _context.Facilities.ToList();
+            // 🔥 Ab ye dummy data nahi, asli database se fetch karega!
+            var list = await _context.Resources.ToListAsync();
 
-            // Abhi testing ke liye dummy data bhej rahe hain
-            var dummyList = new List<object>
-            {
-                new { Id = 1, ResourceName = "Dream Box Cricket 1", ResourceType = "Box Cricket", BasePricePerHour = 1000, Capacity = 12, IsActive = true },
-                new { Id = 2, ResourceName = "Pro Pool Table", ResourceType = "Pool", BasePricePerHour = 300, Capacity = 4, IsActive = true }
-            };
-
-            return Ok(dummyList);
+            return Ok(list);
         }
     }
 }
