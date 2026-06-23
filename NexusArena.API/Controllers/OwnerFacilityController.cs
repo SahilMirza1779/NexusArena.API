@@ -1,42 +1,59 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
-// using NexusArena.API.Data; // Apne DbContext ka namespace add kar lena
+using System.Linq;
+using NexusArena.API.Models; 
 
 namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize(Roles = "Owner")] 
     public class OwnerFacilityController : ControllerBase
     {
-        // private readonly NexusArenaDbContext _context;
-        // public OwnerFacilityController(NexusArenaDbContext context) { _context = context; }
+        private readonly NexusArenaDbContext _context;
+
+        public OwnerFacilityController(NexusArenaDbContext context)
+        {
+            _context = context;
+        }
 
         [HttpPost("AddFacility")]
-        public IActionResult AddFacility([FromBody] object model)
+        public IActionResult AddFacility([FromBody] Resource model)
         {
-            // TODO: EF Core logic to save in database
-            // _context.Facilities.Add(model);
-            // _context.SaveChanges();
+            try
+            {
+                var categoryExists = _context.SportCategories.Any(c => c.CategoryId == model.CategoryId);
+                if (!categoryExists)
+                {
+                    model.CategoryId = _context.SportCategories.FirstOrDefault()?.CategoryId ?? 1;
+                }
 
-            return Ok(new { Message = "Nayi facility successfully add ho gayi!" });
+                model.ArenaId = 1;
+
+                _context.Resources.Add(model);
+                _context.SaveChanges();
+
+                return Ok(new { success = true, Message = "The new facility has been successfully added!" });
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(new { success = false, Message = "Database error: " + (ex.InnerException?.Message ?? ex.Message) });
+            }
         }
 
         [HttpGet("GetAllFacilities")]
         public IActionResult GetAllFacilities()
         {
-            // TODO: Yahan database se list fetch karne ka code aayega
-            // var list = _context.Facilities.ToList();
-
-            // Abhi testing ke liye dummy data bhej rahe hain
-            var dummyList = new List<object>
+            try
             {
-                new { Id = 1, ResourceName = "Dream Box Cricket 1", ResourceType = "Box Cricket", BasePricePerHour = 1000, Capacity = 12, IsActive = true },
-                new { Id = 2, ResourceName = "Pro Pool Table", ResourceType = "Pool", BasePricePerHour = 300, Capacity = 4, IsActive = true }
-            };
+                var realList = _context.Resources.ToList();
 
-            return Ok(dummyList);
+                return Ok(realList);
+            }
+            catch (System.Exception)
+            {
+                return BadRequest(new { success = false, Message = "There was a problem fetching the data." });
+            }
         }
     }
 }

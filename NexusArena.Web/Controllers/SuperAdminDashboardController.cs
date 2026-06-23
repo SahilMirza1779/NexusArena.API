@@ -105,7 +105,6 @@ namespace NexusArena.Web.Controllers
         }
 
         [HttpPost]
-        [HttpPost]
         public async Task<IActionResult> ApproveArena(int id)
         {
             var pendingArena = await _context.PendingArenas.FindAsync(id);
@@ -119,7 +118,7 @@ namespace NexusArena.Web.Controllers
                 RoleId = 2,
                 FullName = pendingArena.OwnerName,
                 Email = pendingArena.Email,
-                PasswordHash = rawPassword, 
+                PasswordHash = rawPassword,
                 Phone = "9999999999",
                 IsActive = true
             };
@@ -255,22 +254,47 @@ namespace NexusArena.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> SuspendArena(int id)
         {
-            var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/Arena/Suspend/{id}";
-            var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
-
             try
             {
-                HttpResponseMessage response = await client.PostAsync(apiUrl, content);
-                if (response.IsSuccessStatusCode)
+                var arena = await _context.Arenas.FindAsync(id);
+
+                if (arena != null)
                 {
+                    arena.IsActive = false;
+                    await _context.SaveChangesAsync();
+
                     return Json(new { success = true });
                 }
+
+                return Json(new { success = false, message = "Arena not found." });
             }
             catch (Exception)
             {
+                return Json(new { success = false, message = "Server error occurred." });
             }
-            return Json(new { success = false });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ActivateArena(int id)
+        {
+            try
+            {
+                var arena = await _context.Arenas.FindAsync(id);
+
+                if (arena != null)
+                {
+                    arena.IsActive = true;
+                    await _context.SaveChangesAsync();
+
+                    return Json(new { success = true });
+                }
+
+                return Json(new { success = false, message = "Arena not found." });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "Server error occurred." });
+            }
         }
 
         [HttpGet]

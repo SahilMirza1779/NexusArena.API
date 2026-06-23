@@ -15,18 +15,15 @@ namespace NexusArena.MVC.Models
         [Required(ErrorMessage = "Price is required")]
         public decimal BasePricePerHour { get; set; }
 
-        // Nayi Fields Niche Hain 👇
-
         [Required(ErrorMessage = "Capacity is required")]
-        public int Capacity { get; set; } // Kitne log khel sakte hain
+        public int Capacity { get; set; } 
 
-        public string Dimensions { get; set; } // e.g., 5v5, 8ft Table
+        public string Dimensions { get; set; }
 
-        public string IncludedEquipment { get; set; } // e.g., 2 Bats, 1 Ball
+        public string IncludedEquipment { get; set; }
 
         public string Description { get; set; }
 
-        // Image upload ke liye IFormFile use hota hai
         public IFormFile? ResourceImage { get; set; }
 
         public bool IsActive { get; set; }

@@ -29,6 +29,7 @@ namespace NexusArena.Web.Controllers
 
             if (string.IsNullOrEmpty(token))
             {
+                TempData["Error"] = "Browser is not saving the token cookie. Try clearing your browser cache.";
                 return RedirectToAction("Login", "Account");
             }
 
@@ -54,8 +55,7 @@ namespace NexusArena.Web.Controllers
                     }
                     else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
-                        Response.Cookies.Delete("JWToken");
-                        return RedirectToAction("Login", "Account");
+                        ViewBag.Error = "🚨 API Error 401 Unauthorized: Your login was successful, but the Dashboard API rejected your token. Please check the API token validation.";
                     }
                     else
                     {
@@ -64,7 +64,7 @@ namespace NexusArena.Web.Controllers
                 }
                 catch (Exception ex)
                 {
-                    ViewBag.Error = "API Server se connect nahi ho paaya: " + ex.Message;
+                    ViewBag.Error = "Could not connect to the API server: " + ex.Message;
                 }
             }
 
@@ -76,6 +76,11 @@ namespace NexusArena.Web.Controllers
         {
             string? token = Request.Cookies["JWToken"];
             if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
+
+            if (TempData["Error"] != null)
+            {
+                ViewBag.Error = TempData["Error"];
+            }
 
             List<ResourceViewModel> resourceList = new List<ResourceViewModel>();
 
@@ -98,8 +103,6 @@ namespace NexusArena.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> AddResource(ResourceViewModel model)
         {
-            if (!ModelState.IsValid) return View("ManageResources", model);
-
             using (var client = GetAuthenticatedClient())
             {
                 var jsonContent = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
@@ -108,13 +111,16 @@ namespace NexusArena.Web.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Naya Resource successfully add ho gaya!";
-                    return RedirectToAction("ManageResources");
+                    TempData["Success"] = "The new resource has been successfully added!";
                 }
-
-                ViewBag.Error = "Resource add karne me problem aayi.";
+                else
+                {
+                    string apiError = await response.Content.ReadAsStringAsync();
+                    TempData["Error"] = $"API Rejected Data: {apiError}";
+                }
             }
-            return View("ManageResources", model);
+
+            return RedirectToAction("ManageResources");
         }
 
         [HttpGet]
@@ -147,11 +153,11 @@ namespace NexusArena.Web.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Booking cancel ho gayi hai aur user ko message bhej diya gaya hai.";
+                    TempData["Success"] = "The booking has been cancelled, and a message has been sent to the user.";
                 }
                 else
                 {
-                    TempData["Error"] = "Cancellation fail ho gaya.";
+                    TempData["Error"] = "Cancellation failed.";
                 }
             }
             return RedirectToAction("Index");

@@ -5,100 +5,33 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
-    .details-container {
-        margin-top: 20px;
-    }
-    .back-btn {
-        background: transparent;
-        color: #aaa;
-        border: 1px solid #444;
-        padding: 8px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-        text-decoration: none;
-        font-size: 14px;
-        transition: 0.3s;
-        display: inline-block;
-        margin-bottom: 20px;
-    }
-    .back-btn:hover {
-        color: #fff;
-        border-color: #00ff7f;
-        background: rgba(0, 255, 127, 0.02);
-    }
+    .details-container { margin-top: 20px; }
+    .back-btn { background: transparent; color: #aaa; border: 1px solid #444; padding: 8px 15px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.3s; display: inline-block; margin-bottom: 20px; }
+    .back-btn:hover { color: #fff; border-color: #00ff7f; background: rgba(0, 255, 127, 0.02); }
     
-    .details-card {
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    .details-header {
-        border-bottom: 1px solid #333;
-        padding-bottom: 15px;
-        margin-bottom: 25px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+    .details-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .details-header { border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
     .details-header h2 { margin: 0; color: #fff; font-size: 24px; }
     
-    /* Status Badges */
-    .badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-    }
+    .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
     .badge.active { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
-    .badge.pending { background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid #ff9800; }
+    .badge.pending, .badge.suspended, .badge.inactive { background-color: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid #ff9800; }
 
-    /* Info Grid Layout */
-    .info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 25px;
-    }
-    .info-item label {
-        display: block;
-        color: #888;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-        letter-spacing: 1px;
-    }
-    .info-item span {
-        color: #fff;
-        font-size: 16px;
-        font-weight: 500;
-    }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; }
+    .info-item label { display: block; color: #888; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1px; }
+    .info-item span { color: #fff; font-size: 16px; font-weight: 500; }
 
-    /* Actions Section */
-    .actions-section {
-        margin-top: 40px;
-        border-top: 1px solid #333;
-        padding-top: 25px;
-        display: flex;
-        gap: 15px;
-    }
-    .btn-suspend {
-        background: rgba(255, 77, 77, 0.1);
-        color: #ff4d4d;
-        border: 1px solid #ff4d4d;
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.3s;
-    }
-    .btn-suspend:hover {
-        background: #ff4d4d;
-        color: #000;
-        box-shadow: 0 4px 15px rgba(255, 77, 77, 0.2);
-    }
+    .actions-section { margin-top: 40px; border-top: 1px solid #333; padding-top: 25px; display: flex; gap: 15px; }
+    
+    .btn-suspend { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+    .btn-suspend:hover { background: #ff4d4d; color: #000; box-shadow: 0 4px 15px rgba(255, 77, 77, 0.2); }
+
+    .btn-activate { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+    .btn-activate:hover { background: #00ff7f; color: #000; box-shadow: 0 4px 15px rgba(0, 255, 127, 0.2); }
 </style>
 
 <div class="details-container">
@@ -107,7 +40,7 @@
     <div class="details-card">
         <div class="details-header">
             <h2>@Model.ArenaName</h2>
-            <span class="badge @Model.Status.ToLower()">@Model.Status</span>
+            <span class="badge @Model.Status?.ToLower()">@Model.Status</span>
         </div>
 
         <div class="info-grid">
@@ -132,8 +65,14 @@
         <div class="actions-section">
             @if (Model.Status == "Active")
             {
-                <button class="btn-suspend" onclick="suspendArena(@Model.Id)">
-                    Suspend / Deactivate Arena <i class="fas fa-ban"></i>
+                <button type="button" class="btn-suspend" onclick="confirmSuspend(@Model.Id)">
+                    <i class="fas fa-ban"></i> Suspend / Deactivate Arena
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn-activate" onclick="confirmActivate(@Model.Id)">
+                    <i class="fas fa-check-circle"></i> Activate Arena
                 </button>
             }
         </div>
@@ -141,28 +80,69 @@
 </div>
 
 <script>
-    function suspendArena(id) {
-        if (confirm("Do you really want to suspend (deactivate) this Arena?")) {
-            
-            var btn = document.querySelector('.btn-suspend');
-            btn.innerHTML = 'Suspending... <i class="fas fa-spinner fa-spin"></i>';
-            btn.disabled = true;
+    function confirmSuspend(id) {
+        Swal.fire({
+            title: 'Deactivate Arena?',
+            text: "Are you sure you want to suspend this arena? You can activate it later.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff4d4d',
+            cancelButtonColor: '#444',
+            confirmButtonText: 'Yes, Suspend it!',
+            cancelButtonText: 'Cancel',
+            background: '#1a1a1a', 
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...', text: 'Please wait...', background: '#1a1a1a', color: '#fff', allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
 
-            fetch('/SuperAdminDashboard/SuspendArena/' + id, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.success) {
-                    window.location.href = '/SuperAdminDashboard/Arenas'; 
-                } else {
-                    alert('Oops! An error occurred while suspending.');
-                    btn.innerHTML = 'Suspend / Deactivate Arena <i class="fas fa-ban"></i>';
-                    btn.disabled = false;
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
+                fetch('/SuperAdminDashboard/SuspendArena/' + id, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        Swal.fire({ title: 'Suspended!', text: 'Deactivated successfully.', icon: 'success', background: '#1a1a1a', color: '#fff', confirmButtonColor: '#00ff7f' })
+                        .then(() => window.location.reload());
+                    } else {
+                        Swal.fire('Error!', 'Could not suspend.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    function confirmActivate(id) {
+        Swal.fire({
+            title: 'Activate Arena?',
+            text: "This will make the arena live and available for bookings on the platform.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#00ff7f',
+            cancelButtonColor: '#444',
+            confirmButtonText: '<span style="color:#000; font-weight:bold;">Yes, Activate it!</span>',
+            cancelButtonText: 'Cancel',
+            background: '#1a1a1a', 
+            color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...', text: 'Activating the arena...', background: '#1a1a1a', color: '#fff', allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                fetch('/SuperAdminDashboard/ActivateArena/' + id, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        Swal.fire({ title: 'Activated!', text: 'The arena is now LIVE.', icon: 'success', background: '#1a1a1a', color: '#fff', confirmButtonColor: '#00ff7f' })
+                        .then(() => window.location.reload());
+                    } else {
+                        Swal.fire({ title: 'Error!', text: 'Could not activate the arena.', icon: 'error', background: '#1a1a1a', color: '#fff', confirmButtonColor: '#ff4d4d' });
+                    }
+                });
+            }
+        });
     }
 </script>
