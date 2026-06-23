@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using System.Collections.Generic;
 using System.Linq;
-using NexusArena.API.Models; 
+using NexusArena.API.Models;
 
 namespace NexusArena.API.Controllers
 {
@@ -18,26 +16,22 @@ namespace NexusArena.API.Controllers
         }
 
         [HttpPost("AddFacility")]
-        public IActionResult AddFacility([FromBody] Resource model)
+        public IActionResult AddFacility([FromBody] Resource formData)
         {
             try
             {
-                var categoryExists = _context.SportCategories.Any(c => c.CategoryId == model.CategoryId);
-                if (!categoryExists)
-                {
-                    model.CategoryId = _context.SportCategories.FirstOrDefault()?.CategoryId ?? 1;
-                }
+                formData.ArenaId = 1;
 
-                model.ArenaId = 1;
+                formData.CategoryId = 2;
 
-                _context.Resources.Add(model);
+                _context.Resources.Add(formData);
                 _context.SaveChanges();
 
                 return Ok(new { success = true, Message = "The new facility has been successfully added!" });
             }
             catch (System.Exception ex)
             {
-                return BadRequest(new { success = false, Message = "Database error: " + (ex.InnerException?.Message ?? ex.Message) });
+                return BadRequest(new { Message = ex.InnerException?.Message ?? ex.Message });
             }
         }
 
@@ -47,12 +41,11 @@ namespace NexusArena.API.Controllers
             try
             {
                 var realList = _context.Resources.ToList();
-
                 return Ok(realList);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                return BadRequest(new { success = false, Message = "There was a problem fetching the data." });
+                return BadRequest(new { Message = "Data fetch fail: " + ex.Message });
             }
         }
     }

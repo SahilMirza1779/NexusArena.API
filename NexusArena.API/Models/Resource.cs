@@ -15,6 +15,9 @@ public partial class Resource
     public string ResourceName { get; set; } = null!;
 
     public int? Capacity { get; set; }
+    public decimal BasePricePerHour { get; set; }
+    public string ResourceType { get; set; } = null!;
+    public bool IsActive { get; set; }
 
     [JsonIgnore]
     public virtual Arena? Arena { get; set; }
