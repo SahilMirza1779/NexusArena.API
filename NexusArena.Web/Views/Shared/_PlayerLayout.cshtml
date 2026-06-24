@@ -110,7 +110,6 @@
             <li><a href="/Explore/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Explore" ? "active" : "")"><i class="fas fa-search"></i> Explore Turfs</a></li>
             <li><a href="/BookingHistory/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "BookingHistory" ? "active" : "")"><i class="fas fa-calendar-check"></i> My Bookings</a></li>
             <li><a href="/Review/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Review" ? "active" : "")"><i class="fas fa-star"></i> Reviews</a></li>
-            
             <li><a href="/Profile/Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Profile" ? "active" : "")"><i class="fas fa-user-cog"></i> My Profile</a></li>
         </ul>
     </div>
@@ -122,12 +121,9 @@
             </div>
             <div class="user-profile">
                 <div class="wallet-badge"><i class="fas fa-wallet"></i> ₹ 1,200</div>
-                
-                <!-- 🔥 YAHAN UPDATE KIYA HAI: Ab yeh clickable link ban gaya hai 🔥 -->
                 <a href="/Profile/Index" style="color: #fff; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#00ff66'" onmouseout="this.style.color='#fff'">
                     <i class="fas fa-user-circle" style="font-size: 24px; color: #00ff66; vertical-align: middle;"></i> Zubeir
                 </a>
-
                 <a href="/Account/Login" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
@@ -145,7 +141,7 @@
             document.addEventListener("DOMContentLoaded", function() {
                 Swal.fire({
                     title: 'Success!',
-                    text: '@TempData["Success"]',
+                    html: '@Html.Raw(TempData["Success"])', // Text hata kar HTML.Raw laga diya!
                     icon: 'success',
                     background: '#1a1a1a',
                     color: '#fff',
@@ -161,7 +157,7 @@
             document.addEventListener("DOMContentLoaded", function() {
                 Swal.fire({
                     title: 'Oops...',
-                    text: '@TempData["Error"]',
+                    html: '@Html.Raw(TempData["Error"])', // Yahan bhi HTML.Raw laga diya!
                     icon: 'error',
                     background: '#1a1a1a',
                     color: '#fff',
@@ -170,5 +166,7 @@
             });
         </script>
     }
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

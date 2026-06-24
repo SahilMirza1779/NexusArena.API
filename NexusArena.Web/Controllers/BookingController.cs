@@ -5,6 +5,8 @@ using System.Text;
 
 namespace NexusArena.Web.Controllers
 {
+    // 🌟 THE FIX: Is ek line se browser page ko cache nahi karega aur Back button ka error zindagi bhar nahi aayega!
+    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     public class BookingController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -61,7 +63,6 @@ namespace NexusArena.Web.Controllers
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // 🌟 UPGRADED: Ab backend ko 'PaymentMode' (Full, Advance50, ya PayAtTurf) bhi bhej rahe hain
             var bookingData = new { ArenaId = arenaId, SlotId = slotId, PlayDate = playDate, PaymentMode = paymentMode };
             var content = new StringContent(JsonSerializer.Serialize(bookingData), Encoding.UTF8, "application/json");
 
@@ -72,37 +73,69 @@ namespace NexusArena.Web.Controllers
                 var responseString = await response.Content.ReadAsStringAsync();
                 var apiResult = JsonSerializer.Deserialize<BookingCreateResponse>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                // 🌟 RAZORPAY LOGIC: Agar PayAtTurf NAHI hai (Advance ya Full hai), toh Payment page kholo
                 if (apiResult != null && apiResult.requiresPayment)
                 {
-                    ViewBag.OrderId = apiResult.razorpayOrderId;
-                    ViewBag.Amount = apiResult.amount;
-                    ViewBag.BookingId = apiResult.bookingId;
+                    // 🌟 PRG PATTERN FIX: Direct View nahi bhej rahe, data TempData me daal kar Redirect kar rahe hain
+                    TempData["OrderId"] = apiResult.razorpayOrderId;
+                    TempData["Amount"] = apiResult.amount.ToString();
+                    TempData["BookingId"] = apiResult.bookingId;
 
-                    return View("Payment"); // Yahan se naya Razorpay loader wala view khulega
+                    return RedirectToAction("Payment");
                 }
 
-                // Agar "Pay at Turf" chuna hai, toh bina payment ke direct confirm kar do
                 TempData["Success"] = "Your turf booking has been successfully confirmed!";
                 return RedirectToAction("Index", "BookingHistory");
             }
+            else
+            {
+                var errorString = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = $"System Error: {errorString}";
+                return RedirectToAction("CheckSlots", new { id = arenaId });
+            }
+        }
 
-            TempData["ErrorMessage"] = "Booking Failed! This slot has already been taken or an error occurred.";
-            return RedirectToAction("CheckSlots", new { id = arenaId });
+        // 🌟 NAYA METHOD: Redirect hone ke baad Payment page yahan se load hoga
+        [HttpGet]
+        public IActionResult Payment()
+        {
+            if (TempData["OrderId"] == null) return RedirectToAction("Index", "Explore");
+
+            ViewBag.OrderId = TempData["OrderId"]?.ToString();
+            ViewBag.Amount = Convert.ToDecimal(TempData["Amount"]);
+            ViewBag.BookingId = Convert.ToInt32(TempData["BookingId"]);
+
+            // Important: Data ko retain karein taaki refresh karne par error na aaye
+            TempData.Keep();
+
+            return View();
+        }
+
+        // 🌟 PHASE 4: Payment Verify Karne ka Method
+        [HttpPost]
+        public async Task<IActionResult> VerifyPayment(int bookingId, string paymentId, string orderId, string signature)
+        {
+            var token = Request.Cookies["JWToken"];
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var verifyData = new { BookingId = bookingId, RazorpayPaymentId = paymentId, RazorpayOrderId = orderId, RazorpaySignature = signature };
+            var content = new StringContent(JsonSerializer.Serialize(verifyData), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("api/Booking/verify", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["Success"] = "Payment Verified & Booking Confirmed Successfully! 🏆";
+            }
+            else
+            {
+                TempData["Error"] = "Payment Verification Failed! Please contact support.";
+            }
+
+            return RedirectToAction("Index", "BookingHistory");
         }
     }
 
-    // --- View Models & API Response Models ---
     public class SlotApiResponse { public List<SlotViewModel>? data { get; set; } }
     public class SlotViewModel { public int slotId { get; set; } public string? startTime { get; set; } public string? endTime { get; set; } public decimal price { get; set; } public bool isAvailable { get; set; } }
-
-    // 🌟 NAYA CLASS: Booking Create hone ke baad Razorpay ka order data aayega usko read karne ke liye
-    public class BookingCreateResponse
-    {
-        public string? message { get; set; }
-        public int bookingId { get; set; }
-        public bool requiresPayment { get; set; }
-        public string? razorpayOrderId { get; set; }
-        public decimal amount { get; set; }
-    }
+    public class BookingCreateResponse { public string? message { get; set; } public int bookingId { get; set; } public bool requiresPayment { get; set; } public string? razorpayOrderId { get; set; } public decimal amount { get; set; } }
 }

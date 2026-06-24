@@ -4,66 +4,62 @@
 }
 
 <style>
-    .payment-loader-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 60vh;
-        text-align: center;
-    }
+    .payment-loader-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; }
     .payment-loader-wrapper h2 { color: #fff; font-weight: 800; margin-top: 20px; }
     .payment-loader-wrapper p { color: #888; font-size: 16px; }
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid rgba(0, 255, 127, 0.2);
-        border-top-color: #00ff7f;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
+    .spinner { width: 50px; height: 50px; border: 5px solid rgba(0, 255, 127, 0.2); border-top-color: #00ff7f; border-radius: 50%; animation: spin 1s linear infinite; }
     @@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 <div class="payment-loader-wrapper">
     <div class="spinner"></div>
-    <h2>Initiating Payment...</h2>
-    <p>Please do not refresh the page. Opening secure payment gateway.</p>
+    <h2>Initiating Secure Payment...</h2>
+    <p>Please do not refresh the page. Opening Razorpay Gateway.</p>
 </div>
+
+<form id="verifyForm" method="post" action="/Booking/VerifyPayment" style="display: none;">
+    <input type="hidden" name="bookingId" value="@ViewBag.BookingId" />
+    <input type="hidden" name="paymentId" id="paymentId" />
+    <input type="hidden" name="orderId" id="orderId" />
+    <input type="hidden" name="signature" id="signature" />
+</form>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        
+        // Block Back Button magic
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () { history.go(1); };
+
         var options = {
-            "key": "rzp_test_YOUR_KEY_HERE", // 🔴 Yahan bhi apni Razorpay Test Key daalni hai
+            "key": "rzp_test_Sx2ANZO6KtKqPv", 
             "amount": "@(ViewBag.Amount * 100)", 
             "currency": "INR",
             "name": "Nexus Arena",
-            "description": "Turf Booking Payment",
-            "image": "https://cdn-icons-png.flaticon.com/512/53/53283.png", // Aapka logo yahan aa sakta hai
+            "description": "Premium Turf Booking",
+            "image": "https://cdn-icons-png.flaticon.com/512/53/53283.png", 
             "order_id": "@ViewBag.OrderId", 
+            
+            // 🌟 PHASE 4: SUCCESS HANDLER (Data form mein daal kar backend submit karega)
             "handler": function (response) {
-                // Payment successful hone ke baad kya karna hai?
-                // Hum ek naye URL par bhejenge payment verify karne ke liye
-                window.location.href = "/BookingHistory/Index?paymentSuccess=true";
+                document.getElementById('paymentId').value = response.razorpay_payment_id;
+                document.getElementById('orderId').value = response.razorpay_order_id;
+                document.getElementById('signature').value = response.razorpay_signature;
+                
+                // Form submit for server-side verification
+                document.getElementById('verifyForm').submit();
             },
-            "prefill": {
-                "name": "Player Name", 
-                "email": "player@nexusarena.com",
-                "contact": "9999999999"
-            },
-            "theme": {
-                "color": "#00ff7f" // Aapki website ka theme color
-            },
+            "prefill": { "name": "Zubeir", "email": "player@nexusarena.com", "contact": "9999999999" },
+            "theme": { "color": "#00ff7f" },
             "modal": {
                 "ondismiss": function() {
-                    // Agar user popup cancel kar de
-                    window.location.href = "/BookingHistory/Index?paymentCancelled=true";
+                    window.location.replace("/BookingHistory/Index?paymentCancelled=true");
                 }
             }
         };
 
         var rzp1 = new Razorpay(options);
-        rzp1.open(); // Page load hote hi popup open kar dega
+        rzp1.open(); 
     });
 </script>
