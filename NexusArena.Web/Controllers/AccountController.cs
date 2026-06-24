@@ -25,7 +25,7 @@ namespace NexusArena.Web.Controllers
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
-                ViewBag.Error = "Email aur Password dono daalna zaroori hai!";
+                ViewBag.Error = "It is necessary to enter both the email and the password!";
                 return View();
             }
 
@@ -39,41 +39,43 @@ namespace NexusArena.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var responseData = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<JsonElement>(responseData);
 
-                    string? token = result.GetProperty("token").GetString();
-                    string? role = result.GetProperty("role").GetString();
+                    using JsonDocument doc = JsonDocument.Parse(responseData);
+                    JsonElement root = doc.RootElement;
 
-                    // Null check lagaya taaki warning na aaye
+                    string token = root.TryGetProperty("token", out JsonElement t1) ? t1.GetString() ?? "" :
+                                   (root.TryGetProperty("Token", out JsonElement t2) ? t2.GetString() ?? "" : "");
+
+                    string role = root.TryGetProperty("role", out JsonElement r1) ? r1.GetString() ?? "" :
+                                  (root.TryGetProperty("Role", out JsonElement r2) ? r2.GetString() ?? "" : "");
+
                     if (!string.IsNullOrEmpty(token))
                     {
-                        Response.Cookies.Append("JWToken", token, new CookieOptions { HttpOnly = true, Secure = true });
+                        Response.Cookies.Append("JWToken", token, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            Secure = false,
+                            SameSite = SameSiteMode.Lax
+                        });
                     }
 
-                    switch (role)
-                    {
-                        case "SuperAdmin":
-                            return RedirectToAction("Index", "SuperAdminDashboard");
-                        case "Owner":
-                            return RedirectToAction("Index", "OwnerDashboard");
-                        case "Receptionist":
-                            return RedirectToAction("Index", "ReceptionistDashboard");
-                        case "User":
-                            return RedirectToAction("Index", "Home");
-                        default:
-                            ViewBag.Error = $"System ko ye role samajh nahi aaya: '{role}'";
-                            return View();
-                    }
+                    if (role == "SuperAdmin" || role == "1") return RedirectToAction("Index", "SuperAdminDashboard");
+                    if (role == "Owner" || role == "2" || role == "Turf Owner") return RedirectToAction("Index", "OwnerDashboard");
+                    if (role == "Receptionist" || role == "3") return RedirectToAction("Index", "ReceptionistDashboard");
+                    if (role == "User" || role == "4") return RedirectToAction("Index", "Home");
+
+                    ViewBag.Error = "The system did not understand this role.";
+                    return View();
                 }
                 else
                 {
-                    ViewBag.Error = "Galat Email ya Password! Kripya sahi details daalein.";
+                    ViewBag.Error = "Incorrect email or password, or the account is inactive!";
                     return View();
                 }
             }
             catch (Exception)
             {
-                ViewBag.Error = "API Server se connect nahi ho paya. Kya aapne API project run kiya hai?";
+                ViewBag.Error = "Could not connect to the API server. Have you run the API project?";
                 return View();
             }
         }
