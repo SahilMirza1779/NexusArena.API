@@ -47,7 +47,6 @@
         background-color: #222;
     }
 
-    /* Status Badges */
     .badge {
         padding: 5px 10px;
         border-radius: 20px;
@@ -58,7 +57,6 @@
     .badge.active { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
     .badge.blocked { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
 
-    /* Block / Unblock Buttons */
     .btn-block {
         background: transparent;
         color: #ff4d4d;
@@ -157,30 +155,72 @@
     </div>
 </div>
 
-<script>
-    function toggleOwnerStatus(id, action) {
-        let confirmMsg = action === 'Block' 
-            ? "Do you really want to block this owner? They will not be able to log in after this." 
-            : "Do you want to unblock this owner?";
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        if (confirm(confirmMsg)) {
-            
-            fetch('/SuperAdminDashboard/ToggleOwnerStatus/' + id, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    window.location.reload(); 
-                } else {
-                    alert("An error occurred while updating the status!");
+    <script>
+        function toggleOwnerStatus(id, action) {
+            let isBlock = action === 'Block';
+            let titleMsg = isBlock ? "Are you sure?" : "Unblock Owner?";
+            let textMsg = isBlock 
+                ? "Do you really want to block this owner? They will not be able to log in after this." 
+                : "Do you want to unblock this owner? They will regain access to their account.";
+            let confirmBtnText = isBlock ? "Yes, Block them!" : "Yes, Unblock!";
+            let confirmBtnColor = isBlock ? '#d33' : '#00ff7f';
+
+            Swal.fire({
+                title: titleMsg,
+                text: textMsg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: confirmBtnColor,
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: confirmBtnText,
+                cancelButtonText: 'Cancel',
+                background: '#1a1a1a', 
+                color: '#ffffff'        
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    
+                    fetch('/SuperAdminDashboard/ToggleOwnerStatus/' + id, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: 'Status updated successfully.',
+                                icon: 'success',
+                                background: '#1a1a1a',
+                                color: '#ffffff',
+                                confirmButtonColor: '#00ff7f'
+                            }).then(() => {
+                                window.location.reload(); 
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'An error occurred while updating the status.',
+                                icon: 'error',
+                                background: '#1a1a1a',
+                                color: '#ffffff'
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Server error!',
+                            icon: 'error',
+                            background: '#1a1a1a',
+                            color: '#ffffff'
+                        });
+                    });
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Server error!");
             });
         }
-    }
-</script>
+    </script>
+}
