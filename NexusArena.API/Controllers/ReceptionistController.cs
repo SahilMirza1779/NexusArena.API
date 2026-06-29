@@ -4,12 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using NexusArena.API.Models;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Receptionist")] 
+    [Authorize(Roles = "Receptionist")]
     public class ReceptionistController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
@@ -19,6 +20,51 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
+        [HttpGet("GetLiveDashboard")]
+        public async Task<IActionResult> GetLiveDashboard()
+        {
+            try
+            {
+                var today = DateOnly.FromDateTime(DateTime.Today);
+
+                var todaysBookings = await _context.Bookings
+                    .Include(b => b.User)
+                    .Include(b => b.Resource)
+                    .Include(b => b.Slot) 
+                    .Where(b => b.BookingDate == today && b.Status != "Cancelled")
+                    .ToListAsync();
+
+                var totalPendingCash = todaysBookings.Sum(b => b.TotalAmount - b.AmountPaid);
+
+                int checkedInCount = todaysBookings.Count(b => b.Status == "CheckedIn");
+                int totalTurfs = await _context.Resources.CountAsync();
+
+                var liveBookingsList = todaysBookings.Select(b => new
+                {
+                    BookingId = b.BookingId,
+                    CustomerName = b.User?.FullName ?? "Walk-in Customer",
+                    TurfName = b.Resource?.ResourceName ?? "Unknown Turf",
+                    TimeSlot = b.Slot != null ? $"{b.Slot.StartTime} - {b.Slot.EndTime}" : "N/A",
+                    PendingAmount = Math.Max(0, b.TotalAmount - b.AmountPaid),
+                    IsTimeUpWarning = false 
+                }).ToList();
+
+                var response = new
+                {
+                    TotalPendingCash = totalPendingCash,
+                    TodayBookingsCount = todaysBookings.Count,
+                    AvailableTurfsCount = totalTurfs - checkedInCount,
+                    LiveBookings = liveBookingsList
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Server Error: {ex.Message}" });
+            }
+        }
+
         [HttpGet("todays-bookings/{arenaId}")]
         public IActionResult GetTodaysBookings(int arenaId)
         {
@@ -26,7 +72,7 @@ namespace NexusArena.API.Controllers
 
             var bookings = _context.Bookings
                 .Include(b => b.User)
-                .Include(b => b.Resource) 
+                .Include(b => b.Resource)
                 .Where(b => b.Resource.ArenaId == arenaId && b.BookingDate == today)
                 .Select(b => new
                 {
@@ -46,10 +92,12 @@ namespace NexusArena.API.Controllers
             var newBooking = new Booking
             {
                 UserId = request.CustomerId,
-                ResourceId = request.ResourceId, 
+                ResourceId = request.ResourceId,
                 SlotId = request.SlotId,
                 BookingDate = request.BookingDate,
-                Status = "Confirmed" 
+                Status = "Confirmed",
+                TotalAmount = 0,
+                AmountPaid = 0
             };
 
             _context.Bookings.Add(newBooking);
@@ -67,7 +115,6 @@ namespace NexusArena.API.Controllers
                 return NotFound(new { message = "Booking database me nahi mili." });
             }
 
-            // Status update karega (Jaise: "Completed")
             booking.Status = newStatus;
             _context.SaveChanges();
 
