@@ -1,138 +1,213 @@
-﻿@model List<NexusArena.Web.Controllers.BookingHistoryViewModel>
+﻿@model IEnumerable<NexusArena.Web.Controllers.BookingHistoryViewModel>
+
 @{
-    ViewData["Title"] = "My Bookings";
+    ViewData["Title"] = "My Booking History";
     Layout = "~/Views/Shared/_PlayerLayout.cshtml";
 }
 
 <style>
-    /* ... (Keep all your existing CSS exactly the same as before) ... */
-    .history-container { max-width: 1100px; margin: 30px auto; padding-bottom: 50px; }
-    .header-section { margin-bottom: 40px; }
-    .header-section h1 { color: #fff; font-size: 34px; font-weight: 800; margin: 0; }
-    .header-section h1 span { color: #00ff7f; }
-    .header-section p { color: #aaa; margin-top: 8px; font-size: 16px; }
-    .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-    .ticket-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; display: flex; flex-direction: column; }
-    .ticket-card:hover { transform: translateY(-5px); border-color: #555; }
-    .ticket-top { background: #0f0f0f; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #333; }
-    .booking-id { color: #888; font-weight: 700; font-size: 14px; }
-    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-    .status-confirmed { background: rgba(0, 255, 127, 0.15); color: #00ff7f; }
-    .status-cancelled { background: rgba(255, 76, 76, 0.15); color: #ff4c4c; }
-    .ticket-mid { padding: 25px 20px; flex-grow: 1; }
-    .arena-title { color: #fff; font-size: 20px; font-weight: 800; margin: 0 0 5px 0; }
-    .sport-text { color: #00bfff; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-    .info-row { display: flex; align-items: center; gap: 12px; color: #ccc; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-    .info-row i { color: #00ff7f; font-size: 18px; width: 20px; text-align: center; }
-    .ticket-bot { padding: 15px 20px; background: #111; border-top: 1px solid #222; }
-    .btn-cancel { width: 100%; background: transparent; color: #ff4c4c; border: 1px solid #ff4c4c; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; }
-    .btn-cancel:hover { background: rgba(255, 76, 76, 0.1); }
+    .history-container { max-width: 1100px; margin: 40px auto; padding-bottom: 50px; }
+    .page-header { margin-bottom: 30px; }
+    .page-header h2 { color: #fff; font-weight: 800; font-size: 32px; margin: 0; }
+    .page-header h2 span { color: #00ff7f; }
+    .page-header p { color: #888; margin-top: 5px; }
+
+    .table-container {
+        background: #111;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        border: 1px solid #222;
+        overflow-x: auto;
+    }
+
+    .custom-table { width: 100%; border-collapse: collapse; color: #ccc; }
+    .custom-table th { 
+        background: #1a1a1a; 
+        color: #00ff7f; 
+        padding: 15px; 
+        text-transform: uppercase; 
+        font-size: 12px; 
+        letter-spacing: 1px; 
+        text-align: left;
+        border-bottom: 2px solid #333;
+    }
+    .custom-table td { 
+        padding: 15px; 
+        border-bottom: 1px solid #222; 
+        vertical-align: middle;
+        font-size: 14px;
+    }
+    .custom-table tr:hover { background: #151515; }
+
+    .turf-name { color: #fff; font-weight: 700; font-size: 16px; }
+    .turf-city { color: #888; font-size: 12px; }
+
+    .price-box { display: flex; flex-direction: column; gap: 3px; }
+    .price-paid { color: #00ff7f; font-weight: 700; }
+    .price-pending { color: #ff4757; font-size: 12px; font-weight: 600; }
+
+    .badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    .bg-success-custom { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
+    .bg-warning-custom { background: rgba(255, 165, 0, 0.1); color: #ffa500; border: 1px solid #ffa500; }
+    .bg-danger-custom { background: rgba(255, 71, 87, 0.1); color: #ff4757; border: 1px solid #ff4757; }
+
+    .btn-cancel { 
+        background: transparent; 
+        color: #ff4757; 
+        border: 1px solid #ff4757; 
+        padding: 6px 12px; 
+        border-radius: 6px; 
+        font-size: 12px; 
+        font-weight: 600; 
+        cursor: pointer; 
+        transition: 0.3s; 
+    }
+    .btn-cancel:hover { background: #ff4757; color: #fff; }
+    
+    .btn-invoice {
+        background: #00ff7f;
+        color: #000;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 5px;
+    }
+    .btn-invoice:hover { background: #00cc66; }
 </style>
 
 <div class="history-container">
-    
-    <div class="header-section">
-        <h1>My <span>Bookings</span> 🎫</h1>
-        <p>Manage your upcoming matches and view past history.</p>
+    <div class="page-header">
+        <h2>My <span>Bookings</span> 🏟️</h2>
+        <p>Track your matches, payments, and digital tickets.</p>
     </div>
 
-    <div class="ticket-grid">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" style="background: rgba(0,255,127,0.1); color: #00ff7f; border: 1px solid #00ff7f; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <i class="fas fa-check-circle"></i> @Html.Raw(TempData["Success"])
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" style="background: rgba(255,71,87,0.1); color: #ff4757; border: 1px solid #ff4757; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <i class="fas fa-exclamation-circle"></i> @Html.Raw(TempData["Error"])
+        </div>
+    }
+
+    <div class="table-container">
         @if (Model != null && Model.Any())
         {
-            foreach (var ticket in Model)
-            {
-                <div class="ticket-card">
-                    <div class="ticket-top">
-                        <span class="booking-id">ID: #@ticket.bookingId</span>
-                        <span class="status-badge @(ticket.status == "Confirmed" ? "status-confirmed" : "status-cancelled")">
-                            @ticket.status
-                        </span>
-                    </div>
-                    
-                    <div class="ticket-mid">
-                        <h3 class="arena-title">@ticket.arenaName</h3>
-                        <div class="sport-text">@ticket.sport</div>
-                        
-                        <div class="info-row"><i class="fas fa-calendar-day"></i> @ticket.playDate</div>
-                        <div class="info-row"><i class="far fa-clock"></i> @ticket.startTime</div>
-                    </div>
-
-                    @if (ticket.status == "Confirmed")
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Turf Details</th>
+                        <th>Date & Time</th>
+                        <th>Payment Stats</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
                     {
-                        <div class="ticket-bot">
-                            <form method="post" action="/BookingHistory/Cancel">
-                                <input type="hidden" name="bookingId" value="@ticket.bookingId" />
-                                <button type="button" class="btn-cancel" onclick="confirmCancel(this)">CANCEL BOOKING</button>
-                            </form>
-                        </div>
+                        <tr>
+                            <td style="color: #666; font-weight: 600;">#@item.BookingId</td>
+                            <td>
+                                <div class="turf-name">@item.ArenaName</div>
+                                <div class="turf-city"><i class="fas fa-map-marker-alt"></i> @item.City</div>
+                            </td>
+                            <td>
+                                <div style="color: #fff; font-weight: 600;">@item.PlayDate</div>
+                                <div style="color: #aaa; font-size: 13px;">@item.TimeSlot</div>
+                            </td>
+                            <td>
+                                <div class="price-box">
+                                    <span style="font-size: 12px; color: #888;">Total: ₹@item.TotalAmount</span>
+                                    <span class="price-paid">Paid: ₹@item.AmountPaid</span>
+                                    @if (item.PendingAmount > 0 && item.Status != "Cancelled")
+                                    {
+                                        <span class="price-pending">Due at Turf: ₹@item.PendingAmount</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (item.Status == "Cancelled")
+                                {
+                                    <span class="badge bg-danger-custom">Cancelled</span>
+                                }
+                                else if (item.PaymentStatus == "Paid")
+                                {
+                                    <span class="badge bg-success-custom"><i class="fas fa-check"></i> Confirmed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-custom">Pending</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status != "Cancelled")
+                                {
+                                    <form id="cancel-form-@item.BookingId" method="post" action="@Url.Action("Cancel", "BookingHistory", new { bookingId = item.BookingId })">
+                                        <button type="button" class="btn-cancel" onclick="confirmCancel(@item.BookingId)">Cancel</button>
+                                    </form>
+                                    
+                                    @if(item.PaymentStatus == "Paid" || item.Status == "Confirmed")
+                                    {
+                                        <br/>
+                                        <a href="@Url.Action("Ticket", "BookingHistory", new { id = item.BookingId })" class="btn-invoice" target="_blank">
+                                            <i class="fas fa-ticket-alt"></i> View Ticket
+                                        </a>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color: #555; font-size: 13px;">No actions</span>
+                                }
+                            </td>
+                        </tr>
                     }
-                </div>
-            }
+                </tbody>
+            </table>
         }
         else
         {
-            <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: #1a1a1a; border-radius: 12px; border: 1px dashed #444;">
-                <i class="fas fa-ticket-alt" style="font-size: 50px; color: #444; margin-bottom: 20px;"></i>
-                <h3 style="color: #fff; margin: 0 0 10px 0;">No Bookings Found</h3>
-                <p style="color: #888; margin-bottom: 20px;">You haven't booked any slots yet.</p>
-                <a href="/Explore/Index" style="background: #00ff7f; color: #000; padding: 10px 25px; border-radius: 6px; font-weight: 800; text-decoration: none;">Explore Turfs</a>
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-futbol" style="font-size: 40px; color: #333; margin-bottom: 15px;"></i>
+                <h3 style="color: #fff;">No Bookings Found</h3>
+                <p style="color: #888;">You haven't booked any turf matches yet.</p>
+                <a href="/Explore/Index" class="btn-invoice" style="padding: 10px 20px; font-size: 14px;">Explore Turfs</a>
             </div>
         }
     </div>
-
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    // 1. Function for Custom Cancel Confirmation
-    function confirmCancel(buttonElement) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "Do you really want to cancel this booking?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ff4c4c',
-            cancelButtonColor: '#333',
-            confirmButtonText: 'Yes, Cancel it!',
-            background: '#1a1a1a',
-            color: '#fff'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Submit the form if user clicks Yes
-                buttonElement.closest('form').submit();
-            }
-        })
-    }
-
-    // 2. Notifications for Success/Error
-    document.addEventListener("DOMContentLoaded", function() {
-        @if (TempData["Success"] != null)
-        {
-            <text>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmCancel(bookingId) {
             Swal.fire({
-                title: 'Success!',
-                text: '@Html.Raw(TempData["Success"])',
-                icon: 'success',
-                confirmButtonColor: '#00ff7f',
-                background: '#1a1a1a',
-                color: '#fff',
-                iconColor: '#00ff7f'
-            });
-            </text>
-        }
-
-        @if (TempData["Error"] != null || ViewBag.Error != null)
-        {
-            <text>
-            Swal.fire({
-                title: 'Oops!',
-                text: '@Html.Raw(TempData["Error"] ?? ViewBag.Error)',
-                icon: 'error',
-                confirmButtonColor: '#ff4c4c',
+                title: 'Are you sure? 😟',
+                text: "Do you really want to cancel this turf booking?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff4757',
+                cancelButtonColor: '#333',
+                confirmButtonText: 'Yes, Cancel it!',
                 background: '#1a1a1a',
                 color: '#fff'
-            });
-            </text>
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('cancel-form-' + bookingId).submit();
+                }
+            })
         }
-    });
-</script>
+    </script>
+}

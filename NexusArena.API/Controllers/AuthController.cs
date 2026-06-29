@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NexusArena.API.Models;
@@ -24,9 +22,13 @@ namespace NexusArena.API.Controllers
         }
 
         [HttpPost("Login")]
-        public IActionResult Login([FromBody] NexusArena.API.Models.LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var user = _context.Users.Include(u => u.Role).FirstOrDefault(u => u.Email == request.Email && u.PasswordHash == request.Password);
+            var user = await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email == request.Email && u.PasswordHash == request.Password);
+
             if (user == null || user.IsActive == false)
             {
                 return Unauthorized(new { message = "Invalid Email or Password" });
@@ -50,9 +52,20 @@ namespace NexusArena.API.Controllers
                 signingCredentials: creds
              );
 
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            // 🌟 PRO FIX: Token ko Cookie mein save kar rahe hain taaki MVC Views isko padh sakein!
+            Response.Cookies.Append("JWToken", tokenString, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(2)
+            });
+
             return Ok(new
             {
-                token = new JwtSecurityTokenHandler().WriteToken(token),
+                token = tokenString,
                 role = user.Role.RoleName,
                 message = "Login Successful"
             });
