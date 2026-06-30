@@ -10,7 +10,7 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // 🌟 Sirf login user access kar sakta hai
+    [Authorize]
     public class BookingHistoryController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
@@ -25,7 +25,6 @@ namespace NexusArena.API.Controllers
         {
             try
             {
-                // Token se safely User ID nikalo
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
@@ -38,20 +37,36 @@ namespace NexusArena.API.Controllers
                     .ThenByDescending(b => b.BookingId)
                     .ToListAsync();
 
-                // 🌟 API sirf JSON data bhejegi, View nahi
-                var history = rawBookings.Select(b => new
-                {
-                    BookingId = b.BookingId,
-                    ArenaName = b.Resource?.Arena?.Name ?? "Nexus Turf",
-                    City = b.Resource?.Arena?.City ?? "Surat",
-                    PlayDate = b.BookingDate.ToString("dd MMM yyyy"),
-                    TimeSlot = FormatTimeSlot(b.Slot?.StartTime, b.Slot?.EndTime),
-                    TotalAmount = b.Slot?.BasePrice ?? 0,
-                    AmountPaid = b.AmountPaid,
-                    PendingAmount = (b.PaymentMode == "Advance50" && b.PaymentStatus == "Paid")
-                                    ? ((b.Slot?.BasePrice ?? 0) - b.AmountPaid) : 0,
-                    PaymentStatus = b.PaymentStatus ?? "Pending",
-                    Status = b.Status ?? "Confirmed"
+                // 🌟 FIX: Aaj ki date nikali
+                DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+
+                var history = rawBookings.Select(b => {
+                    bool isPast = b.BookingDate < today;
+                    string currentStatus = b.Status ?? "Confirmed";
+
+                    // 🌟 FIX: Agar match ki date nikal gayi hai, toh status Completed ya Expired hoga
+                    if (isPast && currentStatus != "Cancelled")
+                    {
+                        currentStatus = (b.PaymentStatus == "Paid") ? "Completed" : "Expired";
+                    }
+
+                    return new
+                    {
+                        BookingId = b.BookingId,
+                        ArenaId = b.Resource?.ArenaId ?? 0,
+                        ArenaName = b.Resource?.Arena?.Name ?? "Nexus Turf",
+                        City = b.Resource?.Arena?.City ?? "Surat",
+                        PlayDate = b.BookingDate.ToString("dd MMM yyyy"),
+                        TimeSlot = FormatTimeSlot(b.Slot?.StartTime, b.Slot?.EndTime),
+                        TotalAmount = b.Slot?.BasePrice ?? 0,
+                        AmountPaid = b.AmountPaid,
+                        PendingAmount = (b.PaymentMode == "Advance50" && b.PaymentStatus == "Paid")
+                                        ? ((b.Slot?.BasePrice ?? 0) - b.AmountPaid) : 0,
+                        PaymentStatus = b.PaymentStatus ?? "Pending",
+                        Status = currentStatus,
+                        // 🌟 FIX: UI ko batao ki yeh cancel ho sakta hai ya nahi
+                        CanCancel = !isPast && currentStatus != "Cancelled" && currentStatus != "Completed" && currentStatus != "Expired"
+                    };
                 }).ToList();
 
                 return Ok(new { message = "Success", data = history });
@@ -79,6 +94,10 @@ namespace NexusArena.API.Controllers
 
             if (booking == null) return NotFound();
             if (booking.Status == "Cancelled") return BadRequest(new { message = "Already cancelled." });
+
+            // 🌟 FIX: Koi past booking cancel karna chahe API ke through toh rok do
+            if (booking.BookingDate < DateOnly.FromDateTime(DateTime.Now))
+                return BadRequest(new { message = "Past bookings cannot be cancelled." });
 
             booking.Status = "Cancelled";
             await _context.SaveChangesAsync();

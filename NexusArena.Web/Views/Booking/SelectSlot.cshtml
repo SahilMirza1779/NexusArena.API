@@ -8,7 +8,6 @@
 <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
 
 <style>
-    /* Main Layout */
     .slots-wrapper { max-width: 1100px; margin: 30px auto; padding-bottom: 50px; }
     
     .page-header { margin-bottom: 30px; }
@@ -16,12 +15,10 @@
     .page-header h1 span { color: #00ff7f; }
     .page-header p { color: #888; margin-top: 10px; font-size: 16px; }
 
-    /* 🌟 UPGRADED: Date Filter Card & Alignment */
     .filter-card { background-color: #161616; padding: 25px 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.5); margin-bottom: 40px; border: 1px solid #2a2a2a; }
     .filter-form { display: flex; align-items: stretch; gap: 20px; width: 100%; flex-wrap: wrap; }
     .filter-label { color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; }
     
-    /* 🌟 FIXED: Custom class explicitly for Flatpickr's generated input */
     .premium-date-input { 
         padding: 12px 20px !important; 
         border-radius: 8px !important; 
@@ -43,34 +40,27 @@
         background-color: #111 !important;
     }
     
-    /* Search Button */
     .btn-check { display: flex; align-items: center; gap: 8px; background-color: #00ff7f; color: #000; border: none; padding: 0 35px; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
     .btn-check:hover { background-color: #00cc66; box-shadow: 0 6px 20px rgba(0, 255, 127, 0.4); transform: translateY(-2px); }
 
-    /* Alerts */
     .error-alert { background-color: rgba(255, 76, 76, 0.1); border-left: 4px solid #ff4c4c; color: #ff4c4c; padding: 15px; border-radius: 6px; margin-bottom: 25px; font-weight: 600; font-size: 15px; }
 
-    /* 🌟 UPGRADED: Slots Grid System */
     .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
     
-    /* 🌟 UPGRADED: Individual Slot Card */
     .slot-card { background: linear-gradient(145deg, #1a1a1a, #111); border: 1px solid #2a2a2a; padding: 30px 20px; border-radius: 14px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: all 0.4s ease; position: relative; overflow: hidden; }
     .slot-card:hover { transform: translateY(-8px); border-color: #00ff7f; box-shadow: 0 10px 25px rgba(0, 255, 127, 0.15); }
     
-    /* Subtle glow line at top of cards */
     .slot-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: transparent; transition: 0.4s ease; }
     .slot-card:hover::before { background: #00ff7f; }
 
     .slot-time { color: #fff; font-size: 18px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: 0.5px; }
     .slot-price { color: #00ff7f; font-size: 28px; font-weight: 800; margin: 0 0 25px 0; }
 
-    /* Buttons inside Card */
     .btn-book { display: block; background-color: rgba(0, 255, 127, 0.05); color: #00ff7f; border: 2px solid #00ff7f; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 800; transition: all 0.3s ease; letter-spacing: 1px; text-transform: uppercase; }
     .btn-book:hover { background-color: #00ff7f; color: #000; box-shadow: 0 5px 20px rgba(0, 255, 127, 0.4); }
 
     .btn-booked { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background-color: #1a1a1a; color: #555; border: 2px solid #333; padding: 12px; border-radius: 8px; font-weight: 800; cursor: not-allowed; letter-spacing: 1px; text-transform: uppercase; }
     
-    /* No Slots Found Box */
     .no-slots { grid-column: 1 / -1; background-color: #161616; padding: 60px; text-align: center; border-radius: 12px; border: 1px dashed #333; }
     .no-slots i { font-size: 50px; margin-bottom: 20px; color: #444; }
     .no-slots p { color: #888; font-size: 16px; margin: 0; }
@@ -84,7 +74,8 @@
     </div>
 
     <div class="filter-card">
-        <form method="get" action="/Booking/CheckSlots/@ViewBag.ArenaId" class="filter-form">
+        <form method="get" action="/Booking/SelectSlot" class="filter-form">
+            <input type="hidden" name="arenaId" value="@ViewBag.ArenaId" />
             
             <label class="filter-label"><i class="far fa-calendar-alt" style="color: #00ff7f; margin-right: 10px; font-size: 20px;"></i> Select Date:</label>
             
@@ -98,15 +89,11 @@
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="error-alert">
-            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> @TempData["ErrorMessage"]
-        </div>
+        <div class="error-alert"><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> @TempData["ErrorMessage"]</div>
     }
     @if (ViewBag.Error != null)
     {
-        <div class="error-alert">
-            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> @ViewBag.Error
-        </div>
+        <div class="error-alert"><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> @ViewBag.Error</div>
     }
 
     <div class="slots-grid">
@@ -115,20 +102,18 @@
             foreach (var slot in Model)
             {
                 <div class="slot-card">
-                    <h3 class="slot-time">@slot.startTime - @slot.endTime</h3>
+                    <h3 class="slot-time">@slot.timeDisplay</h3>
                     <h2 class="slot-price">₹ @slot.price</h2>
 
-                    @if (slot.isAvailable)
+                    @if (!slot.isBooked)
                     {
-                        <a href="/Booking/Review?arenaId=@ViewBag.ArenaId&date=@ViewBag.SelectedDate&slotId=@slot.slotId&startTime=@slot.startTime&endTime=@slot.endTime&price=@slot.price" class="btn-book">
+                        <a href="@Url.Action("Review", "Booking", new { arenaId = ViewBag.ArenaId, date = ViewBag.SelectedDate, slotId = slot.slotId, timeDisplay = slot.timeDisplay, price = slot.price })" class="btn-book">
                             BOOK NOW
                         </a>
                     }
                     else
                     {
-                        <button disabled class="btn-booked">
-                            BOOKED <i class="fas fa-lock"></i>
-                        </button>
+                        <button disabled class="btn-booked">BOOKED <i class="fas fa-lock"></i></button>
                     }
                 </div>
             }
@@ -142,28 +127,25 @@
             </div>
         }
     </div>
-
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        
-        let today = new Date();
-        let lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let today = new Date();
+            let lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-        flatpickr("#customDatePicker", {
-            minDate: "today",               
-            maxDate: lastDayOfMonth,        
-            dateFormat: "Y-m-d",            
-            disableMobile: "true",          
-            altInput: true,                 
-            altFormat: "F j, Y",            
-            defaultDate: "@ViewBag.SelectedDate",
-            
-            // 🌟 THE FIX: Yahan hum explicitly class pass kar rahe hain naye visible textbox ke liye
-            altInputClass: "premium-date-input"
+            flatpickr("#customDatePicker", {
+                minDate: "today",               
+                maxDate: lastDayOfMonth,        
+                dateFormat: "Y-m-d",            
+                disableMobile: "true",          
+                altInput: true,                 
+                altFormat: "F j, Y",            
+                defaultDate: "@ViewBag.SelectedDate",
+                altInputClass: "premium-date-input"
+            });
         });
-        
-    });
-</script>
+    </script>
+}

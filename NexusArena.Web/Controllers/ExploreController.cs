@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+using System.Net.Http;
 
 namespace NexusArena.Web.Controllers
 {
@@ -11,51 +15,37 @@ namespace NexusArena.Web.Controllers
         public ExploreController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/"); // API ka port
+            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
-        // Search aur Area filters ke sath complete Index method
         public async Task<IActionResult> Index(string? searchTerm, string? area)
         {
             var token = Request.Cookies["JWToken"];
-            if (string.IsNullOrEmpty(token))
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             try
             {
-                // API ka dynamic URL ban raha hai
                 var apiUrl = "api/Explore/arenas?";
                 if (!string.IsNullOrEmpty(searchTerm)) apiUrl += $"searchTerm={Uri.EscapeDataString(searchTerm)}&";
                 if (!string.IsNullOrEmpty(area)) apiUrl += $"area={Uri.EscapeDataString(area)}";
 
                 var response = await _httpClient.GetAsync(apiUrl);
 
-                // UI form mein value wapas dikhane ke liye
                 ViewBag.CurrentSearch = searchTerm;
                 ViewBag.CurrentArea = area;
 
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-                    try
-                    {
-                        var apiResult = JsonSerializer.Deserialize<ExploreApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                        return View(apiResult?.data ?? new List<ArenaViewModel>());
-                    }
-                    catch (JsonException)
-                    {
-                        ViewBag.Error = "JSON Format Error: Data convert nahi ho paya.";
-                        return View(new List<ArenaViewModel>());
-                    }
+                    var apiResult = JsonSerializer.Deserialize<ExploreApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return View(apiResult?.data ?? new List<ExploreArenaViewModel>());
                 }
                 else
                 {
                     ViewBag.Error = "No arenas found matching your search.";
-                    return View(new List<ArenaViewModel>());
+                    return View(new List<ExploreArenaViewModel>());
                 }
             }
             catch (Exception ex)
@@ -63,22 +53,24 @@ namespace NexusArena.Web.Controllers
                 ViewBag.Error = $"Connection Error: {ex.Message}";
             }
 
-            return View(new List<ArenaViewModel>());
+            return View(new List<ExploreArenaViewModel>());
         }
     }
 
-    // API ka response map karne ke liye Models
+    // 🌟 THE FIX: Sabkuch lower camelCase kar diya hai
     public class ExploreApiResponse
     {
         public string? message { get; set; }
-        public List<ArenaViewModel>? data { get; set; }
+        public List<ExploreArenaViewModel>? data { get; set; }
     }
 
-    public class ArenaViewModel
+    public class ExploreArenaViewModel
     {
         public int arenaId { get; set; }
-        public string? name { get; set; }
+        public string name { get; set; } = string.Empty;
         public string? location { get; set; }
-        public string? city { get; set; }
+        public string city { get; set; } = string.Empty;
+        public double averageRating { get; set; }
+        public int totalReviews { get; set; }
     }
 }
