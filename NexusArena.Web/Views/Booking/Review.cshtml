@@ -2,7 +2,7 @@
     ViewData["Title"] = "Booking Review";
     Layout = "~/Views/Shared/_PlayerLayout.cshtml";
     
-    // Half price calculate kar rahe hain Razorpay 50% advance ke liye
+    // Total aur Half price
     decimal totalAmount = ViewBag.Price;
     decimal halfAmount = totalAmount / 2;
 }
@@ -35,8 +35,6 @@
     /* Checked State */
     .payment-option input:checked ~ .option-content { color: #00ff7f; }
     .payment-option input:checked { border-color: #00ff7f; }
-    
-    /* Javascript se parent ko class denge for green border */
     .payment-option.active { border-color: #00ff7f; background: rgba(0, 255, 127, 0.05); }
 
     .option-content { display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #ccc; transition: 0.3s; }
@@ -57,7 +55,7 @@
     
     <div class="page-header">
         <h1>Review <span>Booking</span> 📋</h1>
-        <p>Choose how you want to pay and confirm.</p>
+        <p>Choose your payment option to secure the turf.</p>
     </div>
 
     <div class="summary-card">
@@ -75,6 +73,15 @@
             
             <h3 class="payment-title"><i class="fas fa-wallet" style="color: #00ff7f; margin-right: 8px;"></i> Select Payment Option</h3>
 
+            <label class="payment-option active" id="opt-half">
+                <input type="radio" name="paymentMode" value="Advance50" checked onchange="updatePrice('Half', @halfAmount)">
+                <div class="option-content">
+                    <span>Pay 50% Advance</span>
+                    <span>₹ @halfAmount</span>
+                </div>
+                <div class="option-desc">Secure your slot now. Pay remaining ₹ @halfAmount at the turf.</div>
+            </label>
+
             <label class="payment-option" id="opt-full">
                 <input type="radio" name="paymentMode" value="Full" onchange="updatePrice('Full', @totalAmount)">
                 <div class="option-content">
@@ -82,24 +89,6 @@
                     <span>₹ @totalAmount</span>
                 </div>
                 <div class="option-desc">Complete payment online. No cash needed at turf.</div>
-            </label>
-
-            <label class="payment-option active" id="opt-half">
-                <input type="radio" name="paymentMode" value="Advance50" checked onchange="updatePrice('Half', @halfAmount)">
-                <div class="option-content">
-                    <span>Pay 50% Advance</span>
-                    <span>₹ @halfAmount</span>
-                </div>
-                <div class="option-desc">Pay remaining ₹ @halfAmount at the turf.</div>
-            </label>
-
-            <label class="payment-option" id="opt-turf">
-                <input type="radio" name="paymentMode" value="PayAtTurf" onchange="updatePrice('Turf', 0)">
-                <div class="option-content">
-                    <span>Pay at Turf</span>
-                    <span>₹ 0</span>
-                </div>
-                <div class="option-desc">Book slot now, pay full amount at the ground.</div>
             </label>
 
             <hr class="divider" />
@@ -123,20 +112,13 @@
 <script>
     function updatePrice(type, amount) {
         document.getElementById('displayAmount').innerText = '₹ ' + amount;
-        let btn = document.getElementById('btnSubmit');
-        
-        if(amount == 0) {
-            btn.innerHTML = 'CONFIRM BOOKING <i class="fas fa-check-circle" style="margin-left: 5px;"></i>';
-        } else {
-            btn.innerHTML = 'PROCEED TO PAY <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>';
-        }
 
+        // Remove active class from both
         document.getElementById('opt-full').classList.remove('active');
         document.getElementById('opt-half').classList.remove('active');
-        document.getElementById('opt-turf').classList.remove('active');
 
+        // Add active class to selected
         if(type === 'Full') document.getElementById('opt-full').classList.add('active');
         if(type === 'Half') document.getElementById('opt-half').classList.add('active');
-        if(type === 'Turf') document.getElementById('opt-turf').classList.add('active');
     }
 </script>

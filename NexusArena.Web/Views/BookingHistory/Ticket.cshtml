@@ -1,0 +1,99 @@
+﻿@model NexusArena.Web.Controllers.BookingHistoryViewModel
+
+@{
+    ViewData["Title"] = "Digital Ticket - #" + Model.BookingId;
+    Layout = null; // Layout null rakha hai taaki Sidebar/Header print mein na aaye
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket - #@Model.BookingId</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #0f0f0f; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px;}
+        .ticket-box { background: #1a1a1a; width: 100%; max-width: 500px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 255, 102, 0.1); border: 1px solid #333; position: relative; }
+        .ticket-header { background: #00ff66; padding: 20px; text-align: center; color: #000; }
+        .ticket-header h2 { margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; font-size: 24px;}
+        .ticket-body { padding: 30px; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px dashed #333; padding-bottom: 15px; }
+        .detail-row:last-child { border-bottom: none; }
+        .label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 16px; font-weight: 600; margin-top: 5px; }
+        .turf-name { font-size: 26px; font-weight: 800; color: #00ff66; margin-bottom: 5px; text-transform: uppercase;}
+        .print-btn { display: block; width: 100%; background: #222; color: #00ff66; border: none; border-top: 1px solid #333; padding: 18px; text-align: center; text-decoration: none; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.3s; font-size: 16px;}
+        .print-btn:hover { background: #00ff66; color: #000; }
+        
+        /* 🌟 Print Command Logic: Sirf box print hoga, baaki sab gayab */
+        @@media print {
+            body { background: white; color: black; display: block; padding: 0; margin: 0; align-items: flex-start;}
+            .ticket-box { box-shadow: none; border: 2px solid #000; max-width: 100%; border-radius: 0;}
+            .ticket-header { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact; }
+            .turf-name { color: #000 !important; }
+            .print-btn { display: none; }
+            .detail-row { border-bottom: 1px dashed #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ticket-box">
+        <div class="ticket-header">
+            <h2>NEXUS ARENA PASS</h2>
+        </div>
+        <div class="ticket-body">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div class="turf-name">@Model.ArenaName</div>
+                <div style="color: #aaa; font-weight: 600;"><i class="fas fa-map-marker-alt" style="color: #ff4757;"></i> @Model.City</div>
+            </div>
+
+            <div class="detail-row">
+                <div>
+                    <div class="label">Booking ID</div>
+                    <div class="value">#@Model.BookingId</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="label">Status</div>
+                    <div class="value" style="color: #00ff66;">@Model.Status</div>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div>
+                    <div class="label">Play Date</div>
+                    <div class="value">@Model.PlayDate</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="label">Time Slot</div>
+                    <div class="value">@Model.TimeSlot</div>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div>
+                    <div class="label">Total Amount</div>
+                    <div class="value">₹@Model.TotalAmount</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="label">Amount Paid</div>
+                    <div class="value">₹@Model.AmountPaid</div>
+                </div>
+            </div>
+            
+            @if(Model.PendingAmount > 0 && Model.Status != "Cancelled")
+            {
+                <div style="text-align: center; margin-top: 20px; color: #ff4757; font-weight: 700; font-size: 14px; padding: 10px; border: 1px solid #ff4757; border-radius: 8px; background: rgba(255, 71, 87, 0.1);">
+                    ⚠️ Due at Venue: ₹@Model.PendingAmount
+                </div>
+            }
+        </div>
+        <button class="print-btn" onclick="window.print()">
+            <i class="fas fa-print"></i> Download / Print Ticket
+        </button>
+    </div>
+
+</body>
+</html>
