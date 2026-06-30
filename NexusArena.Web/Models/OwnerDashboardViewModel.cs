@@ -1,10 +1,12 @@
-﻿namespace NexusArena.MVC.Models
+﻿using System.Collections.Generic;
+
+namespace NexusArena.MVC.Models
 {
     public class OwnerDashboardViewModel
     {
         public decimal TodayRevenue { get; set; }
-        public string LiveOccupancy { get; set; } = string.Empty;
-        public List<UpcomingBookingViewModel> UpcomingBookings { get; set; } = new();
+        public string LiveOccupancy { get; set; } = "0%";
+        public List<UpcomingBookingViewModel> UpcomingBookings { get; set; } = new List<UpcomingBookingViewModel>();
     }
 
     public class UpcomingBookingViewModel

@@ -1,13 +1,15 @@
-﻿public class PendingArenaViewModel
+﻿namespace NexusArena.Web.Models
 {
-    public int Id { get; set; }
-    public string ArenaName { get; set; }
-    public string OwnerName { get; set; }
-    public string Status { get; set; }
-
-    public string Category { get; set; }
-    public string Address { get; set; }
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public string ImagePaths { get; set; }
+    public class PendingArenaViewModel
+    {
+        public int Id { get; set; }
+        public string ArenaName { get; set; } = string.Empty;
+        public string OwnerName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public string ImagePaths { get; set; } = string.Empty;
+    }
 }

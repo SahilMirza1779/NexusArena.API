@@ -17,16 +17,15 @@ public partial class Booking
 
     public string Status { get; set; } = null!;
 
-    // 🌟 Naye Payment Fields (Razorpay aur Checkout ke liye)
     public string? PaymentMode { get; set; }
 
     public string? PaymentStatus { get; set; }
 
     public decimal AmountPaid { get; set; }
+    public decimal TotalAmount { get; set; }
 
     public string? TransactionId { get; set; }
 
-    // --- Navigation Properties (Aapke original as it is hain) ---
     public virtual ICollection<BookingEquipment> BookingEquipments { get; set; } = new List<BookingEquipment>();
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();

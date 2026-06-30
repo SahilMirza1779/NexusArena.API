@@ -67,6 +67,7 @@
                 padding: 15px 10px;
                 border-bottom: 1px solid var(--border-color);
                 font-size: 14px;
+                vertical-align: middle;
             }
 
         .badge-active {
@@ -77,6 +78,41 @@
             font-size: 12px;
             border: 1px solid var(--accent-green);
         }
+
+        /* Cancel Button aur Dropdown ka naya design */
+        .btn-cancel {
+            background-color: transparent;
+            color: #ff4d4d;
+            border: 1px solid #ff4d4d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+            width: 100%;
+        }
+
+            .btn-cancel:hover {
+                background-color: #ff4d4d;
+                color: white;
+            }
+
+        .reason-select {
+            background-color: #2b2b2b;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 11px;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+            .reason-select:focus {
+                outline: none;
+                border-color: #ff4d4d;
+            }
     </style>
 }
 
@@ -86,7 +122,11 @@
 
     @if (ViewBag.Error != null)
     {
-        <div class="alert alert-danger mt-2">@ViewBag.Error</div>
+        <div class="alert alert-warning mt-2">@ViewBag.Error</div>
+    }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mt-2">@TempData["Success"]</div>
     }
 </div>
 
@@ -131,6 +171,7 @@
                 <th>Facility</th>
                 <th>Time Slot</th>
                 <th>Status</th>
+                <th style="width: 150px;">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -143,12 +184,27 @@
                         <td>@booking.FacilityName</td>
                         <td>@booking.TimeSlot</td>
                         <td><span class="badge-active">@booking.Status</span></td>
+                        <td>
+                            <form asp-action="CancelBooking" asp-controller="OwnerDashboard" method="post" style="margin: 0;">
+                                <input type="hidden" name="bookingId" value="@booking.BookingId" />
+
+                                <select name="cancelReason" class="reason-select" required>
+                                    <option value="" disabled selected>-- Select Reason --</option>
+                                    <option value="Rain / Bad Weather">Rain / Bad Weather</option>
+                                    <option value="Maintenance Issue">Maintenance Issue</option>
+                                    <option value="Customer Requested">Customer Requested</option>
+                                    <option value="Other">Other</option>
+                                </select>
+
+                                <button type="submit" class="btn-cancel" onclick="return confirm('Cancel booking and send notification to customer?');">Cancel</button>
+                            </form>
+                        </td>
                     </tr>
                 }
             }
             else
             {
-                <tr><td colspan="4" class="text-center text-muted">No upcoming bookings today.</td></tr>
+                <tr><td colspan="5" class="text-center text-muted">No upcoming bookings today.</td></tr>
             }
         </tbody>
     </table>

@@ -1,75 +1,77 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NexusArena.API.Models;
+using NexusArena.API.Models; // Ek hi baar rakha hai
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
+    // Naam change kar diya taaki duplicate ka error na aaye
+    public class NewArenaDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+    }
+
+    [Authorize(Roles = "Owner")]
     [Route("api/[controller]")]
     [ApiController]
     public class ArenaController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
+        public ArenaController(NexusArenaDbContext context) => _context = context;
 
-        public ArenaController(NexusArenaDbContext context)
+        // Helper method to get Logged in Owner's ID from Token
+        private int GetOwnerId()
         {
-            _context = context;
+            var claim = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == ClaimTypes.NameIdentifier);
+            return claim != null ? int.Parse(claim.Value) : 1;
         }
 
-        [HttpGet("GetAll")]
-        public  async Task<IActionResult> GetAllArenas()
+        [HttpPost("add")]
+        public async Task<IActionResult> AddArena([FromBody] NewArenaDto input) // Yahan bhi naam update kiya
         {
-            var arenas = await _context.Arenas
-                .Select(a => new
-                {
-                    Id = a.ArenaId,
-                    ArenaName = a.Name,
-                    OwnerName = a.Owner.FullName,
-                    City = a.City,
-                    Status = a.IsActive == true ? "Active" : (a.IsActive == false ? "Pending" : "Unknown")
-                })
-                .ToListAsync();
-
-            return Ok(arenas);
-        }
-
-        [HttpGet("GetDetails/{id}")]
-        public async Task<IActionResult> GetArenaDetails(int id)
-        {
-            var arena = await _context.Arenas
-                .Where(a => a.ArenaId == id)
-                .Select(a => new
-                {
-                    Id = a.ArenaId,
-                    ArenaName = a.Name,
-                    Location = a.Location ?? "Not Specified", 
-                    City = a.City,
-                    OwnerName = a.Owner.FullName,
-                    Status = a.IsActive == true ? "Active" : "Pending"
-                })
-                .FirstOrDefaultAsync();
-
-            if (arena == null)
+            try
             {
-                return NotFound(new { message = "Arena nahi mila!" });
-            }
+                var arena = new Arena
+                {
+                    OwnerId = GetOwnerId(),
+                    Name = input.Name,
+                    Location = input.Location,
+                    City = input.City,
+                    IsActive = true
+                };
 
-            return Ok(arena);
+                _context.Arenas.Add(arena);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Arena successfully added!" });
+            }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        [HttpPost("Suspend/{id}")]
-        public async Task<IActionResult> SuspendArena(int id)
+        [HttpGet("GetMyArenas")]
+        public async Task<IActionResult> GetMyArenas()
         {
-            var arena = await _context.Arenas.FindAsync(id);
-            if (arena == null)
+            try
             {
-                return NotFound(new { message = "Couldn't find the Arena!" });
+                int ownerId = GetOwnerId();
+                var arenas = await _context.Arenas
+                    .Where(a => a.OwnerId == ownerId)
+                    .Select(a => new {
+                        a.ArenaId,
+                        a.Name,
+                        a.Location,
+                        a.City,
+                        a.IsActive
+                    }).ToListAsync();
+
+                return Ok(arenas);
             }
-
-            arena.IsActive = false;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true });
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
     }
 }

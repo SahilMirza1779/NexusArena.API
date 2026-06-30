@@ -1,0 +1,30 @@
+﻿@{ Layout = "~/Views/Shared/_OwnerLayout.cshtml"; }
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h4 class="text-white">Existing Resources</h4>
+        <a asp-action="ManageResources" class="btn btn-primary btn-sm">+ Add New</a>
+    </div>
+
+    <table class="table table-dark table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Price</th>
+                <th>Capacity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in (List<NexusArena.MVC.Models.ResourceViewModel>)ViewBag.ResourceList)
+            {
+                <tr>
+                    <td>@item.ResourceName</td>
+                    <td>@item.ResourceType</td>
+                    <td>₹@item.BasePricePerHour</td>
+                    <td>@item.Capacity</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
