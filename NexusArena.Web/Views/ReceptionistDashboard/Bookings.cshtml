@@ -1,0 +1,124 @@
+﻿@model List<NexusArena.Web.Models.ReceptionistBookingHistoryViewModel>
+
+@{
+    ViewData["Title"] = "Booking History";
+    Layout = "~/Views/Shared/_ReceptionistLayout.cshtml";
+}
+
+<style>
+    body { background-color: #121212; color: white; }
+    
+    .history-card {
+        background-color: transparent; 
+        padding: 10px;
+    }
+
+    .table-custom { 
+        width: 100%;
+        border-collapse: separate; 
+        border-spacing: 0 15px; 
+    }
+    
+    .table-custom th { 
+        color: #888; 
+        font-size: 12px; 
+        text-transform: uppercase; 
+        letter-spacing: 1.5px;
+        padding: 0 20px 10px 20px;
+        border: none;
+        font-weight: 600;
+    }
+    
+    .table-custom tbody tr {
+        background-color: #1a1a1a; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .table-custom tbody tr:hover { 
+        transform: translateY(-3px); 
+        box-shadow: 0 8px 20px rgba(0, 255, 127, 0.15); 
+        background-color: #1f1f1f;
+    }
+
+    .table-custom td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    .table-custom td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+    
+    .table-custom td { 
+        padding: 22px 20px; 
+        border: none; 
+        vertical-align: middle; 
+        color: #ddd; 
+    }
+
+    .badge-completed { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid rgba(0, 255, 127, 0.3); padding: 8px 15px; border-radius: 8px; font-weight: 500; letter-spacing: 0.5px;}
+    .badge-cancelled { background-color: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.3); padding: 8px 15px; border-radius: 8px; font-weight: 500; letter-spacing: 0.5px;}
+    .badge-active { background-color: rgba(52, 152, 219, 0.1); color: #3498db; border: 1px solid rgba(52, 152, 219, 0.3); padding: 8px 15px; border-radius: 8px; font-weight: 500; letter-spacing: 0.5px;}
+</style>
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 ps-2">
+        <h2 style="font-weight: 700; letter-spacing: 1px;">
+            <i class="fas fa-history me-2" style="color: #00ff7f;"></i> Booking History
+        </h2>
+    </div>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+    }
+
+    <div class="history-card">
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Turf</th>
+                        <th>Time Slot</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td style="color: #6c757d; font-weight: bold; font-size: 15px;">#@item.BookingId</td>
+                                <td><i class="far fa-calendar-alt text-muted me-2"></i>@item.BookingDate.ToString("dd MMM yyyy")</td>
+                                <td class="text-white font-weight-bold" style="font-size: 15px;">@item.CustomerName</td>
+                                <td style="color: #00ff7f; font-weight: 600;">@item.TurfName</td>
+                                <td><i class="far fa-clock text-muted me-2"></i>@item.TimeSlot</td>
+                                <td>
+                                    @if(item.Status == "Completed") {
+                                        <span class="badge-completed"><i class="fas fa-check-circle me-1"></i> Completed</span>
+                                    } else if(item.Status == "Cancelled") {
+                                        <span class="badge-cancelled"><i class="fas fa-times-circle me-1"></i> Cancelled</span>
+                                    } else {
+                                        <span class="badge-active"><i class="fas fa-play-circle me-1"></i> @item.Status</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span style="font-weight: bold; color: #fff; font-size: 16px;">₹@item.TotalAmount</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5" style="background-color: #1a1a1a; border-radius: 12px;">
+                                <i class="fas fa-folder-open mb-3" style="font-size: 40px; opacity: 0.3;"></i>
+                                <h5>No bookings found in history.</h5>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
