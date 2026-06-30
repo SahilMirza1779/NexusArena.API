@@ -1,0 +1,107 @@
+﻿@model NexusArena.MVC.Models.PricingAndSlotsPageViewModel
+@{
+    ViewData["Title"] = "Pricing & Slots";
+    Layout = "~/Views/Shared/_OwnerLayout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card p-4 text-white" style="background-color: #1a1d20; border: 1px solid #333; border-radius: 10px;">
+                <h4 class="mb-4">Add Time Slot</h4>
+                <form asp-action="AddTimeSlot" asp-controller="OwnerDashboard" method="post">
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Facility (Turf/Table)</label>
+                        <select asp-for="NewSlot.ResourceId" class="form-select bg-dark text-white border-secondary" required>
+                            <option value="">-- Choose Facility --</option>
+                            @foreach (var res in Model.Resources)
+                            {
+                                <option value="@res.ResourceId">@res.ResourceName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Start Time</label>
+                            <input asp-for="NewSlot.StartTime" type="time" class="form-control bg-dark text-white border-secondary" required />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">End Time</label>
+                            <input asp-for="NewSlot.EndTime" type="time" class="form-control bg-dark text-white border-secondary" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Price (₹)</label>
+                        <input asp-for="NewSlot.BasePrice" type="number" step="0.01" class="form-control bg-dark text-white border-secondary" required />
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input asp-for="NewSlot.IsPremium" type="checkbox" class="form-check-input bg-dark border-secondary" />
+                        <label class="form-check-label">Mark as Premium Slot</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">Save Time Slot</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card p-4 text-white" style="background-color: #1a1d20; border: 1px solid #333; border-radius: 10px;">
+                <h4 class="mb-4">Existing Time Slots</h4>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover border-secondary">
+                        <thead>
+                            <tr>
+                                <th>Facility</th>
+                                <th>Timing</th>
+                                <th>Price</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.TimeSlots != null && Model.TimeSlots.Count > 0)
+                            {
+                                @foreach (var slot in Model.TimeSlots)
+                                {
+                                    <tr>
+                                        <td>@slot.ResourceName</td>
+                                        <td>@slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")</td>
+                                        <td class="text-success fw-bold">₹@slot.BasePrice</td>
+                                        <td>
+                                            @if (slot.IsPremium)
+                                            {
+                                                <span class="badge bg-warning text-dark">Premium</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Standard</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">No time slots added yet.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,25 +1,152 @@
 ﻿@model NexusArena.MVC.Models.ResourceViewModel
 @{
+    ViewData["Title"] = "Manage Arenas & Resources";
     Layout = "~/Views/Shared/_OwnerLayout.cshtml";
 }
 
-<div class="container mt-4">
-    @if (ViewBag.Error != null)
-    {
-        <div class="alert alert-danger">@ViewBag.Error</div>
+<style>
+    body {
+        background-color: #121212;
+        color: white;
     }
-    <div class="card bg-dark text-white p-4">
-        <h4>Add New Resource</h4>
-        <form asp-action="AddResource" asp-controller="OwnerDashboard" method="post">
-            <div class="mb-3">
-                <label>Resource Name</label>
-                <input asp-for="ResourceName" class="form-control" required />
+
+    .card {
+        background-color: #1e1e1e;
+        border: none;
+        padding: 25px;
+        border-radius: 8px;
+        color: white;
+    }
+
+        .card h5 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+    .form-label {
+        color: #e0e0e0;
+        font-size: 0.95rem;
+        margin-bottom: 5px;
+        display: inline-block;
+    }
+
+    .form-control, .form-select {
+        background-color: #2b2b2b;
+        border: 1px solid #444;
+        color: white !important;
+    }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #333;
+            border-color: #00e676;
+            box-shadow: none;
+            color: white;
+        }
+
+    /* Dropdown options ka background dark rakhne ke liye */
+    option {
+        background-color: #2b2b2b;
+        color: white;
+    }
+
+    .btn-green {
+        background-color: #00e676;
+        color: black;
+        font-weight: bold;
+        padding: 10px;
+        border: none;
+    }
+
+        .btn-green:hover {
+            background-color: #00c853;
+        }
+
+    table {
+        color: white;
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    th {
+        border-bottom: 2px solid #444;
+        padding: 12px 10px;
+        color: #cccccc;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    td {
+        border-bottom: 1px solid #333;
+        padding: 15px 10px;
+        font-size: 0.95rem;
+    }
+
+    .text-custom-green {
+        color: #00e676;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="text-custom-green fw-bold">Owner Portal</h2>
+    <h3 class="mb-4">Manage Arenas & Resources</h3>
+
+    <div class="card shadow-sm">
+        <h5>Add New Facility (Turf/Table)</h5>
+        <form asp-action="AddResource" method="post" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Facility Name</label>
+                <input type="text" name="ResourceName" class="form-control" required placeholder="e.g. Premium Turf 1" />
             </div>
-            <div class="mb-3">
-                <label>Max Players (Capacity)</label>
-                <input asp-for="Capacity" type="number" class="form-control" required />
+
+            <div class="col-md-3">
+                <label class="form-label">Type (Sport)</label>
+                <select name="ResourceType" class="form-select form-control" required>
+                    <option value="" disabled selected>-- Select Sport --</option>
+                    <option value="Box Cricket">Box Cricket</option>
+                    <option value="Box Football">Box Football</option>
+                    <option value="Bowling">Bowling</option>
+                    <option value="Pool">Pool</option>
+                    <option value="Pickleball">Pickleball</option>
+                </select>
             </div>
-            <button type="submit" class="btn btn-success w-100">Save Resource</button>
+
+            <div class="col-md-3">
+                <label class="form-label">Price Per Hour (₹)</label>
+                <input type="number" name="BasePricePerHour" class="form-control" required placeholder="e.g. 1200" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-green w-100 rounded">+ Add Facility</button>
+            </div>
         </form>
     </div>
+
+    <h4 class="mt-5 mb-3">Existing Turfs & Tables</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Resource Name</th>
+                <th>Type</th>
+                <th>Price/Hr</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var resourceList = ViewBag.ResourceList as List<NexusArena.MVC.Models.ResourceViewModel> ?? new List<NexusArena.MVC.Models.ResourceViewModel>();
+            }
+            @foreach (var item in resourceList)
+            {
+                <tr>
+                    <td>@item.ResourceName</td>
+                    <td>@item.ResourceType</td>
+                    <td>₹@item.BasePricePerHour</td>
+                    <td>
+                        <span class="badge" style="background-color: rgba(0, 230, 118, 0.15); color: #00e676; border: 1px solid #00e676; padding: 6px 12px;">Active</span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
