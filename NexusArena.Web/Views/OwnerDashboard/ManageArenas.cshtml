@@ -1,0 +1,96 @@
+﻿@using NexusArena.Web.Models
+@model ManageArenaPageViewModel
+
+@{
+    ViewData["Title"] = "Manage Arenas";
+    Layout = "~/Views/Shared/_OwnerLayout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card p-4 text-white" style="background-color: #1a1d20; border: 1px solid #333; border-radius: 10px;">
+                <h4 class="mb-4">Register New Arena</h4>
+                <form asp-action="AddArena" asp-controller="OwnerDashboard" method="post">
+
+                    <div class="mb-3">
+                        <label class="form-label">Arena Name</label>
+                        <input asp-for="NewArena.Name" class="form-control bg-dark text-white border-secondary" placeholder="e.g. Nexus Sports Club" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Location / Address</label>
+                        <textarea asp-for="NewArena.Location" class="form-control bg-dark text-white border-secondary" rows="2" placeholder="e.g. VIP Road, Vesu" required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">City</label>
+                        <input asp-for="NewArena.City" class="form-control bg-dark text-white border-secondary" placeholder="e.g. Surat" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">Add Arena</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card p-4 text-white" style="background-color: #1a1d20; border: 1px solid #333; border-radius: 10px;">
+                <h4 class="mb-4">My Arenas</h4>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover border-secondary">
+                        <thead>
+                            <tr>
+                                <th>Arena Name</th>
+                                <th>Location</th>
+                                <th>City</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ArenasList != null && Model.ArenasList.Count > 0)
+                            {
+                                @foreach (var arena in Model.ArenasList)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@arena.Name</td>
+                                        <td>@arena.Location</td>
+                                        <td>@arena.City</td>
+                                        <td>
+                                            @if (arena.IsActive)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info">Manage</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No arenas registered yet. Start by adding one!</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

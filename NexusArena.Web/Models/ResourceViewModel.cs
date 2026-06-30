@@ -1,31 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.ComponentModel.DataAnnotations;
-
-namespace NexusArena.MVC.Models
+﻿namespace NexusArena.MVC.Models
 {
     public class ResourceViewModel
     {
-        public int Id { get; set; }
+        // YEH PROPERTY MISSING THI
+        public int ResourceId { get; set; }
 
-        [Required(ErrorMessage = "Resource Name is required")]
-        public string ResourceName { get; set; }
-
-        public string ResourceType { get; set; }
-
-        [Required(ErrorMessage = "Price is required")]
+        public string ResourceName { get; set; } = string.Empty;
+        public string ResourceType { get; set; } = string.Empty;
+        public int Capacity { get; set; }
         public decimal BasePricePerHour { get; set; }
-
-        [Required(ErrorMessage = "Capacity is required")]
-        public int Capacity { get; set; } 
-
-        public string Dimensions { get; set; }
-
-        public string IncludedEquipment { get; set; }
-
-        public string Description { get; set; }
-
-        public IFormFile? ResourceImage { get; set; }
-
-        public bool IsActive { get; set; }
+        public string Dimensions { get; set; } = string.Empty;
+        public string IncludedEquipment { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 }

@@ -1,52 +1,42 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using NexusArena.API.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NexusArena.API.Models; // Apne Models ka namespace
 
 namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Owner")]
     public class OwnerFacilityController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
-
         public OwnerFacilityController(NexusArenaDbContext context)
         {
             _context = context;
         }
 
+        // 1. DATA ADD KARNE WALA METHOD
         [HttpPost("AddFacility")]
-        public IActionResult AddFacility([FromBody] Resource formData)
+        public async Task<IActionResult> AddFacility([FromBody] Resource model)
         {
-            try
-            {
-                formData.ArenaId = 1;
+            if (model == null) return BadRequest("Invalid data.");
 
-                formData.CategoryId = 2;
+            // Database me save karo
+            _context.Resources.Add(model);
+            await _context.SaveChangesAsync();
 
-                _context.Resources.Add(formData);
-                _context.SaveChanges();
-
-                return Ok(new { success = true, Message = "The new facility has been successfully added!" });
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(new { Message = ex.InnerException?.Message ?? ex.Message });
-            }
+            return Ok(new { Message = "Nayi facility successfully add ho gayi!" });
         }
 
+        // 2. DATABASE SE DATA FETCH KARNE WALA METHOD
         [HttpGet("GetAllFacilities")]
-        public IActionResult GetAllFacilities()
+        public async Task<IActionResult> GetAllFacilities()
         {
-            try
-            {
-                var realList = _context.Resources.ToList();
-                return Ok(realList);
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(new { Message = "Data fetch fail: " + ex.Message });
-            }
+            // 🔥 Ab ye dummy data nahi, asli database se fetch karega!
+            var list = await _context.Resources.ToListAsync();
+
+            return Ok(list);
         }
     }
 }

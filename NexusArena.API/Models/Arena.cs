@@ -1,27 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
-namespace NexusArena.API.Models;
-
-public partial class Arena
+namespace NexusArena.API.Models
 {
-    public int ArenaId { get; set; }
+    public class Arena
+    {
+        [Key]
+        public int ArenaId { get; set; }
+        public int OwnerId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
 
-    public int OwnerId { get; set; }
-
-    public string Name { get; set; } = null!;
-
-    public string? Location { get; set; }
-
-    public string City { get; set; } = null!;
-
-    public bool? IsActive { get; set; }
-
-    public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
-
-    public virtual User Owner { get; set; } = null!;
-
-    public virtual ICollection<Resource> Resources { get; set; } = new List<Resource>();
-
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+        // --- YEH HAIN WO PROPERTIES JO TERE DOST KA CODE DHOONDH RAHA THA ---
+        [JsonIgnore]
+        public virtual User? Owner { get; set; }
+        [JsonIgnore]
+        public virtual ICollection<Equipment>? Equipment { get; set; }
+        [JsonIgnore]
+        public virtual ICollection<Resource>? Resources { get; set; }
+        [JsonIgnore]
+        public virtual ICollection<Review>? Reviews { get; set; }
+    }
 }
