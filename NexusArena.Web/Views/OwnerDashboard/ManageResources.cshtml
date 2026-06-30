@@ -44,11 +44,30 @@
             color: white;
         }
 
-    /* Dropdown options ka background dark rakhne ke liye */
-    option {
+    /* Checkbox styling */
+    .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        padding: 8px 10px;
         background-color: #2b2b2b;
-        color: white;
+        border: 1px solid #444;
+        border-radius: 5px;
     }
+
+    .checkbox-item {
+        color: white;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+    }
+
+        .checkbox-item input[type="checkbox"] {
+            accent-color: #00e676;
+            cursor: pointer;
+        }
 
     .btn-green {
         background-color: #00e676;
@@ -92,43 +111,51 @@
     <h2 class="text-custom-green fw-bold">Owner Portal</h2>
     <h3 class="mb-4">Manage Arenas & Resources</h3>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mt-2">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mt-2">@TempData["Error"]</div>
+    }
+
+    <!-- Add New Business Form -->
     <div class="card shadow-sm">
-        <h5>Add New Facility (Turf/Table)</h5>
-        <form asp-action="AddResource" method="post" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">Facility Name</label>
-                <input type="text" name="ResourceName" class="form-control" required placeholder="e.g. Premium Turf 1" />
+        <h5>Add New Business</h5>
+        <!-- Form par id lagayi hai taaki JS ise pehchan sake -->
+        <form asp-action="AddResource" method="post" class="row g-3" id="addBusinessForm">
+            <div class="col-md-4">
+                <label class="form-label">Business Name</label>
+                <!-- Id 'businessNameInput' lagayi duplicate check ke liye -->
+                <input type="text" name="ResourceName" id="businessNameInput" class="form-control" required placeholder="e.g. Premium Turf 1" />
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label">Type (Sport)</label>
-                <select name="ResourceType" class="form-select form-control" required>
-                    <option value="" disabled selected>-- Select Sport --</option>
-                    <option value="Box Cricket">Box Cricket</option>
-                    <option value="Box Football">Box Football</option>
-                    <option value="Bowling">Bowling</option>
-                    <option value="Pool">Pool</option>
-                    <option value="Pickleball">Pickleball</option>
-                </select>
+            <div class="col-md-5">
+                <label class="form-label">Type (Sports)</label>
+                <!-- Dropdown hata kar Multiple Checkboxes laga diye -->
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Box Cricket"> Box Cricket</label>
+                    <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Box Football"> Box Football</label>
+                    <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Bowling"> Bowling</label>
+                    <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Pool"> Pool</label>
+                    <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Pickleball"> Pickleball</label>
+                </div>
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label">Price Per Hour (₹)</label>
-                <input type="number" name="BasePricePerHour" class="form-control" required placeholder="e.g. 1200" />
-            </div>
             <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-green w-100 rounded">+ Add Facility</button>
+                <button type="submit" class="btn btn-green w-100 rounded">+ Add Business</button>
             </div>
         </form>
     </div>
 
-    <h4 class="mt-5 mb-3">Existing Turfs & Tables</h4>
-    <table>
+    <!-- Existing Table -->
+    <h4 class="mt-5 mb-3">Existing Businesses</h4>
+    <table id="businessTable">
         <thead>
             <tr>
-                <th>Resource Name</th>
-                <th>Type</th>
-                <th>Price/Hr</th>
+                <th>Business Name</th>
+                <th>Type (Sports)</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -141,7 +168,6 @@
                 <tr>
                     <td>@item.ResourceName</td>
                     <td>@item.ResourceType</td>
-                    <td>₹@item.BasePricePerHour</td>
                     <td>
                         <span class="badge" style="background-color: rgba(0, 230, 118, 0.15); color: #00e676; border: 1px solid #00e676; padding: 6px 12px;">Active</span>
                     </td>
@@ -150,3 +176,38 @@
         </tbody>
     </table>
 </div>
+
+<!-- Duplicate Name Check aur Checkbox Validation ka Script -->
+<script>
+    document.getElementById('addBusinessForm').addEventListener('submit', function(e) {
+        var newName = document.getElementById('businessNameInput').value.trim().toLowerCase();
+
+        // 1. Table se purane saare naam nikal kar check karo
+        var tableRows = document.querySelectorAll('#businessTable tbody tr');
+        var isDuplicate = false;
+
+        tableRows.forEach(function(row) {
+            var nameCell = row.cells[0]; // Pehla column (Business Name)
+            if(nameCell && nameCell.innerText) {
+                var existingName = nameCell.innerText.trim().toLowerCase();
+                if(existingName === newName) {
+                    isDuplicate = true;
+                }
+            }
+        });
+
+        if(isDuplicate) {
+            e.preventDefault(); // Form submit hone se roko
+            alert("⚠️ Ye Business Name already added hai! Kripya koi aur naam daaliye."); // Popup dikhao
+            return false;
+        }
+
+        // 2. Check karo ki kam se kam 1 sport select kiya hai ya nahi
+        var checkboxes = document.querySelectorAll('input[name="SelectedSports"]:checked');
+        if(checkboxes.length === 0) {
+            e.preventDefault(); // Form submit hone se roko
+            alert("⚠️ Kam se kam ek Sport select karna zaroori hai!");
+            return false;
+        }
+    });
+</script>
