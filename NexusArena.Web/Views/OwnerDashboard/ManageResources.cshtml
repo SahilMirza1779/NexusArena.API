@@ -37,14 +37,6 @@
         color: white !important;
     }
 
-        .form-control:focus, .form-select:focus {
-            background-color: #333;
-            border-color: #00e676;
-            box-shadow: none;
-            color: white;
-        }
-
-    /* Checkbox styling */
     .checkbox-group {
         display: flex;
         flex-wrap: wrap;
@@ -64,11 +56,6 @@
         cursor: pointer;
     }
 
-        .checkbox-item input[type="checkbox"] {
-            accent-color: #00e676;
-            cursor: pointer;
-        }
-
     .btn-green {
         background-color: #00e676;
         color: black;
@@ -76,10 +63,6 @@
         padding: 10px;
         border: none;
     }
-
-        .btn-green:hover {
-            background-color: #00c853;
-        }
 
     table {
         color: white;
@@ -92,48 +75,50 @@
         border-bottom: 2px solid #444;
         padding: 12px 10px;
         color: #cccccc;
-        text-transform: uppercase;
         font-size: 0.85rem;
     }
 
     td {
         border-bottom: 1px solid #333;
         padding: 15px 10px;
-        font-size: 0.95rem;
+        vertical-align: middle;
     }
 
-    .text-custom-green {
-        color: #00e676;
+    .btn-edit {
+        background-color: transparent;
+        color: #4dabf7;
+        border: 1px solid #4dabf7;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    .btn-delete {
+        background-color: transparent;
+        color: #ff4d4d;
+        border: 1px solid #ff4d4d;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+        cursor: pointer;
     }
 </style>
 
 <div class="container mt-4">
-    <h2 class="text-custom-green fw-bold">Owner Portal</h2>
-    <h3 class="mb-4">Manage Arenas & Resources</h3>
+    <h2 class="text-success fw-bold">Manage Arenas & Resources</h2>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success mt-2">@TempData["Success"]</div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger mt-2">@TempData["Error"]</div>
-    }
-
-    <!-- Add New Business Form -->
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mt-4">
         <h5>Add New Business</h5>
-        <!-- Form par id lagayi hai taaki JS ise pehchan sake -->
-        <form asp-action="AddResource" method="post" class="row g-3" id="addBusinessForm">
+        <form asp-action="AddResource" method="post" class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Business Name</label>
-                <!-- Id 'businessNameInput' lagayi duplicate check ke liye -->
-                <input type="text" name="ResourceName" id="businessNameInput" class="form-control" required placeholder="e.g. Premium Turf 1" />
+                <input type="text" name="ResourceName" class="form-control" required />
             </div>
-
             <div class="col-md-5">
                 <label class="form-label">Type (Sports)</label>
-                <!-- Dropdown hata kar Multiple Checkboxes laga diye -->
                 <div class="checkbox-group">
                     <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Box Cricket"> Box Cricket</label>
                     <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Box Football"> Box Football</label>
@@ -142,72 +127,33 @@
                     <label class="checkbox-item"><input type="checkbox" name="SelectedSports" value="Pickleball"> Pickleball</label>
                 </div>
             </div>
-
             <div class="col-md-3 d-flex align-items-end">
                 <button type="submit" class="btn btn-green w-100 rounded">+ Add Business</button>
             </div>
         </form>
     </div>
 
-    <!-- Existing Table -->
-    <h4 class="mt-5 mb-3">Existing Businesses</h4>
-    <table id="businessTable">
+    <table class="mt-4">
         <thead>
-            <tr>
-                <th>Business Name</th>
-                <th>Type (Sports)</th>
-                <th>Status</th>
-            </tr>
+            <tr><th>Business Name</th><th>Type (Sports)</th><th>Action</th></tr>
         </thead>
         <tbody>
-            @{
-                var resourceList = ViewBag.ResourceList as List<NexusArena.MVC.Models.ResourceViewModel> ?? new List<NexusArena.MVC.Models.ResourceViewModel>();
-            }
-            @foreach (var item in resourceList)
+            @foreach (var item in ViewBag.ResourceList)
             {
                 <tr>
                     <td>@item.ResourceName</td>
                     <td>@item.ResourceType</td>
                     <td>
-                        <span class="badge" style="background-color: rgba(0, 230, 118, 0.15); color: #00e676; border: 1px solid #00e676; padding: 6px 12px;">Active</span>
+                        <div style="display:flex; gap:10px;">
+                            <a href="/OwnerDashboard/EditResource?resourceName=@item.ResourceName" class="btn-edit">Edit</a>
+                            <form asp-action="DeleteResource" method="post">
+                                <input type="hidden" name="resourceName" value="@item.ResourceName" />
+                                <button type="submit" class="btn-delete" onclick="return confirm('Pakka delete karna hai?');">Delete</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
-
-<!-- Duplicate Name Check aur Checkbox Validation ka Script -->
-<script>
-    document.getElementById('addBusinessForm').addEventListener('submit', function(e) {
-        var newName = document.getElementById('businessNameInput').value.trim().toLowerCase();
-
-        // 1. Table se purane saare naam nikal kar check karo
-        var tableRows = document.querySelectorAll('#businessTable tbody tr');
-        var isDuplicate = false;
-
-        tableRows.forEach(function(row) {
-            var nameCell = row.cells[0]; // Pehla column (Business Name)
-            if(nameCell && nameCell.innerText) {
-                var existingName = nameCell.innerText.trim().toLowerCase();
-                if(existingName === newName) {
-                    isDuplicate = true;
-                }
-            }
-        });
-
-        if(isDuplicate) {
-            e.preventDefault(); // Form submit hone se roko
-            alert("⚠️ Ye Business Name already added hai! Kripya koi aur naam daaliye."); // Popup dikhao
-            return false;
-        }
-
-        // 2. Check karo ki kam se kam 1 sport select kiya hai ya nahi
-        var checkboxes = document.querySelectorAll('input[name="SelectedSports"]:checked');
-        if(checkboxes.length === 0) {
-            e.preventDefault(); // Form submit hone se roko
-            alert("⚠️ Kam se kam ek Sport select karna zaroori hai!");
-            return false;
-        }
-    });
-</script>
