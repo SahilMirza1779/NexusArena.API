@@ -61,7 +61,7 @@ namespace NexusArena.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateWalkInBooking(int customerId, int resourceId, int slotId)
+        public async Task<IActionResult> CreateWalkInBooking(string customerName, string customerPhone, int resourceId, string startTime, string endTime)
         {
             try
             {
@@ -78,33 +78,34 @@ namespace NexusArena.Web.Controllers
 
                     var payload = new
                     {
-                        CustomerId = customerId,
+                        CustomerName = customerName,
+                        CustomerPhone = customerPhone,
                         ResourceId = resourceId,
-                        SlotId = slotId,
+                        StartTime = startTime,
+                        EndTime = endTime,
                         BookingDate = DateTime.Today.ToString("yyyy-MM-dd")
                     };
 
                     var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
-
                     HttpResponseMessage response = await client.PostAsync("http://localhost:5092/api/Receptionist/walk-in-booking", content);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        TempData["SuccessMessage"] = "Walk-in Booking successfully created! 🎉";
+                        TempData["SuccessMessage"] = "✅ Walk-in Booking successfully created! Customer data saved to database.";
                     }
                     else
                     {
                         string errorMsg = await response.Content.ReadAsStringAsync();
-                        TempData["ErrorMessage"] = $"Booking failed! Status: {response.StatusCode}. The API says: {errorMsg}";
+                        TempData["ErrorMessage"] = $"❌ Booking failed! {errorMsg}";
                     }
                 }
             }
             catch (System.Exception ex)
             {
-                TempData["ErrorMessage"] = "Connection Crash! Error: " + ex.Message;
+                TempData["ErrorMessage"] = "Connection Error: " + ex.Message;
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction("Index"); 
         }
 
         [HttpPost]
@@ -225,7 +226,40 @@ namespace NexusArena.Web.Controllers
 
         public async Task<IActionResult> AvailableTurfs()
         {
-            return View();
+            var handler = new HttpClientHandler();
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+
+            using (var client = new HttpClient(handler))
+            {
+                var token = HttpContext.Request.Cookies["JWToken"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
+
+                try
+                {
+                    HttpResponseMessage response = await client.GetAsync("http://localhost:5092/api/Receptionist/available-turfs");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string data = await response.Content.ReadAsStringAsync();
+                        var turfs = System.Text.Json.JsonSerializer.Deserialize<List<NexusArena.Web.Models.AvailableTurfViewModel>>(data, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                        return View(turfs);
+                    }
+                    else
+                    {
+                        ViewBag.ErrorMessage = "API Error: Data could not be retrieved.";
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    ViewBag.ErrorMessage = "Connection Error: " + ex.Message;
+                }
+            }
+
+            return View(new List<NexusArena.Web.Models.AvailableTurfViewModel>());
         }
     }
 }
