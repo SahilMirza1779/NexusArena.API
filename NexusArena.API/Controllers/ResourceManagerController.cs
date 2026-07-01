@@ -2,10 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NexusArena.API.Models;
+using System;
+using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
-    // Yahan humne API ko bata diya ki frontend se ab kya-kya aayega
     public class AddResourceRequest
     {
         public string ResourceName { get; set; } = string.Empty;
@@ -29,16 +30,12 @@ namespace NexusArena.API.Controllers
             {
                 var newResource = new Resource
                 {
-                    ArenaId = 1, // Abhi ke liye hardcoded
-                    CategoryId = 1, // Abhi ke liye hardcoded
+                    ArenaId = 1,
+                    CategoryId = 1,
                     ResourceName = input.ResourceName,
-
-                    // Naye fields jo ab seedha database mein jayenge
                     ResourceType = input.ResourceType,
                     BasePricePerHour = input.BasePricePerHour,
                     Capacity = input.Capacity,
-
-                    // Naya facility add karte hi default active rahega
                     IsActive = true
                 };
 
@@ -53,6 +50,54 @@ namespace NexusArena.API.Controllers
         public async Task<IActionResult> GetAllFacilities()
         {
             return Ok(await _context.Resources.ToListAsync());
+        }
+
+        [HttpDelete("Delete/{name}")]
+        public async Task<IActionResult> DeleteResource(string name)
+        {
+            try
+            {
+                var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ResourceName == name);
+                if (resource == null) return NotFound(new { message = "Resource not found" });
+
+                _context.Resources.Remove(resource);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Deleted successfully" });
+            }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
+        }
+
+        [HttpGet("GetByName/{name}")]
+        public async Task<IActionResult> GetByName(string name)
+        {
+            try
+            {
+                var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ResourceName == name);
+                if (resource == null) return NotFound(new { message = "Resource not found" });
+
+                return Ok(resource);
+            }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
+        }
+
+        // 🚨 NAYA: EDIT/UPDATE LOGIC
+        [HttpPut("update/{originalName}")]
+        public async Task<IActionResult> UpdateResource(string originalName, [FromBody] AddResourceRequest input)
+        {
+            try
+            {
+                var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ResourceName == originalName);
+                if (resource == null) return NotFound(new { message = "Resource not found" });
+
+                resource.ResourceName = input.ResourceName;
+                resource.ResourceType = input.ResourceType;
+                resource.BasePricePerHour = input.BasePricePerHour;
+                resource.Capacity = input.Capacity;
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Updated successfully" });
+            }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
     }
 }
