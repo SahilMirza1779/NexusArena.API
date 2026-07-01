@@ -1,27 +1,483 @@
-﻿@{
+﻿@model List<NexusArena.Web.Models.AvailableTurfViewModel>
+
+@{
     ViewData["Title"] = "Available Turfs";
     Layout = "~/Views/Shared/_ReceptionistLayout.cshtml";
 }
 
-<div class="container-fluid mt-4">
-    <h2 style="color: #fff;">Available Turfs</h2>
-    <p style="color: #aaa;">The ones currently available for booking.</p>
+<style>
+    body { background-color: #121212; color: white; }
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card bg-dark text-white p-3 border-success">
-                <h5>Box 1</h5>
-                <p>Status: <span class="text-success">Available</span></p>
-                <button class="btn btn-outline-success btn-sm">Book Now</button>
-            </div>
+    .turf-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
+        padding: 10px 0;
+    }
+
+    .turf-card {
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        padding: 30px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+
+    .turf-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 25px rgba(0, 255, 127, 0.15);
+        border-color: rgba(0, 255, 127, 0.5);
+    }
+
+    .turf-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background: rgba(0, 255, 127, 0.05);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px auto;
+        border: 1px solid rgba(0, 255, 127, 0.2);
+    }
+
+    .turf-title { color: #fff; font-weight: 700; font-size: 22px; margin-bottom: 5px; }
+    .turf-type { color: #aaa; font-size: 14px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+    .turf-details {
+        background-color: #121212;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px dashed #333;
+    }
+
+    .glow-dot {
+        height: 10px; width: 10px; background-color: #00ff7f; border-radius: 50%;
+        display: inline-block; box-shadow: 0 0 10px #00ff7f; animation: blink 2s infinite;
+    }
+
+    @@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .btn-turf-book {
+        background-color: transparent; color: #00ff7f; border: 2px solid #00ff7f; border-radius: 8px;
+        padding: 10px 20px; font-weight: 600; text-decoration: none; display: block; transition: all 0.3s ease;
+    }
+    .btn-turf-book:hover { background-color: #00ff7f; color: #000; }
+
+    .custom-overlay {
+        display: none; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); z-index: 9999;
+        align-items: center; justify-content: center; backdrop-filter: blur(5px);
+    }
+
+    .custom-modal {
+        background-color: #1a1a1a; border: 1px solid #333; border-radius: 20px;
+        width: 100%; max-width: 520px; padding: 28px; box-shadow: 0 10px 40px rgba(0,255,127,0.1);
+        position: relative; box-sizing: border-box; overflow: visible;
+    }
+
+    .custom-close {
+        position: absolute; top: 15px; right: 20px; background: transparent;
+        border: none; color: #aaa; font-size: 24px; cursor: pointer; transition: color 0.2s;
+    }
+    .custom-close:hover { color: #ff4d4d; }
+
+    .custom-input {
+        width: 100%; padding: 12px; background-color: #222; color: #fff;
+        border: 1px solid #444; border-radius: 8px; margin-bottom: 20px; outline: none;
+    }
+    .custom-input:focus { border-color: #00ff7f; }
+
+    input[type="time"] {
+        background-color: #222 !important;
+        color: #ffffff !important;
+        border: 1px solid #444 !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        font-size: 15px !important;
+        appearance: none; 
+        cursor: pointer;
+    }
+
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(1) hue-rotate(180deg) brightness(1.5);
+        cursor: pointer;
+    }
+
+    input[type="time"]:focus {
+        border-color: #00ff7f !important;
+        box-shadow: 0 0 5px rgba(0, 255, 127, 0.3) !important;
+        outline: none;
+    }
+
+    .time-row { display:flex; gap:10px; margin-bottom:30px; align-items:flex-end; }
+    .time-box { flex:1; min-width:0; overflow:hidden; }
+    .time-picker { display:flex; gap:6px; align-items:center; width:100%; overflow:hidden; }
+    .tp-icon { background: rgba(0,255,127,0.06); border-radius:10px; padding:8px 10px; border:1px solid rgba(0,255,127,0.08); color:#00ff7f; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .tp-container { display:flex; align-items:center; gap:4px; min-width:0; flex:1 1 auto; overflow:hidden; }
+    .tp-label { color:#aaa; font-size:11px; display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
+
+    .tp-select { 
+        appearance:none; -webkit-appearance:none; 
+        background: linear-gradient(180deg, #151515, #1b1b1b);
+        color:#e6fff6; 
+        border:1px solid #2c2c2c; 
+        border-radius:10px; 
+        padding:9px 10px; 
+        font-size:12px; 
+        font-weight:600;
+        outline:none; 
+        box-sizing:border-box; 
+        height:40px; 
+        position:relative; 
+        z-index:1; 
+        transition:all 0.15s ease;
+        cursor:pointer;
+        text-align:center;
+        flex-shrink:0;
+    }
+    .tp-select:hover { border-color:#444; }
+    .tp-select:focus { border-color:#00ff7f; box-shadow:0 4px 12px rgba(0,255,127,0.15); z-index:100; }
+    .tp-select::-ms-expand { display:none; }
+    .tp-select option { background:#1a1a1a; color:#fff; }
+
+    .tp-select.hour { width:56px; }
+    .tp-select.minute { width:46px; }
+    .tp-select.ampm { width:52px; }
+
+    .tp-sep { color:#888; font-weight:900; font-size:14px; margin:0 0px; flex-shrink:0; }
+
+    @@media (max-width:680px) {
+        .time-row { flex-direction:column; gap:14px; align-items:stretch; }
+        .time-picker { gap:6px; }
+        .tp-select { width:auto; flex:1 1 auto; min-width:45px; }
+        .tp-select.hour { flex:0 0 50px; width:50px; }
+        .tp-select.minute { flex:0 0 44px; width:44px; }
+        .tp-select.ampm { flex:0 0 52px; width:52px; }
+        .tp-icon { flex-shrink:0; }
+    }
+
+    .hidden-time { display:none; }
+</style>
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-2 ps-2">
+        <h2 style="font-weight: 700; letter-spacing: 1px; color: #fff;">
+            <i class="fas fa-futbol me-2" style="color: #00ff7f;"></i> Available Turfs
+        </h2>
+    </div>
+
+    <p style="color: #aaa; margin-bottom: 30px; padding-left: 10px;">
+        Explore turfs that are currently free and ready for walk-in bookings.
+    </p>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" style="background-color: rgba(255,77,77,0.1); border-left: 4px solid #ff4d4d; color: #ff4d4d;">
+            <i class="fas fa-exclamation-triangle me-2"></i> @ViewBag.ErrorMessage
         </div>
-        
-        <div class="col-md-4">
-            <div class="card bg-dark text-white p-3 border-success">
-                <h5>Box 2</h5>
-                <p>Status: <span class="text-success">Available</span></p>
-                <button class="btn btn-outline-success btn-sm">Book Now</button>
+    }
+
+    <div class="turf-grid">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var turf in Model)
+            {
+                <div class="turf-card">
+                    <div>
+                        <div class="turf-icon-wrapper">
+                            @if(turf.ResourceType != null && turf.ResourceType.ToLower().Contains("pool"))
+                            {
+                                <div style="position: relative; width: 45px; height: 45px; margin: 0 auto;">
+                                    <i class="fas fa-circle" style="font-size: 45px; color: #00ff7f; position: absolute; top: 0; left: 0;"></i>
+                                    <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #1a1a1a; font-weight: 900; font-size: 24px; z-index: 10; margin-top: 1px;">8</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="fas fa-layer-group" style="font-size: 35px; color: #00ff7f;"></i>
+                            }
+                        </div>
+
+                        <h4 class="turf-title">@turf.ResourceName</h4>
+                        <div class="turf-type">@turf.ResourceType</div>
+
+                        <div class="turf-details">
+                            <span style="color: #ddd; font-size: 14px;">
+                                <i class="fas fa-users me-1 text-secondary"></i> Capacity: <strong>@turf.Capacity</strong>
+                            </span>
+                        </div>
+
+                        <div class="mb-4">
+                            <span style="color: #00ff7f; font-size: 14px; font-weight: 600;">
+                                <span class="glow-dot me-2"></span> Available Now
+                            </span>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-turf-book w-100 mt-3" onclick="openModal(@turf.ResourceId, '@turf.ResourceName')">
+                        Go to Booking <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div style="grid-column: 1 / -1; background-color: #1a1a1a; border: 1px dashed #333; border-radius: 15px;" class="text-center py-5">
+                <i class="fas fa-calendar-times mb-3" style="font-size: 50px; color: #ff4d4d; opacity: 0.5;"></i>
+                <h4 class="text-white">All Turfs are Booked!</h4>
+                <p class="text-muted">There are currently no free turfs available for booking.</p>
             </div>
-        </div>
+        }
     </div>
 </div>
+
+<div id="bookingModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+    <div class="custom-modal" style="border:1px solid #333; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+        
+        <button onclick="closeModal()" style="position:absolute; top:20px; right:20px; background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;">&times;</button>
+        
+        <h3 style="color:#fff; margin-bottom:30px; font-weight:700;">
+            <i class="fas fa-calendar-check" style="color:#00ff7f; margin-right:10px;"></i> Book <span id="turfTitle" style="color:#00ff7f;"></span>
+        </h3>
+        
+        <form asp-controller="ReceptionistDashboard" asp-action="CreateWalkInBooking" method="post">
+            <input type="hidden" name="resourceId" id="resId">
+            
+            <div style="margin-bottom:20px;">
+                <label style="color:#aaa; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:1px;">Customer Name</label>
+                <input type="text" name="customerName" placeholder="Enter full name" required 
+                    style="width:100%; padding:14px; background:#222; border:1px solid #444; border-radius:10px; color:white; font-size:15px; outline:none;">
+            </div>
+
+            <div style="margin-bottom:25px;">
+                <label style="color:#aaa; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:1px;">Customer Mobile</label>
+                <input type="text" name="customerPhone" placeholder="Enter mobile number" required 
+                    style="width:100%; padding:14px; background:#222; border:1px solid #444; border-radius:10px; color:white; font-size:15px; outline:none;">
+            </div>
+
+            <div class="time-row">
+                <div class="time-box">
+                    <label class="tp-label">START TIME</label>
+                    <div class="time-picker">
+                        <div class="tp-icon"><i class="fas fa-clock"></i></div>
+                        <div class="tp-container" style="width:100%;">
+                            <select id="startHour" class="tp-select hour" aria-label="Start hour"></select>
+                            <span class="tp-sep">:</span>
+                            <select id="startMinute" class="tp-select minute" aria-label="Start minute"></select>
+                            <select id="startAmPm" class="tp-select ampm" aria-label="Start AM PM">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" name="startTime" id="startTimeHidden">
+                </div>
+
+                <div class="time-box">
+                    <label class="tp-label">END TIME</label>
+                    <div class="time-picker">
+                        <div class="tp-icon"><i class="fas fa-clock"></i></div>
+                        <div class="tp-container" style="width:100%;">
+                            <select id="endHour" class="tp-select hour" aria-label="End hour"></select>
+                            <span class="tp-sep">:</span>
+                            <select id="endMinute" class="tp-select minute" aria-label="End minute"></select>
+                            <select id="endAmPm" class="tp-select ampm" aria-label="End AM PM">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" name="endTime" id="endTimeHidden">
+                </div>
+            </div>
+
+            <button type="submit" 
+                style="width:100%; padding:16px; background:#00ff7f; color:black; border:none; border-radius:10px; font-weight:800; font-size:16px; cursor:pointer; transition:0.3s;">
+                Confirm Booking
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id, name) {
+        document.getElementById('resId').value = id;
+        document.getElementById('turfTitle').innerText = name;
+        
+        document.getElementById('bookingModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('bookingModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        var modal = document.getElementById('bookingModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
+
+<script>
+    (function(){
+        function populate(sel, start, end, step){
+            if(!sel) return;
+            for(var i=start;i<=end;i+=step){
+                var v = i.toString().padStart(2,'0');
+                var opt = document.createElement('option'); 
+                opt.value = v; 
+                opt.text = v; 
+                sel.appendChild(opt);
+            }
+        }
+
+        function initTimePicker() {
+            var startHour = document.getElementById('startHour');
+            var startMinute = document.getElementById('startMinute');
+            var startAmPm = document.getElementById('startAmPm');
+            var endHour = document.getElementById('endHour');
+            var endMinute = document.getElementById('endMinute');
+            var endAmPm = document.getElementById('endAmPm');
+
+            if(!startHour || !startMinute || !startAmPm || !endHour || !endMinute || !endAmPm) {
+                console.log('Waiting for selects...');
+                setTimeout(initTimePicker, 100);
+                return;
+            }
+
+            startHour.innerHTML = '';
+            endHour.innerHTML = '';
+            startMinute.innerHTML = '';
+            endMinute.innerHTML = '';
+
+            for(var h=1;h<=12;h++){ 
+                var o1=document.createElement('option'); 
+                o1.value = h.toString().padStart(2,'0'); 
+                o1.text = h.toString().padStart(2,'0'); 
+                startHour.appendChild(o1);
+
+                var o2=document.createElement('option'); 
+                o2.value = h.toString().padStart(2,'0'); 
+                o2.text = h.toString().padStart(2,'0'); 
+                endHour.appendChild(o2);
+            }
+
+            populate(startMinute,0,55,5); 
+            populate(endMinute,0,55,5);
+
+                    function timeToHidden(hSel,mSel,apSel,hidden){
+                        var h = parseInt(hSel.value,10);
+                        var m = parseInt(mSel.value,10);
+                        var ap = apSel.value;
+                        if(isNaN(h) || isNaN(m)) { hidden.value=''; return; }
+                        if(ap==='PM' && h<12) h+=12;
+                        if(ap==='AM' && h===12) h=0;
+                        hidden.value = h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
+                    }
+
+                    function attach(hSel,mSel,apSel,hidden){
+                        [hSel,mSel,apSel].forEach(function(el){ el.addEventListener('change', function(){ timeToHidden(hSel,mSel,apSel,hidden); }); });
+                    }
+
+                    attach(startHour,startMinute,startAmPm, document.getElementById('startTimeHidden'));
+                    attach(endHour,endMinute,endAmPm, document.getElementById('endTimeHidden'));
+
+                    var now = new Date();
+                    var mins = now.getMinutes();
+                    var rounded = (mins < 15 ? 0 : (mins < 45 ? 30 : 0));
+                    if(rounded===0) now.setHours(now.getHours()+1);
+                    now.setMinutes(rounded,0,0);
+
+                    function setSelects(prefix,dt){
+                        var hr = dt.getHours(); 
+                        var ap = hr>=12? 'PM':'AM'; 
+                        var hr12 = hr%12; 
+                        if(hr12===0) hr12=12;
+
+                        var hourSel = document.getElementById(prefix+'Hour');
+                        var minSel = document.getElementById(prefix+'Minute');
+                        var apSel = document.getElementById(prefix+'AmPm');
+
+                        if(hourSel) hourSel.value = hr12.toString().padStart(2,'0');
+                        if(minSel) minSel.value = dt.getMinutes().toString().padStart(2,'0');
+                        if(apSel) apSel.value = ap;
+
+                        var hiddenId = prefix + 'TimeHidden';
+                        var hidden = document.getElementById(hiddenId);
+                        if(hidden && hourSel && minSel && apSel) {
+                            timeToHidden(hourSel, minSel, apSel, hidden);
+                        }
+                    }
+
+                    setSelects('start', now);
+                    var end = new Date(now.getTime()+60*60*1000);
+                    setSelects('end', end);
+
+                    function ensureEndAfterStart(){
+                        var sh = document.getElementById('startHour').value; 
+                        var sm = document.getElementById('startMinute').value; 
+                        var sap = document.getElementById('startAmPm').value;
+                        var eh = document.getElementById('endHour').value; 
+                        var em = document.getElementById('endMinute').value; 
+                        var eap = document.getElementById('endAmPm').value;
+
+                        function toDate(h,m,ap){ 
+                            var hh=parseInt(h,10); 
+                            if(ap==='PM' && hh<12) hh+=12; 
+                            if(ap==='AM' && hh===12) hh=0; 
+                            var d=new Date(); 
+                            d.setHours(hh, parseInt(m,10),0,0); 
+                            return d; 
+                        }
+
+                        var sdt=toDate(sh,sm,sap); 
+                        var edt=toDate(eh,em,eap);
+                        if(edt.getTime() <= sdt.getTime()+29*60000){
+                            var newEnd = new Date(sdt.getTime()+60*60000);
+                            setSelects('end', newEnd);
+                        }
+                        timeToHidden(document.getElementById('startHour'),document.getElementById('startMinute'),document.getElementById('startAmPm'), document.getElementById('startTimeHidden'));
+                        timeToHidden(document.getElementById('endHour'),document.getElementById('endMinute'),document.getElementById('endAmPm'), document.getElementById('endTimeHidden'));
+                    }
+
+                    ['startHour','startMinute','startAmPm'].forEach(function(id){ 
+                        var el=document.getElementById(id); 
+                        if(el) el.addEventListener('change', ensureEndAfterStart); 
+                    });
+                    ['endHour','endMinute','endAmPm'].forEach(function(id){ 
+                        var el=document.getElementById(id); 
+                        if(el) el.addEventListener('change', function(){ 
+                            timeToHidden(document.getElementById('endHour'),document.getElementById('endMinute'),document.getElementById('endAmPm'), document.getElementById('endTimeHidden')); 
+                        }); 
+                    });
+                }
+
+                var modal = document.getElementById('bookingModal');
+                if(modal) {
+                    var observer = new MutationObserver(function(mutations) {
+                        if(modal.style.display !== 'none') {
+                            initTimePicker();
+                        }
+                    });
+                    observer.observe(modal, {attributes: true});
+                }
+
+                if(document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initTimePicker);
+                } else {
+                    setTimeout(initTimePicker, 100);
+                }
+
+            })();
+        </script>
