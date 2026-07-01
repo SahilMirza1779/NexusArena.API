@@ -5,6 +5,7 @@ using System.Text;
 
 namespace NexusArena.Web.Controllers
 {
+    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     public class ReviewController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -12,7 +13,7 @@ namespace NexusArena.Web.Controllers
         public ReviewController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/"); // API ka port check kar lena
+            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
         [HttpGet]
@@ -26,6 +27,7 @@ namespace NexusArena.Web.Controllers
 
             try
             {
+                // 1. Fetch Past Reviews
                 var reviewResp = await _httpClient.GetAsync("api/Review/my-reviews");
                 if (reviewResp.IsSuccessStatusCode)
                 {
@@ -34,7 +36,8 @@ namespace NexusArena.Web.Controllers
                     viewModel.MyReviews = data?.data ?? new List<ReviewItemViewModel>();
                 }
 
-                var arenaResp = await _httpClient.GetAsync("api/Explore/arenas");
+                // 2. 🌟 FIX: Fetch Arenas (Turfs) from the new endpoint
+                var arenaResp = await _httpClient.GetAsync("api/Review/arenas");
                 if (arenaResp.IsSuccessStatusCode)
                 {
                     var json = await arenaResp.Content.ReadAsStringAsync();
@@ -55,7 +58,6 @@ namespace NexusArena.Web.Controllers
         {
             var token = Request.Cookies["JWToken"];
             if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
-
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var reviewData = new { ArenaId = arenaId, Rating = rating, Comment = comment };
@@ -63,15 +65,11 @@ namespace NexusArena.Web.Controllers
 
             var response = await _httpClient.PostAsync("api/Review/add", content);
 
-            if (response.IsSuccessStatusCode)
-                TempData["Success"] = "Aapka Review successfully submit ho gaya!";
-            else
-                TempData["Error"] = "Review add karne mein koi problem aayi.";
+            if (response.IsSuccessStatusCode) TempData["Success"] = "Your review was submitted successfully! ⭐";
+            else TempData["Error"] = "Failed to add review.";
 
             return RedirectToAction("Index");
         }
-
-        // YAHAN HAIN NAYE EDIT AUR DELETE METHODS (Jinpe 405 error aa raha tha) 👇
 
         [HttpPost]
         public async Task<IActionResult> Edit(int reviewId, int arenaId, int rating, string comment)
@@ -85,10 +83,8 @@ namespace NexusArena.Web.Controllers
 
             var response = await _httpClient.PutAsync($"api/Review/update/{reviewId}", content);
 
-            if (response.IsSuccessStatusCode)
-                TempData["Success"] = "Review successfully update ho gaya!";
-            else
-                TempData["Error"] = "Review update nahi ho paya.";
+            if (response.IsSuccessStatusCode) TempData["Success"] = "Review successfully updated! ✅";
+            else TempData["Error"] = "Failed to update review.";
 
             return RedirectToAction("Index");
         }
@@ -102,10 +98,8 @@ namespace NexusArena.Web.Controllers
 
             var response = await _httpClient.DeleteAsync($"api/Review/delete/{reviewId}");
 
-            if (response.IsSuccessStatusCode)
-                TempData["Success"] = "Review successfully delete ho gaya!";
-            else
-                TempData["Error"] = "Review delete nahi ho paya.";
+            if (response.IsSuccessStatusCode) TempData["Success"] = "Review successfully deleted! 🗑️";
+            else TempData["Error"] = "Failed to delete review.";
 
             return RedirectToAction("Index");
         }
@@ -130,6 +124,5 @@ namespace NexusArena.Web.Controllers
     }
 
     public class ReviewArenaResponse { public List<ReviewArenaModel>? data { get; set; } }
-
     public class ReviewArenaModel { public int arenaId { get; set; } public string? name { get; set; } }
 }

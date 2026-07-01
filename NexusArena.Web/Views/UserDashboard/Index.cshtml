@@ -1,0 +1,205 @@
+﻿@model NexusArena.Web.Controllers.PlayerDashboardMainViewModel
+
+@{
+    ViewData["Title"] = "My Dashboard";
+    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+}
+
+<style>
+    .timer-section-box {
+        background: linear-gradient(135deg, #091f11 0%, #060d09 100%); border: 1px solid #00ff66; border-radius: 14px;
+        padding: 25px 35px; margin-bottom: 35px; box-shadow: 0 8px 25px rgba(0, 255, 102, 0.12);
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+    }
+    .timer-flex { display: flex; gap: 12px; }
+    .timer-unit-card {
+        background: #000000; border: 1px solid #1f4229; border-radius: 10px; padding: 12px 18px; text-align: center;
+        min-width: 75px; box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.05);
+    }
+    .timer-unit-card span { display: block; color: #00ff66; font-size: 2.1rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .timer-unit-card small { color: #777777; font-size: 0.7rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+
+    .dashboard-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 35px; }
+    .stat-premium-card {
+        background: linear-gradient(145deg, #141414, #1c1c1c); border: 1px solid #2b2b2b; border-radius: 14px; padding: 25px;
+        display: flex; align-items: center; gap: 20px; position: relative; overflow: hidden;
+    }
+    .stat-premium-card::after { content: ''; position: absolute; left: 0; bottom: 0; width: 3px; height: 100%; }
+    .card-blue::after { background: #00c3ff; box-shadow: 0 0 8px #00c3ff; }
+    .card-green::after { background: #00ff66; box-shadow: 0 0 8px #00ff66; }
+    .card-yellow::after { background: #ffcc00; box-shadow: 0 0 8px #ffcc00; }
+    
+    .icon-wrapper { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+    
+    .game-list-container { background: #141414; border: 1px solid #232323; border-radius: 14px; padding: 30px; }
+    .game-row-item {
+        background: #1a1a1a; border: 1px solid #262626; border-radius: 10px; padding: 20px;
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; transition: 0.3s;
+    }
+    .game-row-item:hover { border-color: #00ff66; background: #1d2420; }
+</style>
+
+<div style="max-width: 1150px; margin: 0 auto; padding-bottom: 40px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;">
+        <div>
+            <h1 style="margin: 0; font-size: 2.6rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Welcome back, <span style="color: #00ff66;">Zubeir</span> ⚡</h1>
+            <p style="color: #888; font-size: 1.05rem; margin-top: 8px;">Here is your turf activity and upcoming schedule.</p>
+        </div>
+        <a href="/Explore/Index" style="background: #00ff66; color: #000; text-decoration: none; padding: 12px 25px; border-radius: 8px; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px;" onmouseover="this.style.background='#00cc52'" onmouseout="this.style.background='#00ff66'">
+            <i class="fas fa-plus"></i> Book New Turf
+        </a>
+    </div>
+
+    <div class="dashboard-stats-grid">
+        <div class="stat-premium-card card-blue">
+            <div class="icon-wrapper" style="background: rgba(0, 195, 255, 0.1); color: #00c3ff; border: 1px solid rgba(0, 195, 255, 0.2);"><i class="fas fa-futbol"></i></div>
+            <div>
+                <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Total Matches</div>
+                <div style="color: #fff; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.TotalMatches</div>
+            </div>
+        </div>
+        <div class="stat-premium-card card-green">
+            <div class="icon-wrapper" style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0, 255, 102, 0.2);"><i class="fas fa-calendar-alt"></i></div>
+            <div>
+                <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Upcoming Matches</div>
+                <div style="color: #fff; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.UpcomingMatches</div>
+            </div>
+        </div>
+        <div class="stat-premium-card card-yellow">
+            <div class="icon-wrapper" style="background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.2);"><i class="fas fa-star"></i></div>
+            <div>
+                <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Loyalty Points</div>
+                <div style="color: #ffcc00; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.LoyaltyPoints</div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.NextGames != null && Model.NextGames.Any())
+    {
+        var firstMatch = Model.NextGames.First();
+        bool isMatchLive = false;
+        
+        if (DateTime.TryParse(firstMatch.TargetDateTime, out DateTime matchTargetTime))
+        {
+            if (matchTargetTime <= DateTime.Now)
+            {
+                isMatchLive = true;
+            }
+        }
+
+        <div class="timer-section-box" id="live-timer-banner">
+            @if (isMatchLive)
+            {
+                <div style="width:100%; text-align:center; color:#00ff66; font-size:1.4rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">
+                    <i class='fas fa-play-circle'></i> Match is Live! Get on the turf pitch, Zubeir! ⚽
+                </div>
+            }
+            else
+            {
+                <div>
+                    <div style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0,255,102,0.3); display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                        ⚡ Next Kickoff Countdown
+                    </div>
+                    <h3 style="color: #fff; font-size: 1.8rem; font-weight: 800; margin: 10px 0 5px 0;">@firstMatch.ArenaName</h3>
+                    <p style="color: #aaa; margin: 0; font-size: 0.95rem; font-weight: 600;">
+                        <i class="far fa-clock" style="color: #00ff66; margin-right: 4px;"></i> @firstMatch.PlayDate | @firstMatch.TimeSlot
+                    </p>
+                </div>
+                <div class="timer-flex" id="timer-ui-wrap">
+                    <div class="timer-unit-card"><span id="days-val">00</span><small>Days</small></div>
+                    <div class="timer-unit-card"><span id="hours-val">00</span><small>Hrs</small></div>
+                    <div class="timer-unit-card"><span id="mins-val">00</span><small>Min</small></div>
+                    <div class="timer-unit-card"><span id="secs-val">00</span><small>Sec</small></div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="game-list-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #fff;">Your Next Games</h3>
+            <a href="/BookingHistory/Index" style="color: #00ff66; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 5px;">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+
+        @if (Model.NextGames != null && Model.NextGames.Any())
+        {
+            foreach (var match in Model.NextGames)
+            {
+                <div class="game-row-item">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 45px; height: 45px; background: rgba(0, 255, 102, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #00ff66; font-size: 1.2rem;">
+                            <i class="fas fa-running"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin: 0; color: #fff; font-size: 1.1rem; font-weight: 700;">@match.ArenaName</h4>
+                            <span style="color: #888; font-size: 0.85rem;"><i class="far fa-calendar-alt"></i> @match.PlayDate | <i class="far fa-clock"></i> @match.TimeSlot</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0, 255, 102, 0.2); padding: 5px 15px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; display: inline-block; margin-bottom: 5px;">
+                            @match.Status
+                        </span>
+                        <div style="color: #555; font-size: 0.75rem; font-weight: 600;">Booking ID: #@match.BookingId</div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div style="text-align: center; padding: 40px 0;">
+                <i class="fas fa-ghost" style="font-size: 2.5rem; color: #444; margin-bottom: 15px;"></i>
+                <h4 style="color: #aaa; margin: 0;">No schedule upcoming. Time to lock a turf pitch!</h4>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.addEventListener("pageshow", function (event) {
+            var historyTraversal = event.persisted || 
+                                   (typeof window.performance != "undefined" && window.performance.navigation.type === 2);
+            if (historyTraversal) {
+                window.location.reload();
+            }
+        });
+    </script>
+
+    @if (Model.NextGames != null && Model.NextGames.Any())
+    {
+        var targetMatch = Model.NextGames.First();
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var targetIsoString = '@targetMatch.TargetDateTime';
+                if (!targetIsoString) return;
+
+                var countDownDate = new Date(targetIsoString).getTime();
+
+                // 🌟 THE FIX 2: Timer sirf tab chalega jab UI par timer exist karta ho
+                if (document.getElementById("timer-ui-wrap")) {
+                    var interval = setInterval(function () {
+                        var now = new Date().getTime();
+                        var distance = countDownDate - now;
+
+                        if (distance < 0) {
+                            clearInterval(interval);
+                            document.getElementById("live-timer-banner").innerHTML = "<div style='width:100%; text-align:center; color:#00ff66; font-size:1.4rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;'><i class='fas fa-play-circle'></i> Match is Live! Get on the turf pitch, Zubeir! ⚽</div>";
+                            return;
+                        }
+
+                        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                        document.getElementById("days-val").innerText = String(days).padStart(2, '0');
+                        document.getElementById("hours-val").innerText = String(hours).padStart(2, '0');
+                        document.getElementById("mins-val").innerText = String(minutes).padStart(2, '0');
+                        document.getElementById("secs-val").innerText = String(seconds).padStart(2, '0');
+                    }, 1000);
+                }
+            });
+        </script>
+    }
+}

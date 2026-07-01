@@ -62,7 +62,9 @@ namespace NexusArena.Web.Controllers
                     if (role == "SuperAdmin" || role == "1") return RedirectToAction("Index", "SuperAdminDashboard");
                     if (role == "Owner" || role == "2" || role == "Turf Owner") return RedirectToAction("Index", "OwnerDashboard");
                     if (role == "Receptionist" || role == "3") return RedirectToAction("Index", "ReceptionistDashboard");
-                    if (role == "User" || role == "4") return RedirectToAction("Index", "Home");
+
+                    // 🌟 THE MAIN FIX: Login hote hi seedha naye VIP UserDashboard par jayega, purane Home par nahi!
+                    if (role == "User" || role == "4") return RedirectToAction("Index", "UserDashboard");
 
                     ViewBag.Error = "The system did not understand this role.";
                     return View();

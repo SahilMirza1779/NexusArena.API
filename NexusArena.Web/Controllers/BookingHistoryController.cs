@@ -1,6 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Net.Http;
+using System;
+using System.Linq;
 
 namespace NexusArena.Web.Controllers
 {
@@ -12,13 +17,9 @@ namespace NexusArena.Web.Controllers
         public BookingHistoryController()
         {
             _httpClient = new HttpClient();
-            // 🌟 DHAYAN RAHE: Agar aapka API port alag hai toh yahan update karein (e.g., 5092)
             _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
-        // ==========================================
-        // 1. GET: MY BOOKINGS LIST
-        // ==========================================
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -42,14 +43,14 @@ namespace NexusArena.Web.Controllers
                     ViewBag.Error = "Failed to fetch booking history.";
                 }
             }
-            catch (Exception ex) { ViewBag.Error = $"Connection Error: {ex.Message}"; }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Connection Error: {ex.Message}";
+            }
 
             return View(viewModel);
         }
 
-        // ==========================================
-        // 2. POST: CANCEL BOOKING
-        // ==========================================
         [HttpPost]
         public async Task<IActionResult> Cancel(int bookingId)
         {
@@ -61,17 +62,19 @@ namespace NexusArena.Web.Controllers
             try
             {
                 var response = await _httpClient.PutAsync($"api/BookingHistory/cancel/{bookingId}", null);
-                if (response.IsSuccessStatusCode) TempData["Success"] = "Your booking has been successfully cancelled.";
-                else TempData["Error"] = "Failed to cancel the booking. Please try again.";
+                if (response.IsSuccessStatusCode)
+                    TempData["Success"] = "Your booking has been successfully cancelled.";
+                else
+                    TempData["Error"] = "Failed to cancel the booking. It might be too late or already processed.";
             }
-            catch (Exception ex) { TempData["Error"] = $"Error: {ex.Message}"; }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error: {ex.Message}";
+            }
 
             return RedirectToAction("Index");
         }
 
-        // ==========================================
-        // 3. GET: VIEW VIP TICKET (NAYA METHOD) 🎟️
-        // ==========================================
         [HttpGet]
         public async Task<IActionResult> Ticket(int id)
         {
@@ -88,21 +91,24 @@ namespace NexusArena.Web.Controllers
                     var jsonString = await response.Content.ReadAsStringAsync();
                     var apiResult = JsonSerializer.Deserialize<BookingHistoryApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                    // Pura data me se sirf wahi ticket nikalo jis par click hua hai
                     var ticketData = apiResult?.data?.FirstOrDefault(b => b.BookingId == id);
-
                     if (ticketData == null) return NotFound("Ticket details not found in your account!");
 
                     return View(ticketData);
                 }
             }
-            catch (Exception ex) { return Content($"System Error Loading Ticket: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                return Content($"System Error Loading Ticket: {ex.Message}");
+            }
 
             return RedirectToAction("Index");
         }
     }
 
-    // 🌟 VIEW MODELS (Yahi par rahenge)
+    // =========================================================
+    // 🌟 VIEW MODELS (CanCancel added for frontend logic)
+    // =========================================================
     public class BookingHistoryApiResponse
     {
         public string? message { get; set; }
@@ -112,6 +118,7 @@ namespace NexusArena.Web.Controllers
     public class BookingHistoryViewModel
     {
         public int BookingId { get; set; }
+        public int ArenaId { get; set; }
         public string ArenaName { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string PlayDate { get; set; } = string.Empty;
@@ -121,5 +128,6 @@ namespace NexusArena.Web.Controllers
         public decimal PendingAmount { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public bool CanCancel { get; set; } // 🌟 Yahan decide hoga Cancel button dikhana hai ya nahi
     }
 }

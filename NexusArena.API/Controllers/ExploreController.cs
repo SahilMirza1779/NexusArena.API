@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NexusArena.API.Models;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
@@ -17,37 +20,38 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // 🌟 STEP 1: Upgraded API with Search and Area Filter
         [HttpGet("arenas")]
         public async Task<IActionResult> GetAllArenas([FromQuery] string? searchTerm, [FromQuery] string? area)
         {
             try
             {
-                // Pehle sirf Active arenas uthao (Sahil ne approve kiye hue)
-                var query = _context.Arenas.Where(a => a.IsActive == true).AsQueryable();
+                var query = _context.Arenas
+                    .Where(a => a.IsActive == true)
+                    .Include(a => a.Reviews)
+                    .AsQueryable();
 
-                // Agar Search bar me kuch type kiya hai
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     var term = searchTerm.ToLower();
-                    query = query.Where(a => a.Name.ToLower().Contains(term) || a.City.ToLower().Contains(term));
+                    query = query.Where(a => (a.Name != null && a.Name.ToLower().Contains(term)) ||
+                                             (a.City != null && a.City.ToLower().Contains(term)));
                 }
 
-                // Agar Dropdown se Area select kiya hai
                 if (!string.IsNullOrWhiteSpace(area))
                 {
                     var areaTerm = area.ToLower();
-                    query = query.Where(a => !string.IsNullOrEmpty(a.Location) && a.Location.ToLower().Contains(areaTerm));
+                    query = query.Where(a => a.Location != null && a.Location.ToLower().Contains(areaTerm));
                 }
 
-                // Data ko format karke return karo
                 var arenas = await query
                     .Select(a => new
                     {
                         ArenaId = a.ArenaId,
                         Name = a.Name,
                         Location = a.Location,
-                        City = a.City
+                        City = a.City,
+                        AverageRating = a.Reviews.Any() ? Math.Round(a.Reviews.Average(r => r.Rating), 1) : 0.0,
+                        TotalReviews = a.Reviews.Count()
                     })
                     .ToListAsync();
 
@@ -62,7 +66,6 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // Yeh aapka purana method as-it-is rahega
         [HttpGet("arena/{arenaId}/resources")]
         public async Task<IActionResult> GetArenaResources(int arenaId)
         {
@@ -75,7 +78,8 @@ namespace NexusArena.API.Controllers
                     {
                         ResourceId = r.ResourceId,
                         ResourceName = r.ResourceName,
-                        SportCategory = r.Category.Name,
+                        // 🌟 THE FIX: Agar Category null hui toh crash nahi hoga, "General" likh dega
+                        SportCategory = r.Category != null ? r.Category.Name : "General",
                         Capacity = r.Capacity
                     })
                     .ToListAsync();

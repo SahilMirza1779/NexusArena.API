@@ -22,7 +22,45 @@ namespace NexusArena.Web.Controllers
             return client;
         }
 
-        public IActionResult Index() => View();
+        // ================= DASHBOARD INDEX =========================
+        [HttpGet]
+        public IActionResult Index()
+        {
+            // Dummy data for testing UI
+            var viewModel = new OwnerDashboardViewModel
+            {
+                TodayRevenue = 5400,
+                LiveOccupancy = "75%",
+                UpcomingBookings = new List<UpcomingBookingViewModel>
+                {
+                    new UpcomingBookingViewModel { BookingId = 1, CustomerName = "Rahul Sharma", FacilityName = "Premium Box Cricket", TimeSlot = "04:00 PM - 05:00 PM", Status = "Confirmed" },
+                    new UpcomingBookingViewModel { BookingId = 2, CustomerName = "Aman Verma", FacilityName = "Pool Table 1", TimeSlot = "05:30 PM - 06:30 PM", Status = "Pending" },
+                    new UpcomingBookingViewModel { BookingId = 3, CustomerName = "Zubair Khan", FacilityName = "Pickleball Court", TimeSlot = "07:00 PM - 08:00 PM", Status = "Confirmed" }
+                }
+            };
+
+            ViewBag.Error = "Note: API data is hidden. Currently showing dummy data for UI testing.";
+
+            return View(viewModel);
+        }
+
+        // ================= CANCEL BOOKING BUTTON LOGIC =========================
+        [HttpPost]
+        public async Task<IActionResult> CancelBooking(int bookingId, string cancelReason)
+        {
+            // Yahan hum cancelReason receive kar rahe hain! 
+            // Jab real API hogi toh hum is reason ko API me bhejenge.
+
+            // using (var client = GetAuthenticatedClient()) {
+            //    var payload = new { BookingId = bookingId, Reason = cancelReason };
+            //    var json = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            //    var response = await client.PostAsync($"{_baseApiUrl}Booking/cancel", json);
+            // }
+
+            // Success message mein reason dikhayenge testing ke liye
+            TempData["Success"] = $"Booking #{bookingId} cancelled successfully! Reason: {cancelReason}";
+            return RedirectToAction("Index");
+        }
 
         // ================= MANAGE RESOURCES =========================
         [HttpGet]
@@ -47,26 +85,10 @@ namespace NexusArena.Web.Controllers
         {
             using (var client = GetAuthenticatedClient())
             {
-                // Yahan saari properties teri ResourceViewModel file ke mutabiq match kar di hain
-                var payload = new
-                {
-                    ResourceName = model.ResourceName,
-                    ResourceType = model.ResourceType,
-                    Capacity = model.Capacity,
-                    BasePricePerHour = model.BasePricePerHour,
-                    Dimensions = model.Dimensions,
-                    IncludedEquipment = model.IncludedEquipment,
-                    Description = model.Description
-                };
-
+                var payload = new { ResourceName = model.ResourceName, ResourceType = model.ResourceType, Capacity = model.Capacity, BasePricePerHour = model.BasePricePerHour };
                 var json = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-
                 var response = await client.PostAsync($"{_baseApiUrl}ResourceManager/add", json);
-
-                if (response.IsSuccessStatusCode)
-                    return RedirectToAction("ManageResources");
-
-                ViewBag.Error = "Error: " + response.StatusCode;
+                if (response.IsSuccessStatusCode) return RedirectToAction("ManageResources");
             }
             return RedirectToAction("ManageResources");
         }
@@ -95,22 +117,7 @@ namespace NexusArena.Web.Controllers
             return View(viewModel);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddTimeSlot(TimeSlotViewModel NewSlot)
-        {
-            using (var client = GetAuthenticatedClient())
-            {
-                var payload = new { ResourceId = NewSlot.ResourceId, StartTime = NewSlot.StartTime, EndTime = NewSlot.EndTime, BasePrice = NewSlot.BasePrice, IsPremium = NewSlot.IsPremium };
-                var json = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                var response = await client.PostAsync($"{_baseApiUrl}TimeSlot/add", json);
-
-                if (response.IsSuccessStatusCode) TempData["Success"] = "Time Slot successfully added!";
-                else TempData["Error"] = "Failed to add Slot.";
-            }
-            return RedirectToAction("PricingAndSlots");
-        }
-
-        // ================= STAFF / RECEPTIONIST ====================
+        // ================= STAFF / ARENAS ====================
         [HttpGet]
         public async Task<IActionResult> Staff()
         {
@@ -127,29 +134,6 @@ namespace NexusArena.Web.Controllers
             return View(viewModel);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddStaff(ManageReceptionistViewModel NewStaff)
-        {
-            using (var client = GetAuthenticatedClient())
-            {
-                var payload = new { FullName = NewStaff.FullName, Email = NewStaff.Email, Phone = NewStaff.Phone, Password = NewStaff.Password };
-                var json = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                var response = await client.PostAsync($"{_baseApiUrl}Staff/add", json);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    TempData["Success"] = "Staff Member successfully added!";
-                }
-                else
-                {
-                    var errorMsg = await response.Content.ReadAsStringAsync();
-                    TempData["Error"] = $"Failed: {response.StatusCode} - {errorMsg}";
-                }
-            }
-            return RedirectToAction("Staff");
-        }
-
-        // ================= MANAGE ARENAS ===========================
         [HttpGet]
         public async Task<IActionResult> ManageArenas()
         {
@@ -164,21 +148,6 @@ namespace NexusArena.Web.Controllers
                 }
             }
             return View(viewModel);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddArena(ManageArenaPageViewModel model)
-        {
-            using (var client = GetAuthenticatedClient())
-            {
-                var payload = new { Name = model.NewArena.Name, Location = model.NewArena.Location, City = model.NewArena.City };
-                var json = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                var response = await client.PostAsync($"{_baseApiUrl}Arena/add", json);
-
-                if (response.IsSuccessStatusCode) TempData["Success"] = "Arena successfully added!";
-                else TempData["Error"] = "Failed to add Arena.";
-            }
-            return RedirectToAction("ManageArenas");
         }
     }
 }

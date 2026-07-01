@@ -1,12 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NexusArena.Api.Models;
-using NexusArena.API.Models;
+using NexusArena.API.Models; // Make sure API ka 'A', 'P', 'I' capital ho
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // 🌟 Sirf login user access karega
     public class ProfileController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
@@ -16,47 +20,54 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // GET: api/Profile/GetUser/1
-        [HttpGet("GetUser/{id}")]
-        public async Task<IActionResult> GetUser(int id)
+        // GET: api/Profile/me (URL mein ID pass nahi karni)
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyProfile()
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound("User not found");
-            }
+            var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+                return Unauthorized(new { message = "Invalid Token." });
 
-            // Database se data nikal kar DTO mein daal rahe hain
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound("User not found");
+
             var profileData = new ProfileUpdateDto
             {
                 FullName = user.FullName,
                 Email = user.Email,
-                PhoneNumber = user.Phone // Yahan theek kar diya (user.Phone)
+                PhoneNumber = user.Phone // Map Phone directly
             };
 
             return Ok(profileData);
         }
 
-        // PUT: api/Profile/UpdateProfile/1
-        [HttpPut("UpdateProfile/{id}")]
-        public async Task<IActionResult> UpdateProfile(int id, [FromBody] ProfileUpdateDto model)
+        // PUT: api/Profile/update
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateDto model)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound(new { Message = "User not found." });
-            }
+            var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+                return Unauthorized();
 
-            // Naya data database wale user mein update kar rahe hain
-            // '!' lagane se null reference wali saari warnings khatam ho jayengi
-            user.FullName = model.FullName!;
-            user.Email = model.Email!;
-            user.Phone = model.PhoneNumber; // Yahan bhi theek kar diya (user.Phone)
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound(new { Message = "User not found." });
+
+            user.FullName = model.FullName ?? user.FullName;
+            user.Email = model.Email ?? user.Email;
+            user.Phone = model.PhoneNumber ?? user.Phone;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Profile updated successfully!" });
         }
+    }
+
+    // DTO Class Yahi Rakh Lein (Alag file ki zaroorat nahi)
+    public class ProfileUpdateDto
+    {
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
     }
 }
