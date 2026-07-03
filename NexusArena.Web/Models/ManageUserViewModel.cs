@@ -1,4 +1,6 @@
-﻿namespace NexusArena.Web.Models
+﻿#nullable disable
+
+namespace NexusArena.Web.Models
 {
     public class ManageUserViewModel
     {

@@ -3,7 +3,7 @@
     Layout = "~/Views/Shared/_PlayerLayout.cshtml";
     
     // Total aur Half price
-    decimal totalAmount = ViewBag.Price;
+    decimal totalAmount = ViewBag.TotalBill != null ? Convert.ToDecimal(ViewBag.TotalBill) : 0;
     decimal halfAmount = totalAmount / 2;
 }
 
@@ -11,7 +11,7 @@
     .review-wrapper { max-width: 650px; margin: 40px auto; padding-bottom: 50px; }
     
     .page-header { margin-bottom: 30px; text-align: center; }
-    .page-header h1 { margin: 0; color: #fff; font-size: 32px; font-weight: 800; }
+    .page-header h1 { margin: 0; color: #fff; font-size: 32px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
     .page-header h1 span { color: #00ff7f; }
     .page-header p { margin: 10px 0 0; color: #aaa; font-size: 15px; }
 
@@ -52,7 +52,6 @@
 </style>
 
 <div class="review-wrapper">
-    
     <div class="page-header">
         <h1>Review <span>Booking</span> 📋</h1>
         <p>Choose your payment option to secure the turf.</p>
@@ -63,13 +62,24 @@
         <div class="details-box">
             <p>Match Details</p>
             <div class="detail-row"><i class="fas fa-calendar-day"></i> @ViewBag.Date</div>
-            <div class="detail-row"><i class="far fa-clock"></i> @ViewBag.StartTime - @ViewBag.EndTime</div>
+            
+            @if (ViewBag.BookingMode == "Hourly")
+            {
+                <div class="detail-row"><i class="far fa-clock"></i> @ViewBag.StartTime to @ViewBag.EndTime</div>
+            }
+            else
+            {
+                <div class="detail-row"><i class="fas fa-trophy"></i> Tournament: @ViewBag.TournamentPackage</div>
+            }
         </div>
 
-        <form method="post" action="/Booking/Confirm" id="paymentForm">
+        <form method="post" action="@Url.Action("Confirm", "Booking")" id="paymentForm">
             <input type="hidden" name="arenaId" value="@ViewBag.ArenaId" />
-            <input type="hidden" name="slotId" value="@ViewBag.SlotId" />
             <input type="hidden" name="playDate" value="@ViewBag.Date" />
+            <input type="hidden" name="startTime" value="@ViewBag.StartTime" />
+            <input type="hidden" name="endTime" value="@ViewBag.EndTime" />
+            <input type="hidden" name="bookingMode" value="@ViewBag.BookingMode" />
+            <input type="hidden" name="tournamentPackage" value="@ViewBag.TournamentPackage" />
             
             <h3 class="payment-title"><i class="fas fa-wallet" style="color: #00ff7f; margin-right: 8px;"></i> Select Payment Option</h3>
 
@@ -104,7 +114,7 @@
         </form>
         
         <a href="javascript:history.back()" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Go Back
+            <i class="fas fa-arrow-left"></i> Go Back to Edit
         </a>
     </div>
 </div>
@@ -113,11 +123,9 @@
     function updatePrice(type, amount) {
         document.getElementById('displayAmount').innerText = '₹ ' + amount;
 
-        // Remove active class from both
         document.getElementById('opt-full').classList.remove('active');
         document.getElementById('opt-half').classList.remove('active');
 
-        // Add active class to selected
         if(type === 'Full') document.getElementById('opt-full').classList.add('active');
         if(type === 'Half') document.getElementById('opt-half').classList.add('active');
     }

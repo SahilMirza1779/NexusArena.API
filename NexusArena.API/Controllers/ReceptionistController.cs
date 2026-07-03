@@ -30,7 +30,7 @@ namespace NexusArena.API.Controllers
                 var todaysBookings = await _context.Bookings
                     .Include(b => b.User)
                     .Include(b => b.Resource)
-                    .Include(b => b.Slot)
+                    // 🌟 FIX: Purana Slot hata diya
                     .Where(b => b.BookingDate == today
                              && b.Status != "Cancelled"
                              && b.Status != "Completed")
@@ -46,7 +46,8 @@ namespace NexusArena.API.Controllers
                     BookingId = b.BookingId,
                     CustomerName = b.User?.FullName ?? "Walk-in Customer",
                     TurfName = b.Resource?.ResourceName ?? "Unknown Turf",
-                    TimeSlot = b.Slot != null ? $"{b.Slot.StartTime} - {b.Slot.EndTime}" : "N/A",
+                    // 🌟 FIX: Naye StartTime aur EndTime ka use
+                    TimeSlot = b.StartTime != null ? $"{b.StartTime} - {b.EndTime}" : "N/A",
                     PendingAmount = Math.Max(0, b.TotalAmount - b.AmountPaid),
                     IsTimeUpWarning = false
                 }).ToList();
@@ -79,8 +80,8 @@ namespace NexusArena.API.Controllers
                 .Select(b => new
                 {
                     b.BookingId,
-                    CustomerName = b.User.FullName,
-                    ResourceName = b.Resource.ResourceName,
+                    CustomerName = b.User!.FullName,
+                    ResourceName = b.Resource!.ResourceName,
                     b.BookingDate,
                     b.Status
                 }).ToList();
@@ -91,19 +92,16 @@ namespace NexusArena.API.Controllers
         [HttpPost("walk-in-booking")]
         public IActionResult WalkInBooking([FromBody] WalkInBookingRequest request)
         {
-            var slot = _context.TimeSlots.FirstOrDefault(s => s.SlotId == request.SlotId);
-
-            decimal actualPrice = slot != null ? slot.BasePrice : 0;
-
+            // 🌟 TEMPORARY FIX: Jab naya engine banayenge toh isko upgrade karenge
             var newBooking = new Booking
             {
                 UserId = request.CustomerId,
                 ResourceId = request.ResourceId,
-                SlotId = request.SlotId,
                 BookingDate = request.BookingDate,
                 Status = "Confirmed",
-                TotalAmount = actualPrice,
-                AmountPaid = 0
+                TotalAmount = 0,
+                AmountPaid = 0,
+                BookingMode = "Hourly"
             };
 
             _context.Bookings.Add(newBooking);
@@ -135,14 +133,14 @@ namespace NexusArena.API.Controllers
                 var history = await _context.Bookings
                     .Include(b => b.User)
                     .Include(b => b.Resource)
-                    .Include(b => b.Slot)
-                    .OrderByDescending(b => b.BookingDate) 
+                    .OrderByDescending(b => b.BookingDate)
                     .Select(b => new {
                         BookingId = b.BookingId,
                         CustomerName = b.User != null ? b.User.FullName : "Walk-in",
                         TurfName = b.Resource != null ? b.Resource.ResourceName : "-",
                         BookingDate = b.BookingDate,
-                        TimeSlot = b.Slot != null ? $"{b.Slot.StartTime} - {b.Slot.EndTime}" : "-",
+                        // 🌟 FIX: Naye StartTime aur EndTime ka use
+                        TimeSlot = b.StartTime != null ? $"{b.StartTime} - {b.EndTime}" : "-",
                         Status = b.Status,
                         TotalAmount = b.TotalAmount,
                         AmountPaid = b.AmountPaid
@@ -176,7 +174,6 @@ namespace NexusArena.API.Controllers
         public async Task<IActionResult> GetAvailableTurfs()
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
-            var now = TimeOnly.FromDateTime(DateTime.Now);
 
             var activeBookings = await _context.Bookings
                 .Where(b => b.BookingDate == today && b.Status == "CheckedIn")
@@ -192,13 +189,11 @@ namespace NexusArena.API.Controllers
         }
     }
 
-
+    // 🌟 FIX: Class uncomment kar di aur SlotId hata diya
     public class WalkInBookingRequest
     {
         public int CustomerId { get; set; }
         public int ResourceId { get; set; }
-        public int SlotId { get; set; }
         public DateOnly BookingDate { get; set; }
     }
-
 }

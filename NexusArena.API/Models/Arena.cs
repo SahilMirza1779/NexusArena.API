@@ -1,27 +1,30 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+﻿#nullable enable
+using System;
+using System.Collections.Generic;
 
-namespace NexusArena.API.Models
+namespace NexusArena.API.Models;
+
+public partial class Arena
 {
-    public class Arena
-    {
-        [Key]
-        public int ArenaId { get; set; }
-        public int OwnerId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Location { get; set; } = string.Empty;
-        public string City { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
+    public int ArenaId { get; set; }
+    public int OwnerId { get; set; }
+    public string Name { get; set; } = null!;
+    public string? Location { get; set; }
+    public string City { get; set; } = null!;
+    public bool? IsActive { get; set; }
 
-        // --- YEH HAIN WO PROPERTIES JO TERE DOST KA CODE DHOONDH RAHA THA ---
-        [JsonIgnore]
-        public virtual User? Owner { get; set; }
-        [JsonIgnore]
-        public virtual ICollection<Equipment>? Equipment { get; set; }
-        [JsonIgnore]
-        public virtual ICollection<Resource>? Resources { get; set; }
-        [JsonIgnore]
-        public virtual ICollection<Review>? Reviews { get; set; }
-    }
+    // 🌟 NAYE COLUMNS (Prices) YAHAN ADD HUI HAIN
+    public decimal HourlyRegularPrice { get; set; }
+    public decimal HourlyPeakPrice { get; set; }
+    public decimal HalfDayMorningPrice { get; set; }
+    public decimal HalfDayEveningPrice { get; set; }
+    public decimal FullDayPrice { get; set; }
+
+    public virtual ICollection<Equipment> Equipment { get; set; } = new List<Equipment>();
+    public virtual User Owner { get; set; } = null!;
+    public virtual ICollection<Resource> Resources { get; set; } = new List<Resource>();
+    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+    // 🌟 MAPPING RELATION YAHAN ADD HUA HAI
+    public virtual ICollection<ArenaSport> ArenaSports { get; set; } = new List<ArenaSport>();
 }

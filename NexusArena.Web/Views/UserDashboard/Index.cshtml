@@ -51,108 +51,111 @@
         </a>
     </div>
 
-    <div class="dashboard-stats-grid">
-        <div class="stat-premium-card card-blue">
-            <div class="icon-wrapper" style="background: rgba(0, 195, 255, 0.1); color: #00c3ff; border: 1px solid rgba(0, 195, 255, 0.2);"><i class="fas fa-futbol"></i></div>
-            <div>
-                <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Total Matches</div>
-                <div style="color: #fff; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.TotalMatches</div>
-            </div>
-        </div>
-        <div class="stat-premium-card card-green">
-            <div class="icon-wrapper" style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0, 255, 102, 0.2);"><i class="fas fa-calendar-alt"></i></div>
-            <div>
-                <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Upcoming Matches</div>
-                <div style="color: #fff; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.UpcomingMatches</div>
-            </div>
-        </div>
-        <div class="stat-premium-card card-yellow">
-            <div class="icon-wrapper" style="background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.2);"><i class="fas fa-star"></i></div>
-            <div>
-                <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Loyalty Points</div>
-                <div style="color: #ffcc00; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.LoyaltyPoints</div>
-            </div>
-        </div>
-    </div>
-
-    @if (Model.NextGames != null && Model.NextGames.Any())
+    @if (Model != null)
     {
-        var firstMatch = Model.NextGames.First();
-        bool isMatchLive = false;
-        
-        if (DateTime.TryParse(firstMatch.TargetDateTime, out DateTime matchTargetTime))
-        {
-            if (matchTargetTime <= DateTime.Now)
-            {
-                isMatchLive = true;
-            }
-        }
-
-        <div class="timer-section-box" id="live-timer-banner">
-            @if (isMatchLive)
-            {
-                <div style="width:100%; text-align:center; color:#00ff66; font-size:1.4rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">
-                    <i class='fas fa-play-circle'></i> Match is Live! Get on the turf pitch, Zubeir! ⚽
-                </div>
-            }
-            else
-            {
+        <div class="dashboard-stats-grid">
+            <div class="stat-premium-card card-blue">
+                <div class="icon-wrapper" style="background: rgba(0, 195, 255, 0.1); color: #00c3ff; border: 1px solid rgba(0, 195, 255, 0.2);"><i class="fas fa-futbol"></i></div>
                 <div>
-                    <div style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0,255,102,0.3); display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                        ⚡ Next Kickoff Countdown
-                    </div>
-                    <h3 style="color: #fff; font-size: 1.8rem; font-weight: 800; margin: 10px 0 5px 0;">@firstMatch.ArenaName</h3>
-                    <p style="color: #aaa; margin: 0; font-size: 0.95rem; font-weight: 600;">
-                        <i class="far fa-clock" style="color: #00ff66; margin-right: 4px;"></i> @firstMatch.PlayDate | @firstMatch.TimeSlot
-                    </p>
+                    <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Total Matches</div>
+                    <div style="color: #fff; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.TotalMatches</div>
                 </div>
-                <div class="timer-flex" id="timer-ui-wrap">
-                    <div class="timer-unit-card"><span id="days-val">00</span><small>Days</small></div>
-                    <div class="timer-unit-card"><span id="hours-val">00</span><small>Hrs</small></div>
-                    <div class="timer-unit-card"><span id="mins-val">00</span><small>Min</small></div>
-                    <div class="timer-unit-card"><span id="secs-val">00</span><small>Sec</small></div>
+            </div>
+            <div class="stat-premium-card card-green">
+                <div class="icon-wrapper" style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0, 255, 102, 0.2);"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                    <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Upcoming Matches</div>
+                    <div style="color: #fff; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.UpcomingMatches</div>
                 </div>
-            }
-        </div>
-    }
-
-    <div class="game-list-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 15px;">
-            <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #fff;">Your Next Games</h3>
-            <a href="/BookingHistory/Index" style="color: #00ff66; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 5px;">View All <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="stat-premium-card card-yellow">
+                <div class="icon-wrapper" style="background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.2);"><i class="fas fa-star"></i></div>
+                <div>
+                    <div style="color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Loyalty Points</div>
+                    <div style="color: #ffcc00; font-size: 2.2rem; font-weight: 800; margin-top: 2px;">@Model.LoyaltyPoints</div>
+                </div>
+            </div>
         </div>
 
         @if (Model.NextGames != null && Model.NextGames.Any())
         {
-            foreach (var match in Model.NextGames)
+            var firstMatch = Model.NextGames.First();
+            bool isMatchLive = false;
+            
+            if (DateTime.TryParse(firstMatch.TargetDateTime, out DateTime matchTargetTime))
             {
-                <div class="game-row-item">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 45px; height: 45px; background: rgba(0, 255, 102, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #00ff66; font-size: 1.2rem;">
-                            <i class="fas fa-running"></i>
-                        </div>
-                        <div>
-                            <h4 style="margin: 0; color: #fff; font-size: 1.1rem; font-weight: 700;">@match.ArenaName</h4>
-                            <span style="color: #888; font-size: 0.85rem;"><i class="far fa-calendar-alt"></i> @match.PlayDate | <i class="far fa-clock"></i> @match.TimeSlot</span>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <span style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0, 255, 102, 0.2); padding: 5px 15px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; display: inline-block; margin-bottom: 5px;">
-                            @match.Status
-                        </span>
-                        <div style="color: #555; font-size: 0.75rem; font-weight: 600;">Booking ID: #@match.BookingId</div>
-                    </div>
-                </div>
+                if (matchTargetTime <= DateTime.Now)
+                {
+                    isMatchLive = true;
+                }
             }
-        }
-        else
-        {
-            <div style="text-align: center; padding: 40px 0;">
-                <i class="fas fa-ghost" style="font-size: 2.5rem; color: #444; margin-bottom: 15px;"></i>
-                <h4 style="color: #aaa; margin: 0;">No schedule upcoming. Time to lock a turf pitch!</h4>
+
+            <div class="timer-section-box" id="live-timer-banner">
+                @if (isMatchLive)
+                {
+                    <div style="width:100%; text-align:center; color:#00ff66; font-size:1.4rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">
+                        <i class='fas fa-play-circle'></i> Match is Live! Get on the turf pitch! ⚽
+                    </div>
+                }
+                else
+                {
+                    <div>
+                        <div style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0,255,102,0.3); display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                            ⚡ Next Kickoff Countdown
+                        </div>
+                        <h3 style="color: #fff; font-size: 1.8rem; font-weight: 800; margin: 10px 0 5px 0;">@firstMatch.ArenaName</h3>
+                        <p style="color: #aaa; margin: 0; font-size: 0.95rem; font-weight: 600;">
+                            <i class="far fa-clock" style="color: #00ff66; margin-right: 4px;"></i> @firstMatch.PlayDate | @firstMatch.TimeSlot
+                        </p>
+                    </div>
+                    <div class="timer-flex" id="timer-ui-wrap">
+                        <div class="timer-unit-card"><span id="days-val">00</span><small>Days</small></div>
+                        <div class="timer-unit-card"><span id="hours-val">00</span><small>Hrs</small></div>
+                        <div class="timer-unit-card"><span id="mins-val">00</span><small>Min</small></div>
+                        <div class="timer-unit-card"><span id="secs-val">00</span><small>Sec</small></div>
+                    </div>
+                }
             </div>
         }
-    </div>
+
+        <div class="game-list-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #fff;">Your Next Games</h3>
+                <a href="/BookingHistory/Index" style="color: #00ff66; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 5px;">View All <i class="fas fa-arrow-right"></i></a>
+            </div>
+
+            @if (Model.NextGames != null && Model.NextGames.Any())
+            {
+                foreach (var match in Model.NextGames)
+                {
+                    <div class="game-row-item">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 45px; height: 45px; background: rgba(0, 255, 102, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #00ff66; font-size: 1.2rem;">
+                                <i class="fas fa-running"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; color: #fff; font-size: 1.1rem; font-weight: 700;">@match.ArenaName</h4>
+                                <span style="color: #888; font-size: 0.85rem;"><i class="far fa-calendar-alt"></i> @match.PlayDate | <i class="far fa-clock"></i> @match.TimeSlot</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="background: rgba(0, 255, 102, 0.1); color: #00ff66; border: 1px solid rgba(0, 255, 102, 0.2); padding: 5px 15px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; display: inline-block; margin-bottom: 5px;">
+                                @match.Status
+                            </span>
+                            <div style="color: #555; font-size: 0.75rem; font-weight: 600;">Booking ID: #@match.BookingId</div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="text-align: center; padding: 40px 0;">
+                    <i class="fas fa-ghost" style="font-size: 2.5rem; color: #444; margin-bottom: 15px;"></i>
+                    <h4 style="color: #aaa; margin: 0;">No schedule upcoming. Time to lock a turf pitch!</h4>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @section Scripts {
@@ -166,7 +169,7 @@
         });
     </script>
 
-    @if (Model.NextGames != null && Model.NextGames.Any())
+    @if (Model != null && Model.NextGames != null && Model.NextGames.Any())
     {
         var targetMatch = Model.NextGames.First();
         <script>
@@ -176,7 +179,6 @@
 
                 var countDownDate = new Date(targetIsoString).getTime();
 
-                // 🌟 THE FIX 2: Timer sirf tab chalega jab UI par timer exist karta ho
                 if (document.getElementById("timer-ui-wrap")) {
                     var interval = setInterval(function () {
                         var now = new Date().getTime();
@@ -184,7 +186,7 @@
 
                         if (distance < 0) {
                             clearInterval(interval);
-                            document.getElementById("live-timer-banner").innerHTML = "<div style='width:100%; text-align:center; color:#00ff66; font-size:1.4rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;'><i class='fas fa-play-circle'></i> Match is Live! Get on the turf pitch, Zubeir! ⚽</div>";
+                            document.getElementById("live-timer-banner").innerHTML = "<div style='width:100%; text-align:center; color:#00ff66; font-size:1.4rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;'><i class='fas fa-play-circle'></i> Match is Live! Get on the turf pitch! ⚽</div>";
                             return;
                         }
 

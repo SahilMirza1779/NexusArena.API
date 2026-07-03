@@ -15,4 +15,9 @@
     <ProjectReference Include="..\NexusArena.API\NexusArena.API.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\css\" />
+    <Folder Include="wwwroot\js\" />
+  </ItemGroup>
+
 </Project>

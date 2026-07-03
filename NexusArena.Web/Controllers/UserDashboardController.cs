@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Text;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Net.Http;
@@ -14,10 +13,16 @@ namespace NexusArena.Web.Controllers
     {
         private readonly HttpClient _httpClient;
 
+        // 🌟 ENTERPRISE FIX: Caching serializer options (Solves CA1869 & IDE0090)
+        private static readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public UserDashboardController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/"); // API base port
+            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
         [HttpGet]
@@ -35,7 +40,7 @@ namespace NexusArena.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-                    var apiResult = JsonSerializer.Deserialize<PlayerDashboardOuterResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var apiResult = JsonSerializer.Deserialize<PlayerDashboardOuterResponse>(jsonString, _jsonOptions);
                     if (apiResult?.Data != null)
                     {
                         viewModel = apiResult.Data;
@@ -51,7 +56,6 @@ namespace NexusArena.Web.Controllers
         }
     }
 
-    // 🌟 UNIQUE DTOs TO PREVENT AMBIGUITY COMPILATION ERROR
     public class PlayerDashboardOuterResponse
     {
         public string? Message { get; set; }

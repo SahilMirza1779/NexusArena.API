@@ -1,123 +1,115 @@
-﻿@model IEnumerable<NexusArena.Web.Controllers.ExploreArenaViewModel>
-
+﻿@model IEnumerable<dynamic> 
 @{
     ViewData["Title"] = "Explore Turfs";
-    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+    Layout = "_PlayerLayout";
 }
 
 <style>
-    .explore-container { margin-top: 20px; max-width: 1200px; margin: 0 auto; padding-bottom: 50px; }
-    .page-header { margin-bottom: 30px; text-align: center; }
-    .page-header h2 { margin: 0; font-size: 3rem; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
-    .page-header h2 span { color: #00ff66; }
-    .page-header p { margin: 10px 0 0; color: #888; font-size: 1.1rem; }
+    .explore-header { text-align: center; margin-bottom: 40px; }
+    .explore-header h1 { font-size: 36px; font-weight: 900; color: #fff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .explore-header h1 span { color: #00ff7f; }
+    .explore-header p { color: #888; font-size: 16px; margin: 0; }
 
-    .search-container { background-color: #1a1a1a; border-radius: 12px; padding: 25px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 30px; }
-    .search-form { display: flex; gap: 15px; align-items: center; }
-    .form-control, .select-area { flex: 1; padding: 12px 15px; background-color: #222; border: 1px solid #333; color: white; border-radius: 6px; font-size: 14px; outline: none; transition: 0.3s; }
-    .select-area { flex: 0 0 200px; }
-    .form-control:focus, .select-area:focus { border-color: #00ff66; }
-
-    .btn-search { background-color: #00ff66; color: #000; border: none; padding: 12px 25px; border-radius: 6px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
-    .btn-search:hover { background-color: #00cc52; }
-    .btn-reset { background-color: transparent; color: #aaa; border: 1px solid #555; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: 800; text-transform: uppercase; transition: 0.3s; display: inline-block; }
-    .btn-reset:hover { background-color: #333; color: #fff; }
-
-    .error-msg { color: #ff4c4c; background-color: rgba(255, 76, 76, 0.1); padding: 12px 15px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; border: 1px solid rgba(255, 76, 76, 0.2); }
+    .search-bar-container { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #2a2a2a; display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 40px; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .search-input { flex-grow: 1; background: #0a0a0a; border: 1px solid #333; padding: 15px 20px; border-radius: 8px; color: #fff; font-size: 15px; outline: none; min-width: 250px; }
+    .search-input:focus { border-color: #00ff7f; }
+    .filter-select { background: #0a0a0a; border: 1px solid #333; padding: 15px 20px; border-radius: 8px; color: #fff; font-size: 15px; outline: none; cursor: pointer; min-width: 150px; flex-grow: 0; }
+    
+    .btn-search { background: #00ff7f; color: #000; border: none; padding: 15px 30px; border-radius: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; letter-spacing: 1px; white-space: nowrap; }
+    .btn-search:hover { background: #00cc66; box-shadow: 0 5px 15px rgba(0,255,127,0.3); }
+    .btn-reset { background: transparent; color: #888; border: 1px solid #333; padding: 15px 30px; border-radius: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+    .btn-reset:hover { background: #1a1a1a; color: #fff; border-color: #555; }
 
     .turf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
-    .turf-card { background: linear-gradient(145deg, #111, #1a1a1a); border-radius: 16px; border: 1px solid #2a2a2a; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: 0.3s; }
-    .turf-card:hover { transform: translateY(-10px); border-color: #00ff66; box-shadow: 0 15px 40px rgba(0, 255, 102, 0.2); }
+    .turf-card { background: #161616; border: 1px solid #2a2a2a; border-radius: 16px; overflow: hidden; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
+    .turf-card:hover { transform: translateY(-5px); border-color: #00ff7f; box-shadow: 0 10px 30px rgba(0,255,127,0.1); }
     
-    .turf-img-box { height: 180px; background: url('https://images.unsplash.com/photo-1518605368461-1ee7e28905fa?q=80&w=600&auto=format&fit=crop') center/cover; position: relative; }
-    .premium-badge { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); border: 1px solid #ffcc00; padding: 6px 12px; border-radius: 20px; color: #ffcc00; font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(5px); }
+    .turf-image { height: 200px; background: #0a0a0a; position: relative; border-bottom: 1px solid #2a2a2a; }
+    .badge-new { position: absolute; top: 15px; right: 15px; background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.3); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; z-index: 2; }
+    .badge-price { position: absolute; bottom: 15px; left: 15px; background: #00ff7f; color: #000; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 900; z-index: 2; }
+
+    .turf-info { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; }
+    .turf-title { color: #fff; font-size: 20px; font-weight: 800; margin: 0 0 10px 0; text-transform: uppercase; }
+    .turf-location { color: #888; font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+    .turf-tags { margin-bottom: 25px; flex-grow: 1; }
+    .tag { display: inline-block; background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.2); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
     
-    .turf-info { padding: 25px; }
-    .turf-title { margin: 0 0 10px 0; color: #fff; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
-    .turf-location { color: #888; font-size: 0.95rem; margin-bottom: 25px; display: flex; align-items: center; gap: 8px; }
-    .turf-location i { color: #00c3ff; }
-
-    .action-buttons { display: flex; gap: 10px; }
-    .btn-check { flex: 1; text-align: center; background: #00ff66; color: #000; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
-    .btn-check:hover { background: #00cc52; }
-    .btn-map { width: 45px; display: flex; justify-content: center; align-items: center; background-color: #2a2a2a; color: #ccc; border: 1px solid #333; border-radius: 8px; text-decoration: none; transition: 0.3s; }
-    .btn-map:hover { background-color: #333; color: #fff; border-color: #00c3ff; }
-
-    .no-data { text-align: center; padding: 50px; background-color: #111; border-radius: 16px; border: 1px dashed #333; color: #888; grid-column: 1 / -1; }
-    .no-data i { font-size: 3rem; color: #555; margin-bottom: 15px; }
+    .btn-reserve { display: block; text-align: center; width: 100%; background: transparent; color: #00ff7f; border: 1px solid #00ff7f; padding: 12px; border-radius: 8px; font-weight: 800; text-transform: uppercase; text-decoration: none; transition: 0.3s; letter-spacing: 1px; box-sizing: border-box; }
+    .turf-card:hover .btn-reserve { background: #00ff7f; color: #000; }
 </style>
 
-<div class="explore-container">
-    
-    <div class="page-header">
-        <h2>Explore <span style="color: #00ff66;">Turfs</span> 🌍</h2>
-        <p>Find the best premium arenas near you, check ratings, and lock your slot.</p>
-    </div>
-
-    @if (ViewBag.Error != null)
-    {
-        <div class="error-msg"><i class="fas fa-exclamation-circle"></i> @ViewBag.Error</div>
-    }
-
-    <div class="search-container">
-        <form method="get" action="/Explore/Index" class="search-form">
-            <input type="text" name="searchTerm" value="@ViewBag.CurrentSearch" class="form-control" placeholder="Search by Turf Name or City (e.g. Dream Box)">
-            <select name="area" class="select-area">
-                <option value="">All Areas</option>
-                <option value="Vesu" selected="@(ViewBag.CurrentArea == "Vesu" ? "selected" : null)">Vesu</option>
-                <option value="Adajan" selected="@(ViewBag.CurrentArea == "Adajan" ? "selected" : null)">Adajan</option>
-                <option value="Piplod" selected="@(ViewBag.CurrentArea == "Piplod" ? "selected" : null)">Piplod</option>
-                <option value="Pal" selected="@(ViewBag.CurrentArea == "Pal" ? "selected" : null)">Pal</option>
-            </select>
-            <button type="submit" class="btn-search"><i class="fas fa-search"></i> Search</button>
-            <a href="/Explore/Index" class="btn-reset">Reset</a>
-        </form>
-    </div>
-
-    <div class="turf-grid">
-        @if (Model != null && Model.Any())
-        {
-            foreach (var arena in Model)
-            {
-                <div class="turf-card">
-                    <div class="turf-img-box">
-                        <div class="premium-badge">
-                            <i class="fas fa-star"></i> 
-                            @if(arena.averageRating > 0)
-                            {
-                                <span>@arena.averageRating <span style="color: #aaa; font-size: 0.75rem; font-weight: 600;">(@arena.totalReviews)</span></span>
-                            }
-                            else
-                            {
-                                <span style="color: #aaa; font-size: 0.8rem;">New</span>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="turf-info">
-                        <h3 class="turf-title">@arena.name</h3>
-                        <div class="turf-location">
-                            <i class="fas fa-map-marker-alt"></i>
-                            @(string.IsNullOrEmpty(arena.location) ? "Location not updated" : arena.location), @arena.city
-                        </div>
-
-                        <div class="action-buttons">
-                            <a href="@Url.Action("SelectSlot", "Booking", new { arenaId = arena.arenaId })" class="btn-check">
-                                Book Now <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
-                            </a>
-                            <a href="https://maps.google.com/?q=@arena.name @arena.city" target="_blank" class="btn-map" title="View on Map"><i class="fas fa-map"></i></a>
-                        </div>
-                    </div>
-                </div>
-            }
-        }
-        else if (ViewBag.Error == null)
-        {
-            <div class="no-data">
-                <i class="fas fa-search"></i>
-                <h3 style="margin: 0; color: #fff;">No Turfs Available</h3>
-                <p style="margin: 5px 0 0; font-size: 13px;">Try changing your search text or selecting a different area.</p>
-            </div>
-        }
-    </div>
+<div class="explore-header">
+    <h1>Explore <span>Turfs</span> 🌍</h1>
+    <p>Find the best premium arenas, filter by sport, and lock your slot instantly.</p>
 </div>
+
+<div class="search-bar-container">
+    <input type="text" id="searchInput" class="search-input" placeholder="Search arena name..." value="@Context.Request.Query["searchTerm"]" />
+    
+    <select id="sportSelect" class="filter-select">
+        <option value="all">⚽ All Sports</option>
+        <option value="football" selected="@(Context.Request.Query["sport"] == "Football" ? "selected" : null)">Football</option>
+        <option value="cricket" selected="@(Context.Request.Query["sport"] == "Cricket" ? "selected" : null)">Cricket</option>
+    </select>
+    
+    <select id="areaSelect" class="filter-select">
+        <option value="all">📍 All Areas</option>
+        <option value="adajan" selected="@(Context.Request.Query["area"] == "Adajan" ? "selected" : null)">Adajan</option>
+        <option value="vesu" selected="@(Context.Request.Query["area"] == "Vesu" ? "selected" : null)">Vesu</option>
+    </select>
+    
+    <button type="button" id="searchBtn" class="btn-search"><i class="fas fa-search"></i> Search</button>
+    <button type="button" id="resetBtn" class="btn-reset" onclick="window.location.href='/Explore/Index'">Reset</button>
+</div>
+
+<!-- 🚨 YAHAN SE TURF GRID SHURU HO RAHA HAI 🚨 -->
+<div class="turf-grid">
+    
+    <div class="turf-card" data-turf-card>
+        <div class="turf-image" style="background-image: url('https://images.unsplash.com/photo-1518605368461-1e128222204c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center;">
+            <div class="badge-new"><i class="fas fa-star"></i> New</div>
+            <div class="badge-price">Starts ₹1200.00/hr</div>
+        </div>
+        <div class="turf-info">
+            <h3 class="turf-title">DREAM BOX CRICKET</h3>
+            <div class="turf-location"><i class="fas fa-map-marker-alt" style="color:#00c3ff;"></i> Vesu, Surat</div>
+            <div class="turf-tags">
+                <span class="tag">Multi-Sport Arena</span>
+            </div>
+            <a href="/Booking/SelectSlot?arenaId=1" class="btn-reserve">Reserve Slot ⚡</a>
+        </div>
+    </div>
+    
+</div> <!-- 🚨 YEH WALA DIV MISSING THA! JISKE LIYE ERROR AA RAHA THA 🚨 -->
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            function runFilter() {
+                const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
+                const sportVal = document.getElementById("sportSelect").value.toLowerCase();
+                const areaVal = document.getElementById("areaSelect").value.toLowerCase();
+
+                const cards = document.querySelectorAll("[data-turf-card]");
+                
+                cards.forEach(card => {
+                    const text = card.innerText.toLowerCase();
+                    let show = true;
+
+                    if (searchVal && !text.includes(searchVal)) show = false;
+                    if (sportVal !== 'all' && !text.includes(sportVal)) show = false;
+                    if (areaVal !== 'all' && !text.includes(areaVal)) show = false;
+
+                    card.style.display = show ? "block" : "none";
+                });
+            }
+
+            document.getElementById("searchBtn").addEventListener("click", runFilter);
+
+            if (window.location.search) {
+                runFilter();
+            }
+        });
+    </script>
+}

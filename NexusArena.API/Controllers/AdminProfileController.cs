@@ -18,12 +18,12 @@ namespace NexusArena.API.Controllers
 
         public class ProfileDto
         {
-            public string FullName { get; set; }
-            public string DisplayName { get; set; }
-            public string Email { get; set; }
-            public string Phone { get; set; }
-            public string Location { get; set; }
-            public string Role { get; set; }
+            public string FullName { get; set; } = string.Empty;
+            public string DisplayName { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+            public string Phone { get; set; } = string.Empty;
+            public string Location { get; set; } = string.Empty;
+            public string Role { get; set; } = string.Empty;
         }
 
         [HttpGet("GetAdmin/{id}")]

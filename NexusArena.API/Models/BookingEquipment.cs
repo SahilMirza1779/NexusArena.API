@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.Collections.Generic;
 
 namespace NexusArena.API.Models;
@@ -14,7 +16,6 @@ public partial class BookingEquipment
     public int Quantity { get; set; }
 
     public decimal TotalPrice { get; set; }
-    public bool IsReturned { get; set; }
 
     public virtual Booking Booking { get; set; } = null!;
 

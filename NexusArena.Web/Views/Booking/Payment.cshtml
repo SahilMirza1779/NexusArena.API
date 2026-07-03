@@ -1,20 +1,53 @@
 ﻿@{
-    ViewData["Title"] = "Complete Payment";
+    ViewData["Title"] = "Secure Payment Checkout";
     Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+
+    int amountInPaisa = 0;
+    if (ViewBag.Amount != null)
+    {
+        amountInPaisa = Convert.ToInt32(Convert.ToDecimal(ViewBag.Amount) * 100);
+    }
+
+    // 🌟 ENTERPRISE FIX: CSS ko C# string mein daal diya.
+    // Ab Razor engine isme @keyframes dekh kar confuse nahi hoga aur VS Code CSS warnings nahi dega.
+    string paymentCss = @"
+    <style type='text/css'>
+        .payment-gateway-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; text-align: center; }
+        .secure-box { background: linear-gradient(145deg, #111, #161616); border: 1px solid #2a2a2a; padding: 50px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6); max-width: 450px; width: 100%; position: relative; overflow: hidden; }
+        .secure-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #00ff7f; }
+        .secure-icon { font-size: 50px; color: #00ff7f; margin-bottom: 20px; animation: pulse 2s infinite; }
+        .secure-box h2 { color: #fff; font-weight: 900; font-size: 24px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .secure-box p { color: #888; font-size: 15px; line-height: 1.5; margin-bottom: 30px; }
+        .loader-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .dot { width: 12px; height: 12px; background-color: #00ff7f; border-radius: 50%; animation: bounce 1.5s infinite ease-in-out; }
+        .dot:nth-child(1) { animation-delay: -0.3s; }
+        .dot:nth-child(2) { animation-delay: -0.15s; }
+        .warning-text { font-size: 13px; color: #ff4c4c; font-weight: 600; background: rgba(255, 76, 76, 0.1); padding: 10px; border-radius: 6px; }
+
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); text-shadow: 0 0 0 rgba(0, 255, 127, 0.4); } 50% { transform: scale(1.1); text-shadow: 0 0 20px rgba(0, 255, 127, 0.6); } 100% { transform: scale(1); text-shadow: 0 0 0 rgba(0, 255, 127, 0.4); } }
+    </style>";
 }
 
-<style>
-    .payment-loader-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; }
-    .payment-loader-wrapper h2 { color: #fff; font-weight: 800; margin-top: 20px; }
-    .payment-loader-wrapper p { color: #888; font-size: 16px; }
-    .spinner { width: 50px; height: 50px; border: 5px solid rgba(0, 255, 127, 0.2); border-top-color: #00ff7f; border-radius: 50%; animation: spin 1s linear infinite; }
-    @@keyframes spin { to { transform: rotate(360deg); } }
-</style>
+@Html.Raw(paymentCss)
 
-<div class="payment-loader-wrapper">
-    <div class="spinner"></div>
-    <h2>Initiating Secure Payment...</h2>
-    <p>Please do not refresh the page. Opening Razorpay Gateway.</p>
+<div class="payment-gateway-wrapper">
+    <div class="secure-box">
+        <i class="fas fa-shield-alt secure-icon"></i>
+        
+        <h2>Initiating Secure Payment</h2>
+        <p>We are redirecting you to Razorpay's encrypted gateway. Please wait a moment.</p>
+        
+        <div class="loader-container">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
+        <div class="warning-text">
+            <i class="fas fa-exclamation-triangle"></i> Do not refresh or press the back button
+        </div>
+    </div>
 </div>
 
 <form id="verifyForm" method="post" action="/Booking/VerifyPayment" style="display: none;">
@@ -24,42 +57,63 @@
     <input type="hidden" name="signature" id="signature" />
 </form>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        
-        // Block Back Button magic
+<input type="hidden" id="hfPaymentAmount" value="@amountInPaisa" />
+<input type="hidden" id="hfOrderId" value="@ViewBag.OrderId" />
+
+@section Scripts {
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            
         history.pushState(null, null, location.href);
         window.onpopstate = function () { history.go(1); };
 
-        var options = {
-            "key": "rzp_test_Sx2ANZO6KtKqPv", 
-            "amount": "@(ViewBag.Amount * 100)", 
-            "currency": "INR",
-            "name": "Nexus Arena",
-            "description": "Premium Turf Booking",
-            "image": "https://cdn-icons-png.flaticon.com/512/53/53283.png", 
-            "order_id": "@ViewBag.OrderId", 
-            
-            // 🌟 PHASE 4: SUCCESS HANDLER (Data form mein daal kar backend submit karega)
-            "handler": function (response) {
-                document.getElementById('paymentId').value = response.razorpay_payment_id;
-                document.getElementById('orderId').value = response.razorpay_order_id;
-                document.getElementById('signature').value = response.razorpay_signature;
+        const paymentAmountElement = document.getElementById('hfPaymentAmount');
+        const orderIdElement = document.getElementById('hfOrderId');
+
+        if (!paymentAmountElement || !orderIdElement) return;
+
+        const paymentAmount = parseInt(paymentAmountElement.value, 10);
+        const rzpOrderId = orderIdElement.value;
+
+        if (paymentAmount <= 0) return;
+
+        const options = {
+        "key": "rzp_test_Sx2ANZO6KtKqPv",
+        "amount": paymentAmount,
+        "currency": "INR",
+        "name": "Nexus Arena",
+        "description": "Premium Turf Booking",
+        "image": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+        "order_id": rzpOrderId,
                 
-                // Form submit for server-side verification
-                document.getElementById('verifyForm').submit();
-            },
-            "prefill": { "name": "Zubeir", "email": "player@nexusarena.com", "contact": "9999999999" },
-            "theme": { "color": "#00ff7f" },
-            "modal": {
-                "ondismiss": function() {
-                    window.location.replace("/BookingHistory/Index?paymentCancelled=true");
-                }
-            }
+        "handler": function (response) {
+        document.getElementById('paymentId').value = response.razorpay_payment_id;
+        document.getElementById('orderId').value = response.razorpay_order_id;
+        document.getElementById('signature').value = response.razorpay_signature;
+                    
+        setTimeout(function() {
+        document.getElementById('verifyForm').submit();
+        }, 500);
+        },
+        "prefill": {
+        "name": "Player",
+        "email": "player@nexusarena.com",
+        "contact": "9999999999"
+        },
+        "theme": { "color": "#00ff7f" },
+        "modal": {
+        "ondismiss": function() {
+        window.location.replace("/BookingHistory/Index?paymentCancelled=true");
+        }
+        }
         };
 
-        var rzp1 = new Razorpay(options);
-        rzp1.open(); 
-    });
-</script>
+        const rzp1 = new Razorpay(options);
+            
+        setTimeout(function() {
+        rzp1.open();
+        }, 1000);
+        });
+    </script>
+}

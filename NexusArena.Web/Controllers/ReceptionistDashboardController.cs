@@ -13,8 +13,6 @@ namespace NexusArena.Web.Controllers
     {
         private readonly HttpClient _httpClient;
 
-        private readonly string _apiUrl = "https://localhost:5092/api/Receptionist";
-
         public ReceptionistDashboardController(HttpClient httpClient)
         {
             _httpClient = httpClient;
@@ -126,11 +124,11 @@ namespace NexusArena.Web.Controllers
                     var content = new StringContent(System.Text.Json.JsonSerializer.Serialize("Completed"), System.Text.Encoding.UTF8, "application/json");
                     HttpResponseMessage response = await client.PutAsync($"http://localhost:5092/api/Receptionist/update-status/{bookingId}", content);
 
-                    if (response.IsSuccessStatusCode)
+                     if (response.IsSuccessStatusCode)
                     {
                         TempData["SuccessMessage"] = $"Booking #{bookingId} successfully checked out! 🏏";
 
-                        Response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+                        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
                     }
                     else
                     {
@@ -207,7 +205,7 @@ namespace NexusArena.Web.Controllers
                     {
                         TempData["SuccessMessage"] = $"Got the money! Booking #{bookingId} The payment has been cleared. 💸";
 
-                        Response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+                        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
                     }
                     else
                     {

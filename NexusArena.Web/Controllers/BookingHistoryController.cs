@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using NexusArena.API.Models;
+using NexusArena.Web.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Net.Http;
-using System;
-using System.Linq;
 
 namespace NexusArena.Web.Controllers
 {
@@ -13,6 +15,9 @@ namespace NexusArena.Web.Controllers
     public class BookingHistoryController : Controller
     {
         private readonly HttpClient _httpClient;
+
+        // 🌟 THE FIX: CA1869 - Cache JsonSerializerOptions taaki memory bache
+        private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
         public BookingHistoryController()
         {
@@ -27,7 +32,9 @@ namespace NexusArena.Web.Controllers
             if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var viewModel = new List<BookingHistoryViewModel>();
+
+            // 🌟 THE FIX: IDE0028 - Naya C# 12 empty collection syntax
+            List<BookingHistoryViewModel> viewModel = [];
 
             try
             {
@@ -35,8 +42,8 @@ namespace NexusArena.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-                    var apiResult = JsonSerializer.Deserialize<BookingHistoryApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    viewModel = apiResult?.data ?? new List<BookingHistoryViewModel>();
+                    var apiResult = JsonSerializer.Deserialize<BookingHistoryApiResponse>(jsonString, _jsonOptions);
+                    viewModel = apiResult?.Data ?? []; // 🌟 THE FIX: Use uppercase Data & []
                 }
                 else
                 {
@@ -89,9 +96,9 @@ namespace NexusArena.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-                    var apiResult = JsonSerializer.Deserialize<BookingHistoryApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var apiResult = JsonSerializer.Deserialize<BookingHistoryApiResponse>(jsonString, _jsonOptions);
 
-                    var ticketData = apiResult?.data?.FirstOrDefault(b => b.BookingId == id);
+                    var ticketData = apiResult?.Data?.FirstOrDefault(b => b.BookingId == id);
                     if (ticketData == null) return NotFound("Ticket details not found in your account!");
 
                     return View(ticketData);
@@ -106,28 +113,10 @@ namespace NexusArena.Web.Controllers
         }
     }
 
-    // =========================================================
-    // 🌟 VIEW MODELS (CanCancel added for frontend logic)
-    // =========================================================
+    // 🌟 THE FIX: IDE1006 - Naming Rules for JSON deserialization object
     public class BookingHistoryApiResponse
     {
-        public string? message { get; set; }
-        public List<BookingHistoryViewModel>? data { get; set; }
-    }
-
-    public class BookingHistoryViewModel
-    {
-        public int BookingId { get; set; }
-        public int ArenaId { get; set; }
-        public string ArenaName { get; set; } = string.Empty;
-        public string City { get; set; } = string.Empty;
-        public string PlayDate { get; set; } = string.Empty;
-        public string TimeSlot { get; set; } = string.Empty;
-        public decimal TotalAmount { get; set; }
-        public decimal AmountPaid { get; set; }
-        public decimal PendingAmount { get; set; }
-        public string PaymentStatus { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public bool CanCancel { get; set; } // 🌟 Yahan decide hoga Cancel button dikhana hai ya nahi
+        public string? Message { get; set; }
+        public List<BookingHistoryViewModel>? Data { get; set; }
     }
 }
