@@ -1,0 +1,125 @@
+﻿@{
+    ViewData["Title"] = "Verify OTP";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Verify OTP - Nexus Arena</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background-color: #0a0a0a; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .reset-card { background: #1a1a1a; padding: 40px; border-radius: 20px; border: 1px solid #333; width: 100%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); text-align: center; }
+        
+        .otp-input { background: #222; border: 1px solid #444; color: #00ff7f; padding: 15px; border-radius: 12px; width: 100%; font-size: 24px; font-weight: bold; letter-spacing: 15px; text-align: center; transition: all 0.3s; margin-bottom: 25px; }
+        .otp-input:focus { border-color: #00ff7f; box-shadow: 0 0 15px rgba(0, 255, 127, 0.15); outline: none; background: #2a2a2a; }
+        
+        .btn-submit { background: #00ff7f; color: #000; font-weight: 800; width: 100%; padding: 14px; border: none; border-radius: 12px; transition: 0.3s; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-submit:hover { background: #00cc66; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 255, 127, 0.4); }
+        .btn-submit:disabled { background: #444; color: #888; transform: none; box-shadow: none; cursor: not-allowed; }
+
+        .timer-text { font-size: 13px; color: #aaa; margin-top: 15px; font-weight: 600; }
+        .resend-link { color: #00ff7f; cursor: pointer; font-weight: bold; text-decoration: none; }
+        .resend-link:hover { color: #fff; text-decoration: underline; }
+        .resend-disabled { color: #555; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="reset-card">
+        <h3 style="font-weight: 900; color: #fff; letter-spacing: 1px;">Enter <span style="color: #00ff7f;">OTP</span></h3>
+        <p style="color: #aaa; font-size: 14px; margin-bottom: 5px;">We have sent a 6-digit code to</p>
+        <span class="badge bg-dark border border-secondary text-light mb-4 p-2" id="userEmail">@ViewBag.Email</span>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger" style="background: rgba(255,0,0,0.1); border: 1px solid red; color: #ff4d4d; font-size: 14px; border-radius: 10px;">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form asp-controller="Account" asp-action="VerifyOTP" method="post">
+            <input type="text" name="enteredOtp" id="otpField" class="otp-input" placeholder="------" maxlength="6" required autocomplete="off" />
+            <button type="submit" id="verifyBtn" class="btn-submit">Verify & Proceed <i class="fas fa-check-circle ms-2"></i></button>
+        </form>
+        
+        <div class="timer-text">
+            <span id="expiryDisplay" style="color: #ff4d4d;"><i class="fas fa-clock"></i> Expires in: 01:30</span><br/>
+            <span id="resendWaitDisplay">Resend OTP in <span id="resendTimer">45</span>s</span>
+            <a id="resendBtn" class="resend-link" style="display: none;" onclick="resendOtp()">Resend OTP Now</a>
+        </div>
+
+        <div class="mt-4">
+            <a asp-action="ForgotPassword" style="color: #888; text-decoration: none; font-size: 14px; transition: 0.3s;" onmouseover="this.style.color='#00ff7f'" onmouseout="this.style.color='#888'">
+                <i class="fas fa-arrow-left me-1"></i> Change Email Address
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let expirySeconds = 90;
+        let resendSeconds = 45; 
+        let timerInterval;
+
+        function startTimers() {
+            timerInterval = setInterval(() => {
+                if (expirySeconds > 0) {
+                    expirySeconds--;
+                    let mins = Math.floor(expirySeconds / 60).toString().padStart(2, '0');
+                    let secs = (expirySeconds % 60).toString().padStart(2, '0');
+                    document.getElementById('expiryDisplay').innerHTML = `<i class="fas fa-clock"></i> Expires in: ${mins}:${secs}`;
+                } else {
+                    document.getElementById('expiryDisplay').innerHTML = "OTP has expired! Please Resend.";
+                    document.getElementById('verifyBtn').disabled = true; 
+                }
+
+                if (resendSeconds > 0) {
+                    resendSeconds--;
+                    document.getElementById('resendTimer').innerText = resendSeconds;
+                } else {
+                    document.getElementById('resendWaitDisplay').style.display = 'none';
+                    document.getElementById('resendBtn').style.display = 'inline';
+                }
+            }, 1000);
+        }
+
+        startTimers();
+
+        function resendOtp() {
+            let email = document.getElementById('userEmail').innerText;
+
+            fetch('/Account/ResendOTP', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Sent!',
+                        text: 'A new OTP has been sent to your email.',
+                        icon: 'success',
+                        background: '#1a1a1a',
+                        color: '#fff',
+                        iconColor: '#00ff7f',
+                        timer: 5000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+
+                    clearInterval(timerInterval);
+                    expirySeconds = 90;
+                    resendSeconds = 45;
+                    document.getElementById('resendWaitDisplay').style.display = 'inline';
+                    document.getElementById('resendBtn').style.display = 'none';
+                    document.getElementById('verifyBtn').disabled = false;
+                    document.getElementById('otpField').value = ''; 
+                    startTimers();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
