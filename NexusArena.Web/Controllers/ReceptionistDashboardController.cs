@@ -261,5 +261,17 @@ namespace NexusArena.Web.Controllers
 
             return View(new List<NexusArena.Web.Models.AvailableTurfViewModel>());
         }
+
+        [HttpGet]
+        public IActionResult Profile()
+        {
+            ViewBag.Name = "Receptionist User";
+            ViewBag.Email = "receptionist@nexus.com";
+            ViewBag.Phone = "+91 9876543210";
+            ViewBag.Role = "Receptionist";
+            ViewBag.Branch = "Surat Arena";
+
+            return View();
+        }
     }
 }
