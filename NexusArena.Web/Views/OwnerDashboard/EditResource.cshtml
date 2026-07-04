@@ -1,0 +1,57 @@
+﻿@model NexusArena.MVC.Models.ResourceViewModel
+@{
+    ViewData["Title"] = "Edit Business";
+    Layout = "~/Views/Shared/_OwnerLayout.cshtml";
+}
+
+<style>
+    body { background-color: #121212; color: white; }
+    .card { background-color: #1e1e1e; border: none; padding: 25px; border-radius: 8px; color: white; }
+    .form-label { color: #e0e0e0; font-size: 0.95rem; margin-bottom: 5px; }
+    .form-control { background-color: #2b2b2b; border: 1px solid #444; color: white !important; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; padding: 8px 10px; background-color: #2b2b2b; border: 1px solid #444; border-radius: 5px; }
+    .checkbox-item { color: white; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .btn-green { background-color: #00e676; color: black; font-weight: bold; padding: 10px; border: none; }
+</style>
+
+<div class="container mt-4">
+    <h2 class="text-success fw-bold">Edit Business</h2>
+
+    <div class="card shadow-sm mt-4">
+        <h5>Update Details for @Model.ResourceName</h5>
+
+        <form asp-action="EditResource" method="post" class="row g-3">
+            <input type="hidden" name="originalName" value="@ViewBag.OriginalName" />
+
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Business Name</label>
+                <input type="text" asp-for="ResourceName" class="form-control" required />
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Type (Sports)</label>
+                <div class="checkbox-group">
+                    @{
+                        var existingSports = Model.ResourceType ?? "";
+                        var allSports = new[] { "Box Cricket", "Box Football", "Bowling", "Pool", "Pickleball" };
+
+                        foreach (var sport in allSports)
+                        {
+                            var isChecked = existingSports.Contains(sport) ? "checked" : "";
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="SelectedSports" value="@sport" @isChecked> @sport
+                            </label>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-4 mt-4">
+                <button type="submit" class="btn btn-green w-100 rounded">Save Changes</button>
+            </div>
+            <div class="col-md-4 mt-4">
+                <a href="/OwnerDashboard/ManageResources" class="btn btn-secondary w-100 rounded" style="padding: 10px;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

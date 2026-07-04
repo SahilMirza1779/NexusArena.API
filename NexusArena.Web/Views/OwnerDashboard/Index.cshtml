@@ -6,14 +6,19 @@
 
 @section Styles {
     <style>
+        body {
+            background-color: #121212;
+            color: white;
+        }
+
         .stat-card {
-            background-color: var(--panel-bg);
+            background-color: var(--panel-bg, #1e1e1e);
             border-radius: 10px;
             padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-color, #333);
         }
 
             .stat-card h3 {
@@ -24,7 +29,7 @@
 
             .stat-card p {
                 margin: 0;
-                color: var(--text-muted);
+                color: var(--text-muted, #aaa);
                 font-size: 12px;
                 text-transform: uppercase;
                 letter-spacing: 1px;
@@ -32,7 +37,7 @@
 
             .stat-card .icon-box {
                 background-color: rgba(0, 230, 118, 0.1);
-                color: var(--accent-green);
+                color: var(--accent-green, #00e676);
                 width: 50px;
                 height: 50px;
                 border-radius: 10px;
@@ -43,43 +48,51 @@
             }
 
         .dark-table-container {
-            background-color: var(--panel-bg);
+            background-color: var(--panel-bg, #1e1e1e);
             border-radius: 10px;
             padding: 20px;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-color, #333);
             margin-top: 30px;
         }
 
         .dark-table {
             width: 100%;
-            color: var(--text-main);
+            color: var(--text-main, white);
         }
 
             .dark-table th {
-                color: var(--accent-green);
+                color: var(--accent-green, #00e676);
                 font-size: 12px;
                 text-transform: uppercase;
-                border-bottom: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--border-color, #333);
                 padding: 15px 10px;
             }
 
             .dark-table td {
                 padding: 15px 10px;
-                border-bottom: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--border-color, #333);
                 font-size: 14px;
                 vertical-align: middle;
             }
 
         .badge-active {
             background-color: rgba(0, 230, 118, 0.2);
-            color: var(--accent-green);
+            color: var(--accent-green, #00e676);
             padding: 5px 10px;
             border-radius: 20px;
             font-size: 12px;
-            border: 1px solid var(--accent-green);
+            border: 1px solid var(--accent-green, #00e676);
         }
 
-        /* Cancel Button aur Dropdown ka naya design */
+        .badge-pending {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid #ffc107;
+        }
+
         .btn-cancel {
             background-color: transparent;
             color: #ff4d4d;
@@ -117,9 +130,6 @@
 }
 
 <div>
-    <h4 class="mb-1 text-white">Overview</h4>
-    <p class="text-muted" style="font-size: 14px;">Real-time statistics of your arenas and bookings.</p>
-
     @if (ViewBag.Error != null)
     {
         <div class="alert alert-warning mt-2">@ViewBag.Error</div>
@@ -163,7 +173,7 @@
 </div>
 
 <div class="dark-table-container">
-    <h5 style="color: white; margin-bottom: 20px;"><i class="fas fa-clipboard-list" style="color: var(--accent-green);"></i> Upcoming Bookings</h5>
+    <h5 style="color: white; margin-bottom: 20px;"><i class="fas fa-clipboard-list" style="color: var(--accent-green, #00e676);"></i> Upcoming Bookings</h5>
     <table class="dark-table">
         <thead>
             <tr>
@@ -183,12 +193,21 @@
                         <td>@booking.CustomerName</td>
                         <td>@booking.FacilityName</td>
                         <td>@booking.TimeSlot</td>
-                        <td><span class="badge-active">@booking.Status</span></td>
+                        <td>
+                            @if (booking.Status == "Confirmed")
+                            {
+                                <span class="badge-active">@booking.Status</span>
+                            }
+                            else
+                            {
+                                <span class="badge-pending">@booking.Status</span>
+                            }
+                        </td>
                         <td>
                             <form asp-action="CancelBooking" asp-controller="OwnerDashboard" method="post" style="margin: 0;">
                                 <input type="hidden" name="bookingId" value="@booking.BookingId" />
 
-                                <select name="cancelReason" class="reason-select" required>
+                                <select name="cancelReason" class="reason-select" onchange="checkOtherReason(this)" required>
                                     <option value="" disabled selected>-- Select Reason --</option>
                                     <option value="Rain / Bad Weather">Rain / Bad Weather</option>
                                     <option value="Maintenance Issue">Maintenance Issue</option>
@@ -209,3 +228,26 @@
         </tbody>
     </table>
 </div>
+
+<script>
+    function checkOtherReason(selectElement) {
+        // Agar user ne dropdown me "Other" select kiya
+        if (selectElement.value === "Other") {
+            // Javascript ka prompt popup khulega
+            let customReason = prompt("Please type your custom cancellation reason:");
+
+            // Agar user ne reason daala aur OK dabaya
+            if (customReason != null && customReason.trim() !== "") {
+                // Dropdown me on-the-fly ek naya option add karenge
+                let newOption = document.createElement("option");
+                newOption.value = "Other: " + customReason;
+                newOption.text = "Other: " + customReason;
+                newOption.selected = true; // Usko automatically select bhi kar denge
+                selectElement.add(newOption);
+            } else {
+                // Agar cancel kiya ya khaali chhod diya, to wapas default pe set kardo
+                selectElement.value = "";
+            }
+        }
+    }
+</script>

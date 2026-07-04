@@ -11,14 +11,9 @@ namespace NexusArena.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Receptionist")]
-    public class ReceptionistController : ControllerBase
+    public class ReceptionistController(NexusArenaDbContext context) : ControllerBase
     {
-        private readonly NexusArenaDbContext _context;
-
-        public ReceptionistController(NexusArenaDbContext context)
-        {
-            _context = context;
-        }
+        private readonly NexusArenaDbContext _context = context;
 
         [HttpGet("GetLiveDashboard")]
         public async Task<IActionResult> GetLiveDashboard()
@@ -30,7 +25,6 @@ namespace NexusArena.API.Controllers
                 var todaysBookings = await _context.Bookings
                     .Include(b => b.User)
                     .Include(b => b.Resource)
-                    // 🌟 FIX: Purana Slot hata diya
                     .Where(b => b.BookingDate == today
                              && b.Status != "Cancelled"
                              && b.Status != "Completed")
@@ -43,11 +37,10 @@ namespace NexusArena.API.Controllers
 
                 var liveBookingsList = todaysBookings.Select(b => new
                 {
-                    BookingId = b.BookingId,
+                    b.BookingId,
                     CustomerName = b.User?.FullName ?? "Walk-in Customer",
                     TurfName = b.Resource?.ResourceName ?? "Unknown Turf",
-                    // 🌟 FIX: Naye StartTime aur EndTime ka use
-                    TimeSlot = b.StartTime != null ? $"{b.StartTime} - {b.EndTime}" : "N/A",
+                    TimeSlot = b.StartTime != null && b.EndTime != null ? $"{b.StartTime} - {b.EndTime}" : "N/A",
                     PendingAmount = Math.Max(0, b.TotalAmount - b.AmountPaid),
                     IsTimeUpWarning = false
                 }).ToList();
@@ -64,8 +57,64 @@ namespace NexusArena.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Server Error: {ex.Message}" });
+                return StatusCode(500, new { Message = $"Server Error: {ex.Message}" });
             }
+        }
+
+        [HttpGet("get-customers")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCustomers()
+        {
+            try
+            {
+                var customers = await _context.Users
+                    .Where(u => u.Role != null && u.Role.RoleName == "Customer")
+                    .Select(u => new
+                    {
+                        Id = u.UserId,
+                        Name = u.FullName,
+                        u.Phone
+                    })
+                    .ToListAsync();
+
+                return Ok(customers);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("get-turfs")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTurfs()
+        {
+            try
+            {
+                var turfs = await _context.Resources
+                    .Select(r => new
+                    {
+                        Id = r.ResourceId,
+                        Name = r.ResourceName,
+                        Type = r.ResourceType,
+                        PricePerHour = r.BasePricePerHour
+                    })
+                    .ToListAsync();
+
+                return Ok(turfs);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("get-available-slots/{resourceId}")]
+        [AllowAnonymous]
+        public IActionResult GetAvailableSlots(int resourceId)
+        {
+            _ = resourceId; // Warning hatane ke liye discard kiya
+            return Ok(new[] { new { Message = "Dynamic slots enabled. Please select start and end time." } });
         }
 
         [HttpGet("todays-bookings/{arenaId}")]
@@ -76,12 +125,12 @@ namespace NexusArena.API.Controllers
             var bookings = _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Resource)
-                .Where(b => b.Resource.ArenaId == arenaId && b.BookingDate == today)
+                .Where(b => b.Resource != null && b.Resource.ArenaId == arenaId && b.BookingDate == today)
                 .Select(b => new
                 {
                     b.BookingId,
                     CustomerName = b.User!.FullName,
-                    ResourceName = b.Resource!.ResourceName,
+                    b.Resource!.ResourceName,
                     b.BookingDate,
                     b.Status
                 }).ToList();
@@ -92,14 +141,51 @@ namespace NexusArena.API.Controllers
         [HttpPost("walk-in-booking")]
         public IActionResult WalkInBooking([FromBody] WalkInBookingRequest request)
         {
-            // 🌟 TEMPORARY FIX: Jab naya engine banayenge toh isko upgrade karenge
+            var reqStart = TimeOnly.FromTimeSpan(request.StartTime);
+            var reqEnd = TimeOnly.FromTimeSpan(request.EndTime);
+
+            // 🌟 THE FIX: Hussain ka SlotId wala kachra hata kar tera naya StartTime/EndTime lagaya
+            bool isOverlap = _context.Bookings
+                .Any(b => b.ResourceId == request.ResourceId
+                       && b.BookingDate == request.BookingDate
+                       && b.Status != "Cancelled"
+                       && b.StartTime < reqEnd
+                       && b.EndTime > reqStart);
+
+            if (isOverlap)
+            {
+                return BadRequest(new { Message = "Oops! Someone has just booked this time slot online, or it conflicts with another booking. Please choose a different time." });
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Phone == request.CustomerPhone);
+            if (user == null)
+            {
+                user = new User
+                {
+                    FullName = request.CustomerName,
+                    Phone = request.CustomerPhone,
+                    Email = $"walkin_{DateTime.Now.Ticks}@nexus.com",
+                    PasswordHash = "WalkIn123!",
+                    RoleId = _context.Roles.FirstOrDefault(r => r.RoleName == "Customer")?.RoleId ?? 2
+                };
+                _context.Users.Add(user);
+                _context.SaveChanges();
+            }
+
+            double totalHours = (request.EndTime - request.StartTime).TotalHours;
+            if (totalHours <= 0) return BadRequest(new { Message = "The end time must be after the start time!" });
+
+            decimal calculatedPrice = (decimal)totalHours * 500;
+
             var newBooking = new Booking
             {
-                UserId = request.CustomerId,
+                UserId = user.UserId,
                 ResourceId = request.ResourceId,
                 BookingDate = request.BookingDate,
+                StartTime = reqStart,
+                EndTime = reqEnd,
                 Status = "Confirmed",
-                TotalAmount = 0,
+                TotalAmount = calculatedPrice,
                 AmountPaid = 0,
                 BookingMode = "Hourly"
             };
@@ -107,7 +193,7 @@ namespace NexusArena.API.Controllers
             _context.Bookings.Add(newBooking);
             _context.SaveChanges();
 
-            return Ok(new { message = "Walk-in booking successfully done!", bookingId = newBooking.BookingId });
+            return Ok(new { Message = "Custom Walk-in booking successfully done!", BookingId = newBooking.BookingId });
         }
 
         [HttpPut("update-status/{bookingId}")]
@@ -116,13 +202,13 @@ namespace NexusArena.API.Controllers
             var booking = _context.Bookings.FirstOrDefault(b => b.BookingId == bookingId);
             if (booking == null)
             {
-                return NotFound(new { message = "Booking database me nahi mili." });
+                return NotFound(new { Message = "Booking database me nahi mili." });
             }
 
             booking.Status = newStatus;
             _context.SaveChanges();
 
-            return Ok(new { message = $"Booking ka status ab '{newStatus}' ho gaya hai." });
+            return Ok(new { Message = $"Booking ka status ab '{newStatus}' ho gaya hai." });
         }
 
         [HttpGet("booking-history")]
@@ -135,15 +221,14 @@ namespace NexusArena.API.Controllers
                     .Include(b => b.Resource)
                     .OrderByDescending(b => b.BookingDate)
                     .Select(b => new {
-                        BookingId = b.BookingId,
+                        b.BookingId,
                         CustomerName = b.User != null ? b.User.FullName : "Walk-in",
                         TurfName = b.Resource != null ? b.Resource.ResourceName : "-",
-                        BookingDate = b.BookingDate,
-                        // 🌟 FIX: Naye StartTime aur EndTime ka use
-                        TimeSlot = b.StartTime != null ? $"{b.StartTime} - {b.EndTime}" : "-",
-                        Status = b.Status,
-                        TotalAmount = b.TotalAmount,
-                        AmountPaid = b.AmountPaid
+                        b.BookingDate,
+                        TimeSlot = b.StartTime != null && b.EndTime != null ? $"{b.StartTime} - {b.EndTime}" : "-",
+                        b.Status,
+                        b.TotalAmount,
+                        b.AmountPaid
                     })
                     .ToListAsync();
 
@@ -151,7 +236,7 @@ namespace NexusArena.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Server Error: {ex.Message}" });
+                return StatusCode(500, new { Message = $"Server Error: {ex.Message}" });
             }
         }
 
@@ -161,13 +246,13 @@ namespace NexusArena.API.Controllers
             var booking = _context.Bookings.FirstOrDefault(b => b.BookingId == bookingId);
             if (booking == null)
             {
-                return NotFound(new { message = "The booking was not found in the database." });
+                return NotFound(new { Message = "The booking was not found in the database." });
             }
 
             booking.AmountPaid = booking.TotalAmount;
             _context.SaveChanges();
 
-            return Ok(new { message = $"Payment collected successfully for Booking #{bookingId}" });
+            return Ok(new { Message = $"Payment collected successfully for Booking #{bookingId}" });
         }
 
         [HttpGet("available-turfs")]
@@ -189,11 +274,13 @@ namespace NexusArena.API.Controllers
         }
     }
 
-    // 🌟 FIX: Class uncomment kar di aur SlotId hata diya
     public class WalkInBookingRequest
     {
-        public int CustomerId { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerPhone { get; set; } = string.Empty;
         public int ResourceId { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
         public DateOnly BookingDate { get; set; }
     }
 }

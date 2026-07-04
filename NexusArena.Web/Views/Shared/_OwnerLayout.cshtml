@@ -36,10 +36,21 @@
             }
 
             .logo-area {
-                padding: 20px;
+                padding: 15px;
                 text-align: center;
                 border-bottom: 1px solid var(--border-color);
             }
+
+                .logo-area img {
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 8px;
+                    transition: transform 0.2s ease-in-out;
+                }
+
+                    .logo-area img:hover {
+                        transform: scale(1.05);
+                    }
 
             .nav-link {
                 color: var(--text-main);
@@ -96,7 +107,9 @@
 
     <aside class="sidebar">
         <div class="logo-area">
-            <h4 style="color: var(--accent-green); margin:0;">Nexus <span style="color:white;">Arena</span></h4>
+            <a href="/OwnerDashboard/Index" style="display: block;">
+                <img src="~/images/logo.jpg" alt="Nexus Arena Logo" />
+            </a>
         </div>
         <nav style="margin-top: 20px;">
             <a href="/OwnerDashboard/Index" class="nav-link"><i class="fas fa-chart-pie"></i> Dashboard</a>

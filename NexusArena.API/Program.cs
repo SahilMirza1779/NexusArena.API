@@ -4,12 +4,24 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using NexusArena.API.Models;
+using NexusArena.API;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<NexusArenaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWebApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5046", "https://localhost:5046")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 
@@ -65,8 +77,23 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    // One-time password hashing migration
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<NexusArenaDbContext>();
+        try
+        {
+            await HashExistingPasswords.HashAllPasswords(context);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Password hashing migration error: {ex.Message}");
+        }
+    }
 }
 
+app.UseCors("AllowWebApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

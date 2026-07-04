@@ -1,0 +1,161 @@
+﻿@{
+    ViewData["Title"] = "My Profile";
+    Layout = "~/Views/Shared/_ReceptionistLayout.cshtml";
+}
+
+<style>
+    .profile-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 15px;
+        padding: 40px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        max-width: 550px;
+        margin: 0 auto;
+        transition: transform 0.3s ease;
+    }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+        }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        background: #222;
+        border: 3px solid #00ff7f;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 55px;
+        color: #00ff7f;
+        margin: 0 auto 20px;
+        box-shadow: 0 0 25px rgba(0, 255, 127, 0.2);
+    }
+
+    .info-group {
+        background: #222;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        transition: border-color 0.3s ease;
+    }
+
+        .info-group:hover {
+            border-color: #00ff7f;
+            background: #252525;
+        }
+    
+    .info-icon {
+        color: #888;
+        font-size: 22px;
+        width: 45px;
+        text-align: left;
+    }
+
+    .info-group:hover .info-icon {
+        color: #00ff7f;
+    }
+
+    .info-content {
+        flex-grow: 1;
+    }
+
+    .info-label {
+        color: #aaa;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 3px;
+        font-weight: 600;
+    }
+
+    .info-value {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .btn-edit {
+        background: #00ff7f;
+        color: #000;
+        font-weight: 800;
+        border: none;
+        padding: 14px;
+        border-radius: 12px;
+        transition: 0.3s;
+        width: 100%;
+        margin-top: 25px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+        .btn-edit:hover {
+            background: #00cc66;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 255, 127, 0.4);
+        }
+</style>
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 style="font-weight: 700; letter-spacing: 1px;">
+            <i class="fas fa-id-badge me-2" style="color: #00ff7f;"></i> Profile Details
+        </h2>
+    </div>
+
+    <div class="profile-card text-center">
+        
+        <div class="profile-avatar">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        
+        <h3 style="font-weight: 800; color: #fff; margin-bottom: 5px; letter-spacing: 0.5px;">@ViewBag.Name</h3>
+        
+        <span class="badge bg-dark border border-secondary text-light mb-4 px-3 py-2" style="font-size: 13px;">
+            <i class="fas fa-shield-alt me-1" style="color: #00ff7f;"></i> @ViewBag.Role
+        </span>
+
+        <div class="text-start">
+            <div class="info-group">
+                <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                <div class="info-content">
+                    <div class="info-label">Registered Email</div>
+                    <div class="info-value">@ViewBag.Email</div>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
+                <div class="info-content">
+                    <div class="info-label">Contact Number</div>
+                    <div class="info-value">@ViewBag.Phone</div>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="info-content">
+                    <div class="info-label">Assigned Branch</div>
+                    <div class="info-value">@ViewBag.Branch</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-edit" onclick="Swal.fire({
+            title: 'Coming Soon!',
+            text: 'Profile editing will be available in the next update.',
+            icon: 'info',
+            background: '#1a1a1a',
+            color: '#fff',
+            confirmButtonColor: '#00ff7f'
+            })">
+            <i class="fas fa-user-edit me-2"></i> Edit Profile
+        </button>
+    </div>
+</div>

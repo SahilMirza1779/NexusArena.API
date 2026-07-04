@@ -5,8 +5,6 @@
     Layout = "~/Views/Shared/_ReceptionistLayout.cshtml";
 }
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
 <style>
     body {
         background-color: #121212;
@@ -201,7 +199,7 @@
 </div>
 
 <div class="modal fade" id="walkInModal" tabindex="-1" aria-labelledby="walkInModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="background-color: #1a1a1a; border: 1px solid #333; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <div class="modal-header" style="border-bottom: 1px solid #333; padding: 20px;">
                 <h5 class="modal-title" id="walkInModalLabel" style="color: #00ff7f; font-weight: 700; letter-spacing: 0.5px;">
@@ -209,22 +207,75 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
+
             <form asp-action="CreateWalkInBooking" method="post">
                 <div class="modal-body" style="padding: 25px;">
-                    <div class="mb-4">
-                        <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">Customer ID</label>
-                        <input type="number" name="customerId" class="form-control premium-input" required placeholder="Enter Customer ID (e.g. 1)">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">
+                                <i class="fas fa-user-circle me-1"></i> Customer Name
+                            </label>
+                            <input type="text" name="customerName" id="customerName" class="form-control premium-input" required placeholder="Enter customer name">
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">
+                                <i class="fas fa-phone me-1"></i> Customer Phone
+                            </label>
+                            <input type="text" name="customerPhone" id="customerPhone" class="form-control premium-input" required placeholder="Enter phone number">
+                        </div>
                     </div>
+
                     <div class="mb-4">
-                        <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">Turf / Resource ID</label>
-                        <input type="number" name="resourceId" class="form-control premium-input" required placeholder="Enter Turf ID (e.g. 2)">
+                        <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">
+                            <i class="fas fa-volleyball-ball me-1"></i> Turf / Resource
+                        </label>
+                        <select name="resourceId" id="resourceSelect" class="form-control premium-input" required>
+                            <option value="">-- Select Turf --</option>
+                        </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">Time Slot ID</label>
-                        <input type="number" name="slotId" class="form-control premium-input" required placeholder="Enter Slot ID (e.g. 1)">
+
+                    <!-- Custom Time Picker Section -->
+                    <div style="display:flex; gap:15px; margin-bottom:25px; align-items:flex-end;">
+                        <div style="flex:1; min-width:0;">
+                            <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">
+                                <i class="fas fa-clock me-1"></i> Start Time
+                            </label>
+                            <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                                <select id="startHour" class="form-control premium-input" style="flex:0 0 56px; width:56px; padding:8px;" aria-label="Start hour"></select>
+                                <span style="color:#888; font-weight:900; flex-shrink:0;">:</span>
+                                <select id="startMinute" class="form-control premium-input" style="flex:0 0 46px; width:46px; padding:8px;" aria-label="Start minute"></select>
+                                <select id="startAmPm" class="form-control premium-input" style="flex:0 0 52px; width:52px; padding:8px;" aria-label="Start AM PM">
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                            <input type="hidden" name="startTime" id="startTimeHidden">
+                        </div>
+
+                        <div style="flex:1; min-width:0;">
+                            <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 13px; text-transform: uppercase;">
+                                <i class="fas fa-stopwatch me-1"></i> End Time
+                            </label>
+                            <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                                <select id="endHour" class="form-control premium-input" style="flex:0 0 56px; width:56px; padding:8px;" aria-label="End hour"></select>
+                                <span style="color:#888; font-weight:900; flex-shrink:0;">:</span>
+                                <select id="endMinute" class="form-control premium-input" style="flex:0 0 46px; width:46px; padding:8px;" aria-label="End minute"></select>
+                                <select id="endAmPm" class="form-control premium-input" style="flex:0 0 52px; width:52px; padding:8px;" aria-label="End AM PM">
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                            <input type="hidden" name="endTime" id="endTimeHidden">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" style="background-color: rgba(0, 150, 255, 0.1); border: 1px solid #0096ff; color: #0096ff; border-radius: 8px;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>All data will be saved to database automatically.</strong> Enter customer details, select turf, and set time to complete booking.
                     </div>
                 </div>
+
                 <div class="modal-footer" style="border-top: 1px solid #333; padding: 20px;">
                     <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn-walkin" style="padding: 10px 25px;">Confirm Booking <i class="fas fa-arrow-right ms-1"></i></button>
@@ -234,48 +285,237 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<script>
-    function confirmCheckout(bookingId) {
-        Swal.fire({
-            title: 'Checkout Confirm?',
-            text: "Booking #" + bookingId + " The checkout will be completed, and the turf will become free again!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#00ff7f', 
-            cancelButtonColor: '#ff4d4d', 
-            confirmButtonText: '<i class="fas fa-check" style="color: black;"></i> <span style="color: black; font-weight: bold;">Yes, Checkout!</span>',
-            cancelButtonText: 'Cancel',
-            background: '#1a1a1a', 
-            color: '#fff', 
-            border: '1px solid #333'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('checkoutForm_' + bookingId).submit();
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCustomers();
+            loadTurfs();
+            initializeTimeSelects();
+
+            const modal = document.getElementById('walkInModal');
+            if(modal) {
+                modal.addEventListener('show.bs.modal', function() {
+                    initializeTimeSelects();
+                });
             }
         });
-    }
 
-    function confirmCollect(bookingId) {
-    Swal.fire({
-        title: 'Collect payment?',
-        text: "Have you made the booking? #" + bookingId + " Have you received the money?",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#00ff7f', 
-        cancelButtonColor: '#ff4d4d',  
-        confirmButtonText: '<i class="fas fa-check" style="color: black;"></i> <span style="color: black; font-weight: bold;">Yes, Received!</span>',
-        cancelButtonText: 'Cancel',
-        background: '#1a1a1a', 
-        color: '#fff', 
-        border: '1px solid #333'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('collectForm_' + bookingId).submit();
+        function loadCustomers() {
+            fetch('/api/receptionist/get-customers')
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById('customerSelect');
+                    if(select){
+                        select.innerHTML = '<option value="">-- Select Customer --</option>';
+                        data.forEach(customer => {
+                            let option = document.createElement('option');
+                            option.value = customer.id;
+                            option.text = `${customer.name} (ID: ${customer.id})`;
+                            option.setAttribute('data-phone', customer.phone);
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading customers:', error));
         }
-    });
+
+        function loadTurfs() {
+            fetch('/api/receptionist/get-turfs')
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById('resourceSelect');
+                    select.innerHTML = '<option value="">-- Select Turf --</option>';
+                    data.forEach(turf => {
+                        let option = document.createElement('option');
+                        option.value = turf.id;
+                        option.text = `${turf.name} (${turf.type}) - ₹${turf.pricePerHour}/hr`;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading turfs:', error));
+        }
+
+        function populateCustomerDetails() {
+            let select = document.getElementById('customerSelect');
+            let selected = select.options[select.selectedIndex];
+            let phone = selected.getAttribute('data-phone') || '';
+            document.getElementById('customerPhone').value = phone;
+        }
+
+        function populateTimeSlots() {
+            let resourceId = document.getElementById('resourceSelect').value;
+            if (!resourceId) {
+                document.getElementById('startTimeSelect').innerHTML = '<option value="">-- Select Start Time --</option>';
+                document.getElementById('endTimeSelect').innerHTML = '<option value="">-- Select End Time --</option>';
+                return;
+            }
+
+            fetch(`/api/receptionist/get-available-slots/${resourceId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let startSelect = document.getElementById('startTimeSelect');
+                    let endSelect = document.getElementById('endTimeSelect');
+
+                    startSelect.innerHTML = '<option value="">-- Select Start Time --</option>';
+                    endSelect.innerHTML = '<option value="">-- Select End Time --</option>';
+
+                    data.forEach(slot => {
+                        let startOpt = document.createElement('option');
+                        startOpt.value = slot.startTime;
+                        startOpt.text = `${slot.displayTime}`;
+                        startSelect.appendChild(startOpt);
+
+                        let endOpt = document.createElement('option');
+                        endOpt.value = slot.endTime;
+                        endOpt.text = `${slot.endTimeDisplay}`;
+                        endSelect.appendChild(endOpt);
+                    });
+                })
+                .catch(error => console.error('Error loading slots:', error));
+        }
+
+        function initializeTimeSelects() {
+            const hours = document.querySelectorAll('[id$="Hour"]');
+            hours.forEach(select => {
+                select.innerHTML = '';
+                for(let h=1; h<=12; h++) {
+                    let opt = document.createElement('option');
+                    opt.value = h.toString().padStart(2,'0');
+                    opt.text = h.toString().padStart(2,'0');
+                    select.appendChild(opt);
+                }
+            });
+
+            const minutes = document.querySelectorAll('[id$="Minute"]');
+            minutes.forEach(select => {
+                select.innerHTML = '';
+                for(let m=0; m<=55; m+=5) {
+                    let opt = document.createElement('option');
+                    opt.value = m.toString().padStart(2,'0');
+                    opt.text = m.toString().padStart(2,'0');
+                    select.appendChild(opt);
+                }
+            });
+
+            const now = new Date();
+            let mins = now.getMinutes();
+            let rounded = (mins < 15 ? 0 : (mins < 45 ? 30 : 0));
+            if(rounded === 0) now.setHours(now.getHours() + 1);
+            now.setMinutes(rounded, 0, 0);
+
+            function setTimeSelects(prefix, dt) {
+                let hr = dt.getHours();
+                let ap = hr >= 12 ? 'PM' : 'AM';
+                let hr12 = hr % 12;
+                if(hr12 === 0) hr12 = 12;
+
+                document.getElementById(prefix + 'Hour').value = hr12.toString().padStart(2,'0');
+                document.getElementById(prefix + 'Minute').value = dt.getMinutes().toString().padStart(2,'0');
+                document.getElementById(prefix + 'AmPm').value = ap;
+                timeToHidden(prefix);
+            }
+
+            setTimeSelects('start', now);
+            let end = new Date(now.getTime() + 60*60*1000);
+            setTimeSelects('end', end);
+
+            ['startHour','startMinute','startAmPm','endHour','endMinute','endAmPm'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('change', function() {
+                        let prefix = id.substring(0, id === 'startHour' || id === 'startMinute' || id === 'startAmPm' ? 5 : 3);
+                        timeToHidden(prefix);
+                        ensureEndAfterStart();
+                    });
+                }
+            });
+        }
+
+        function timeToHidden(prefix) {
+            let h = parseInt(document.getElementById(prefix + 'Hour').value, 10);
+            let m = parseInt(document.getElementById(prefix + 'Minute').value, 10);
+            let ap = document.getElementById(prefix + 'AmPm').value;
+
+            if(isNaN(h) || isNaN(m)) return;
+            if(ap === 'PM' && h < 12) h += 12;
+            if(ap === 'AM' && h === 12) h = 0;
+
+            document.getElementById(prefix + 'TimeHidden').value = h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
+        }
+
+        function ensureEndAfterStart() {
+            let sh = parseInt(document.getElementById('startHour').value, 10);
+            let sm = parseInt(document.getElementById('startMinute').value, 10);
+            let sap = document.getElementById('startAmPm').value;
+            let eh = parseInt(document.getElementById('endHour').value, 10);
+            let em = parseInt(document.getElementById('endMinute').value, 10);
+            let eap = document.getElementById('endAmPm').value;
+
+            function toDate(h,m,ap) {
+                let hh = h;
+                if(ap === 'PM' && hh < 12) hh += 12;
+                if(ap === 'AM' && hh === 12) hh = 0;
+                let d = new Date();
+                d.setHours(hh, m, 0, 0);
+                return d;
+            }
+
+            let sdt = toDate(sh, sm, sap);
+            let edt = toDate(eh, em, eap);
+
+            if(edt.getTime() <= sdt.getTime() + 29*60000) {
+                let newEnd = new Date(sdt.getTime() + 60*60000);
+                let hr = newEnd.getHours();
+                let ap = hr >= 12 ? 'PM' : 'AM';
+                let hr12 = hr % 12;
+                if(hr12 === 0) hr12 = 12;
+
+                document.getElementById('endHour').value = hr12.toString().padStart(2,'0');
+                document.getElementById('endMinute').value = newEnd.getMinutes().toString().padStart(2,'0');
+                document.getElementById('endAmPm').value = ap;
+                timeToHidden('end');
+            }
+        }
+
+        function confirmCollect(bookingId) {
+            Swal.fire({
+                title: 'Payment Received?',
+                text: "Are you sure you have collected the cash for Booking #" + bookingId + "?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#00ff7f',
+                cancelButtonColor: '#ff4d4d',  
+                confirmButtonText: '<i class="fas fa-check" style="color: black;"></i> <span style="color: black; font-weight: bold;">Yes, Collected!</span>',
+                cancelButtonText: 'Cancel',
+                background: '#1a1a1a', 
+                color: '#fff', 
+                border: '1px solid #333'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('collectForm_' + bookingId).submit();
+                }
+            });
+        }
+
+        function confirmCheckout(bookingId) {
+            Swal.fire({
+                title: 'Checkout Booking?',
+                text: "Do you want to checkout Booking #" + bookingId + "?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3498db',
+                cancelButtonColor: '#ff4d4d',
+                confirmButtonText: 'Yes, Checkout!',
+                background: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid #333'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('checkoutForm_' + bookingId).submit();
+                }
+            });
+        }
+    </script>
 }
-</script>
