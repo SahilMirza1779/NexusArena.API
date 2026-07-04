@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 
+#nullable disable
+
 namespace NexusArena.Web.Models
 {
     public class OwnerApplicationViewModel

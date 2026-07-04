@@ -33,7 +33,7 @@ namespace NexusArena.API.Controllers
 
                 // 🌟 THE LOGIC: UserID match ho YA phir UserId NULL ho (Broadcast message)
                 var notifications = await _context.Notifications
-                    .Where(n => n.UserId == userId || n.UserId == null)
+                    .Where(n => n.UserId == userId || !n.UserId.HasValue)
                     .OrderByDescending(n => n.CreatedAt)
                     .Take(10)
                     .Select(n => new

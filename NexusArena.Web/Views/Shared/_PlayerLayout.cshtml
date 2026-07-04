@@ -267,7 +267,10 @@
                         notifList.innerHTML = "<div style='padding: 30px; text-align: center; color: #666;'><i class='fas fa-bell-slash' style='font-size: 2rem; margin-bottom: 10px;'></i><br/>No alerts for you.</div>";
                     }
                 })
-                .catch(err => console.log("Silent error:", err));
+                .catch(err => {
+                    console.log("Silent error:", err);
+                    document.getElementById("notif-list").innerHTML = "<div style='padding: 30px; text-align: center; color: #666;'>Failed to load notifications.</div>";
+                });
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)

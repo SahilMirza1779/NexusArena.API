@@ -1,10 +1,9 @@
-﻿@model NexusArena.Web.Controllers.BookingHistoryViewModel
+﻿@model NexusArena.Web.Models.BookingHistoryViewModel
 
 @{
     ViewData["Title"] = "Digital Ticket - #" + Model.BookingId;
-    Layout = null; // Layout null rakha hai taaki Sidebar/Header print mein na aaye
+    Layout = null; 
 }
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,9 +12,12 @@
     <title>Ticket - #@Model.BookingId</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
-        body { font-family: 'Montserrat', sans-serif; background-color: #0f0f0f; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px;}
-        .ticket-box { background: #1a1a1a; width: 100%; max-width: 500px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 255, 102, 0.1); border: 1px solid #333; position: relative; }
+        body { font-family: 'Montserrat', sans-serif; background-color: #0f0f0f; color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px;}
+        .ticket-box { background: #1a1a1a; width: 100%; max-width: 500px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 255, 102, 0.1); border: 1px solid #333; position: relative; margin-bottom: 20px;}
         .ticket-header { background: #00ff66; padding: 20px; text-align: center; color: #000; }
         .ticket-header h2 { margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; font-size: 24px;}
         .ticket-body { padding: 30px; }
@@ -24,23 +26,28 @@
         .label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .value { font-size: 16px; font-weight: 600; margin-top: 5px; }
         .turf-name { font-size: 26px; font-weight: 800; color: #00ff66; margin-bottom: 5px; text-transform: uppercase;}
-        .print-btn { display: block; width: 100%; background: #222; color: #00ff66; border: none; border-top: 1px solid #333; padding: 18px; text-align: center; text-decoration: none; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.3s; font-size: 16px;}
-        .print-btn:hover { background: #00ff66; color: #000; }
         
-        /* 🌟 Print Command Logic: Sirf box print hoga, baaki sab gayab */
+        .action-buttons { display: flex; gap: 15px; width: 100%; max-width: 500px; }
+        .action-btn { flex: 1; padding: 15px; border-radius: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.3s; font-size: 14px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn-pdf { background: #00ff66; color: #000; border: none; }
+        .btn-pdf:hover { background: #00cc52; box-shadow: 0 5px 15px rgba(0,255,102,0.3); }
+        .btn-print { background: #222; color: #fff; border: 1px solid #444; }
+        .btn-print:hover { background: #333; border-color: #555; }
+        
+        /* 🌟 FIX: @@media use kiya taaki CS0103 error na aaye */
         @@media print {
             body { background: white; color: black; display: block; padding: 0; margin: 0; align-items: flex-start;}
-            .ticket-box { box-shadow: none; border: 2px solid #000; max-width: 100%; border-radius: 0;}
+            .ticket-box { box-shadow: none; border: 2px solid #000; max-width: 100%; border-radius: 0; margin-bottom: 0;}
             .ticket-header { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact; }
             .turf-name { color: #000 !important; }
-            .print-btn { display: none; }
+            .action-buttons { display: none; }
             .detail-row { border-bottom: 1px dashed #ccc; }
         }
     </style>
 </head>
 <body>
 
-    <div class="ticket-box">
+    <div class="ticket-box" id="ticketContent">
         <div class="ticket-header">
             <h2>NEXUS ARENA PASS</h2>
         </div>
@@ -90,10 +97,31 @@
                 </div>
             }
         </div>
-        <button class="print-btn" onclick="window.print()">
-            <i class="fas fa-print"></i> Download / Print Ticket
+    </div>
+    
+    <div class="action-buttons">
+        <button class="action-btn btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Print
+        </button>
+        <button class="action-btn btn-pdf" onclick="downloadPDF()">
+            <i class="fas fa-file-pdf"></i> Download PDF
         </button>
     </div>
 
+    <script>
+        function downloadPDF() {
+            var element = document.getElementById('ticketContent');
+            var opt = {
+              margin:       0,
+              // 🌟 FIX: String concatenation use kiya taaki CS1061 error na aaye
+              filename:     'NexusArena_Ticket_#' + '@Model.BookingId' + '.pdf',
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2 },
+              jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
 </body>
 </html>

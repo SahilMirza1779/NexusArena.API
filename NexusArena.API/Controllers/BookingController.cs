@@ -25,40 +25,30 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // ==========================================
-        // 1. GET AVAILABLE TIME SLOTS 
-        // ==========================================
+        // =========================================================
+        // 1. GET BOOKED SLOTS
+        // =========================================================
         [AllowAnonymous]
-        [HttpGet("available-slots")]
-        public async Task<IActionResult> GetAvailableSlots(int arenaId, string date)
+        [HttpGet("booked-times")]
+        public async Task<IActionResult> GetBookedTimes(int resourceId, string date)
         {
             try
             {
-                if (!DateOnly.TryParse(date, out DateOnly playDate))
+                if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateOnly playDate))
                     return BadRequest(new { message = "Invalid date format." });
 
-                var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ArenaId == arenaId);
-                if (resource == null) return NotFound(new { message = "Turf resource not found." });
-
-                var allSlots = await _context.TimeSlots
-                    .Where(ts => ts.ResourceId == resource.ResourceId)
+                var bookedRanges = await _context.Bookings
+                    .Where(b => b.ResourceId == resourceId &&
+                                b.BookingDate == playDate &&
+                                b.Status != "Cancelled" &&
+                                b.Status != "Payment Failed")
+                    .Select(b => new {
+                        start = b.StartTime,
+                        end = b.EndTime
+                    })
                     .ToListAsync();
 
-                var bookedSlotIds = await _context.Bookings
-                    .Where(b => b.ResourceId == resource.ResourceId && b.BookingDate == playDate && b.Status != "Cancelled" && b.Status != "Payment Failed")
-                    .Select(b => b.SlotId)
-                    .ToListAsync();
-
-                var result = allSlots.Select(slot => new
-                {
-                    slotId = slot.SlotId,
-                    timeDisplay = $"{slot.StartTime:hh\\:mm tt} - {slot.EndTime:hh\\:mm tt}",
-                    price = slot.BasePrice,
-                    isPremium = slot.IsPremium,
-                    isBooked = bookedSlotIds.Contains(slot.SlotId)
-                }).ToList();
-
-                return Ok(new { data = result });
+                return Ok(new { success = true, data = bookedRanges });
             }
             catch (Exception ex)
             {
@@ -66,9 +56,9 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // ==========================================
-        // 2. CREATE INITIAL BOOKING 
-        // ==========================================
+        // =========================================================
+        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
+        // =========================================================
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
@@ -79,37 +69,85 @@ namespace NexusArena.API.Controllers
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
 
-                if (!DateOnly.TryParse(request.PlayDate, out DateOnly playDate))
-                    return BadRequest(new { message = "Invalid date format." });
+                if (!DateOnly.TryParseExact(request.PlayDate, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateOnly playDate))
+                    return BadRequest(new { message = "Invalid play date format." });
 
-                var resource = await _context.Resources.FirstOrDefaultAsync(r => r.ArenaId == request.ArenaId);
-                if (resource == null) return NotFound(new { message = "Turf not found." });
+                var resource = await _context.Resources
+                    .Include(r => r.Arena)
+                    .FirstOrDefaultAsync(r => r.ResourceId == request.ResourceId || r.ArenaId == request.ResourceId);
 
-                var isAlreadyBooked = await _context.Bookings
-                    .AnyAsync(b => b.ResourceId == resource.ResourceId && b.SlotId == request.SlotId && b.BookingDate == playDate && b.Status != "Cancelled" && b.Status != "Payment Failed");
+                if (resource == null) return NotFound(new { message = $"Turf with ID {request.ResourceId} not found in Database." });
 
-                if (isAlreadyBooked) return BadRequest(new { message = "Slot already booked." });
+                TimeOnly requestedStart = default;
+                TimeOnly requestedEnd = default;
 
-                var slotInfo = await _context.TimeSlots.FindAsync(request.SlotId);
-                if (slotInfo == null) return NotFound(new { message = "Slot details not found." });
+                if (request.BookingMode == "Hourly")
+                {
+                    if (!TimeOnly.TryParse(request.StartTime, out requestedStart))
+                        return BadRequest(new { message = $"Invalid Start Time format: {request.StartTime}" });
 
-                decimal amountToPay = 0;
-                if (request.PaymentMode == "Full") amountToPay = slotInfo.BasePrice;
-                else if (request.PaymentMode == "Advance50") amountToPay = slotInfo.BasePrice / 2;
+                    if (!TimeOnly.TryParse(request.EndTime, out requestedEnd))
+                        return BadRequest(new { message = $"Invalid End Time format: {request.EndTime}" });
+                }
+
+                if (request.BookingMode == "Hourly")
+                {
+                    bool isClashing = await _context.Bookings.AnyAsync(b =>
+                        b.ResourceId == resource.ResourceId &&
+                        b.BookingDate == playDate &&
+                        b.Status != "Cancelled" && b.Status != "Payment Failed" &&
+                        b.BookingMode == "Hourly" &&
+                        b.StartTime != null && b.EndTime != null &&
+                        b.StartTime < requestedEnd && b.EndTime > requestedStart);
+
+                    if (isClashing)
+                        return BadRequest(new { message = "Selected time overlaps with an existing booking." });
+                }
+
+                decimal totalAmount = 0;
+                if (request.BookingMode == "Hourly")
+                {
+                    int startHour = requestedStart.Hour;
+                    int endHour = requestedEnd.Hour;
+                    if (endHour <= startHour) endHour += 24;
+
+                    for (int h = startHour; h < endHour; h++)
+                    {
+                        int currentHour = h % 24;
+                        if (currentHour >= 6 && currentHour < 17)
+                            totalAmount += resource.Arena.HourlyRegularPrice;
+                        else
+                            totalAmount += resource.Arena.HourlyPeakPrice;
+                    }
+                }
+                else if (request.BookingMode == "Tournament")
+                {
+                    if (request.TournamentPackage == "HalfDayMorning") totalAmount = resource.Arena.HalfDayMorningPrice;
+                    else if (request.TournamentPackage == "HalfDayEvening") totalAmount = resource.Arena.HalfDayEveningPrice;
+                    else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
+                }
+
+                decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
                 var newBooking = new Booking
                 {
                     UserId = userId,
                     ResourceId = resource.ResourceId,
-                    SlotId = request.SlotId,
                     BookingDate = playDate,
+                    StartTime = request.BookingMode == "Hourly" ? requestedStart : null,
+                    EndTime = request.BookingMode == "Hourly" ? requestedEnd : null,
+                    BookingMode = request.BookingMode,
+                    TournamentPackage = request.TournamentPackage,
                     Status = "Pending Payment",
                     PaymentMode = request.PaymentMode,
                     PaymentStatus = "Pending",
+                    TotalAmount = totalAmount,
                     AmountPaid = 0
                 };
 
                 _context.Bookings.Add(newBooking);
+
+                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
                 await _context.SaveChangesAsync();
 
                 if (amountToPay > 0)
@@ -120,9 +158,11 @@ namespace NexusArena.API.Controllers
                     try
                     {
                         RazorpayClient client = new RazorpayClient(key, secret);
+                        int amountInPaisa = Convert.ToInt32(amountToPay * 100);
+
                         Dictionary<string, object> options = new Dictionary<string, object>
                         {
-                            { "amount", amountToPay * 100 },
+                            { "amount", amountInPaisa },
                             { "currency", "INR" },
                             { "receipt", "rcpt_" + newBooking.BookingId }
                         };
@@ -134,7 +174,8 @@ namespace NexusArena.API.Controllers
                             bookingId = newBooking.BookingId,
                             requiresPayment = true,
                             razorpayOrderId = order["id"].ToString(),
-                            amount = amountToPay
+                            amount = amountToPay,
+                            totalBill = totalAmount
                         });
                     }
                     catch (Exception rzpEx)
@@ -149,15 +190,30 @@ namespace NexusArena.API.Controllers
                 await _context.SaveChangesAsync();
                 return Ok(new { message = "Booking successful!", bookingId = newBooking.BookingId, requiresPayment = false });
             }
+            catch (DbUpdateException dbEx)
+            {
+                // 🚨 THE FIX: Extracting the deepest SQL Error message
+                Exception inner = dbEx;
+                while (inner.InnerException != null)
+                {
+                    inner = inner.InnerException;
+                }
+                return StatusCode(500, new { message = "SQL DATABASE ERROR: " + inner.Message });
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
+                Exception inner = ex;
+                while (inner.InnerException != null)
+                {
+                    inner = inner.InnerException;
+                }
+                return StatusCode(500, new { message = "SERVER CRASH ERROR: " + inner.Message });
             }
         }
 
-        // ==========================================
-        // 3. SECURE PAYMENT VERIFICATION & EMAIL TICKET 
-        // ==========================================
+        // =========================================================
+        // 3. SECURE PAYMENT VERIFICATION
+        // =========================================================
         [Authorize]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] PaymentVerificationDto request)
@@ -175,98 +231,35 @@ namespace NexusArena.API.Controllers
                 }
 
                 if (generatedSignature != request.RazorpaySignature?.ToLower())
-                {
                     return BadRequest(new { message = "Payment Verification Failed: Invalid Signature!" });
-                }
 
                 var booking = await _context.Bookings.FindAsync(request.BookingId);
                 if (booking == null) return NotFound(new { message = "Booking not found" });
 
                 if (booking.PaymentStatus == "Paid" && booking.Status == "Confirmed")
-                {
-                    return Ok(new { message = "Payment already verified and process completed." });
-                }
+                    return Ok(new { message = "Payment already verified." });
 
                 booking.PaymentStatus = "Paid";
                 booking.Status = "Confirmed";
                 booking.TransactionId = request.RazorpayPaymentId;
 
-                var slot = await _context.TimeSlots.FindAsync(booking.SlotId);
-                decimal basePrice = slot?.BasePrice ?? 0;
-
-                if (booking.PaymentMode == "Full") booking.AmountPaid = basePrice;
-                else if (booking.PaymentMode == "Advance50") booking.AmountPaid = basePrice / 2;
+                if (booking.PaymentMode == "Full") booking.AmountPaid = booking.TotalAmount;
+                else if (booking.PaymentMode == "Advance50") booking.AmountPaid = booking.TotalAmount / 2;
 
                 await _context.SaveChangesAsync();
-
-                // ========================================================
-                // DIGITAL TICKET EMAIL LOGIC
-                // ========================================================
-                try
-                {
-                    var user = await _context.Users.FindAsync(booking.UserId);
-                    if (user != null && !string.IsNullOrEmpty(user.Email))
-                    {
-                        string fromEmail = "sahilmirza01779@gmail.com";
-                        string appPassword = "xumb xpgu rrbd aimt";
-
-                        var smtpClient = new SmtpClient("smtp.gmail.com")
-                        {
-                            Port = 587,
-                            Credentials = new NetworkCredential(fromEmail, appPassword),
-                            EnableSsl = true,
-                        };
-
-                        var mailMessage = new MailMessage
-                        {
-                            From = new MailAddress(fromEmail, "Nexus Arena Premium"),
-                            Subject = "🎟️ Your Turf Ticket is Confirmed! - Nexus Arena",
-                            Body = $@"
-                                <div style='background-color:#0f0f0f; color:#fff; padding:20px; font-family:Arial, sans-serif; border-radius:10px; border:1px solid #333;'>
-                                    <h2 style='color:#00ff66;'>Booking Confirmed! ⚽</h2>
-                                    <p style='color:#aaa;'>Hi {user.FullName}, your turf slot has been successfully locked.</p>
-                                    <div style='background-color:#1a1a1a; padding:15px; border-left:4px solid #00ff66; margin:20px 0;'>
-                                        <strong>Booking ID:</strong> #{booking.BookingId}<br/>
-                                        <strong>Date:</strong> {booking.BookingDate.ToString("dd MMM yyyy")}<br/>
-                                        <strong>Amount Paid:</strong> Rs. {booking.AmountPaid}<br/>
-                                        <strong>Payment Mode:</strong> {booking.PaymentMode}
-                                    </div>
-                                    <p style='color:#888; font-size:12px;'>Please show this email at the arena counter.</p>
-                                </div>",
-                            IsBodyHtml = true,
-                        };
-                        mailMessage.To.Add(user.Email);
-                        await smtpClient.SendMailAsync(mailMessage);
-                    }
-                }
-                catch (Exception mailEx)
-                {
-                    Console.WriteLine("Email Send Failed: " + mailEx.Message);
-                }
-                // ========================================================
-
-                return Ok(new { message = "Payment verified successfully and ticket emailed." });
+                return Ok(new { message = "Payment verified successfully!" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Verification Error: " + ex.Message });
+                Exception inner = ex;
+                while (inner.InnerException != null)
+                {
+                    inner = inner.InnerException;
+                }
+                return StatusCode(500, new { message = "Verification Error: " + inner.Message });
             }
         }
     }
 
-    public class CreateBookingRequest
-    {
-        public int ArenaId { get; set; }
-        public int SlotId { get; set; }
-        public string PlayDate { get; set; } = string.Empty;
-        public string PaymentMode { get; set; } = string.Empty;
-    }
 
-    public class PaymentVerificationDto
-    {
-        public int BookingId { get; set; }
-        public string RazorpayPaymentId { get; set; } = string.Empty;
-        public string RazorpayOrderId { get; set; } = string.Empty;
-        public string RazorpaySignature { get; set; } = string.Empty;
-    }
 }
