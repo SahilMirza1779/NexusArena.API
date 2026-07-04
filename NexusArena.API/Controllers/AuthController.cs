@@ -136,6 +136,72 @@ namespace NexusArena.API.Controllers
             }
         }
 
+        [HttpGet("GetProfile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized(new { message = "Invalid token or user not found" });
+                }
+
+                var user = await _context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null) return NotFound(new { message = "User not found in database" });
+
+                return Ok(new
+                {
+                    fullName = user.FullName,
+                    email = user.Email,
+                    phone = user.Phone,
+                    roleName = user.Role?.RoleName ?? "Receptionist",
+                    branch = "Surat Arena" 
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error fetching profile", error = ex.Message });
+            }
+        }
+
+        [HttpPost("UpdateProfile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
+        {
+            try
+            {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized(new { message = "Invalid token or user not found" });
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null) return NotFound(new { message = "User not found" });
+
+                user.FullName = request.FullName;
+                user.Phone = request.Phone;
+
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Profile updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error updating profile", error = ex.Message });
+            }
+        }
+
+
         [HttpPost("VerifyEmail")]
         [AllowAnonymous]
         public IActionResult VerifyEmail([FromBody] ForgotPasswordRequestDto request)
@@ -155,7 +221,7 @@ namespace NexusArena.API.Controllers
             var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
             if (user == null) return NotFound();
 
-            user.PasswordHash = request.NewPassword;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
             _context.SaveChanges();
 
             return Ok(new { message = "Password updated successfully" });
@@ -171,6 +237,12 @@ namespace NexusArena.API.Controllers
             public string Phone { get; set; }
             public string Password { get; set; }
             public string RoleName { get; set; }
+        }
+
+        public class UpdateProfileDto
+        {
+            public string FullName { get; set; }
+            public string Phone { get; set; }
         }
     }
 }

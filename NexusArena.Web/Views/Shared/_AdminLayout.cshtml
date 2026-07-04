@@ -1,4 +1,40 @@
-﻿<!DOCTYPE html>
+﻿@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@{
+    string loggedInName = "User";
+    var jwToken = Context.Request.Cookies["JWToken"];
+
+    if (!string.IsNullOrEmpty(jwToken))
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(jwToken);
+
+            var nameClaim = jwt.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value;
+
+            if (!string.IsNullOrWhiteSpace(nameClaim))
+            {
+                loggedInName = nameClaim;
+            }
+            else
+            {
+                var emailClaim = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!string.IsNullOrWhiteSpace(emailClaim) && emailClaim.Contains("@"))
+                {
+                    loggedInName = emailClaim.Split('@')[0];
+                    loggedInName = char.ToUpper(loggedInName[0]) + loggedInName.Substring(1);
+                }
+            }
+        }
+        catch
+        {
+            
+        }
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -197,9 +233,9 @@
             </div>
             <div class="profile-dropdown-wrapper" style="position: relative; display: inline-block;">
                 <button class="profile-btn" onclick="toggleProfileDropdown()" style="background: none; border: none; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-user-circle" style="font-size: 22px;"></i> Boss Sahil <i class="fas fa-caret-down" style="font-size: 14px; margin-left: 5px;"></i>
+                    <i class="fas fa-user-circle" style="font-size: 22px;"></i> @loggedInName <i class="fas fa-caret-down" style="font-size: 14px; margin-left: 5px;"></i>
                 </button>
-    
+ 
                 <div id="profileMenu" class="dropdown-content">
                     <a href="/SuperAdminDashboard/AdminDetails" class="dropdown-item">
                         <i class="fas fa-id-card"></i> Admin Details
@@ -242,7 +278,7 @@
                 borderRadius: '12px'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = '/Account/Login';
+                    window.location.href = '/Account/Logout'; 
                 }
             });
         }

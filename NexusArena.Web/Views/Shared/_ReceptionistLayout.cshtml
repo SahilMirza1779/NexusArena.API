@@ -1,4 +1,39 @@
-﻿<!DOCTYPE html>
+﻿@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@{
+    string loggedInName = "User";
+    var jwToken = Context.Request.Cookies["JWToken"];
+
+    if (!string.IsNullOrEmpty(jwToken))
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(jwToken);
+
+            var nameClaim = jwt.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value;
+
+            if (!string.IsNullOrWhiteSpace(nameClaim))
+            {
+                loggedInName = nameClaim;
+            }
+            else
+            {
+                var emailClaim = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!string.IsNullOrWhiteSpace(emailClaim) && emailClaim.Contains("@"))
+                {
+                    loggedInName = emailClaim.Split('@')[0];
+                    loggedInName = char.ToUpper(loggedInName[0]) + loggedInName.Substring(1);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -173,7 +208,7 @@
             <div class="dropdown">
                 <button class="btn text-white d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border: none; box-shadow: none; padding: 5px 10px; transition: 0.3s;">
                     <i class="fas fa-user-circle" style="font-size: 26px; color: #00ff7f;"></i>
-                    <span style="font-weight: 600; font-size: 16px;">Receptionist</span>
+                    <span style="font-weight: 600; font-size: 16px;">@loggedInName</span>
                     <i class="fas fa-chevron-down ms-1" style="font-size: 12px; color: #888;"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" style="min-width: 240px;">
