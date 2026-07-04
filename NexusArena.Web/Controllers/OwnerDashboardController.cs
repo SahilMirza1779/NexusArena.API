@@ -26,6 +26,20 @@ namespace NexusArena.Web.Controllers
             return client;
         }
 
+        // ================= HELPER: Token se Email nikalne ke liye (Profile me kaam aayega) =========================
+        private string GetLoggedInUserEmail()
+        {
+            var token = Request.Cookies["JWToken"];
+            if (string.IsNullOrEmpty(token)) return "";
+            try
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(token);
+                return jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ?? "";
+            }
+            catch { return ""; }
+        }
+
         // ================= EMAIL SENDER LOGIC (FIXED: Synchronous Send) =========================
         private bool SendStaffWelcomeEmail(string toEmail, string fullName, string password, string businessName)
         {
@@ -86,6 +100,55 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        // ================= OWNER PROFILE MANAGEMENT (NAYA LOGIC) ====================
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            string email = GetLoggedInUserEmail();
+            using (var client = GetAuthenticatedClient())
+            {
+                var response = await client.GetAsync($"{_baseApiUrl}OwnerProfile/GetByEmail/{email}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var model = await response.Content.ReadFromJsonAsync<OwnerProfileViewModel>();
+                    return View(model);
+                }
+            }
+            return View(new OwnerProfileViewModel());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> UpdateProfile()
+        {
+            string email = GetLoggedInUserEmail();
+            using (var client = GetAuthenticatedClient())
+            {
+                var response = await client.GetAsync($"{_baseApiUrl}OwnerProfile/GetByEmail/{email}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var model = await response.Content.ReadFromJsonAsync<OwnerProfileViewModel>();
+                    return View(model);
+                }
+            }
+            return RedirectToAction("Profile");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateProfile(OwnerProfileViewModel model)
+        {
+            string email = GetLoggedInUserEmail();
+            using (var client = GetAuthenticatedClient())
+            {
+                var payload = new { FullName = model.FullName, Phone = model.Phone };
+                var response = await client.PutAsJsonAsync($"{_baseApiUrl}OwnerProfile/update/{email}", payload);
+
+                if (response.IsSuccessStatusCode) TempData["Success"] = "Profile Updated Successfully!";
+                else TempData["Error"] = "Failed to update profile!";
+            }
+            return RedirectToAction("Profile");
+        }
+
+        // ================= MANAGE RESOURCES =========================
         [HttpGet]
         public async Task<IActionResult> ManageResources()
         {
@@ -138,6 +201,7 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("ManageResources");
         }
 
+        // ================= PRICING & SLOTS =========================
         [HttpGet]
         public async Task<IActionResult> PricingAndSlots()
         {
@@ -166,6 +230,7 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("PricingAndSlots");
         }
 
+        // ================= MANAGE ARENAS =========================
         [HttpGet]
         public async Task<IActionResult> ManageArenas()
         {
@@ -181,6 +246,7 @@ namespace NexusArena.Web.Controllers
             return View();
         }
 
+        // ================= STAFF MANAGEMENT ====================
         [HttpGet]
         public async Task<IActionResult> Staff()
         {
