@@ -17,6 +17,9 @@ public partial class TimeSlot
 
     public bool? IsPremium { get; set; }
 
+    public string? FestivalName { get; set; }
+    public int? DiscountPercent { get; set; }
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual Resource Resource { get; set; } = null!;

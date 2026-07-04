@@ -14,6 +14,14 @@ namespace NexusArena.API.Controllers
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public string? BusinessName { get; set; }
+    }
+
+    public class UpdateStaffRequest
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string? BusinessName { get; set; }
     }
 
     [Authorize(Roles = "Owner")]
@@ -38,8 +46,9 @@ namespace NexusArena.API.Controllers
                     Email = input.Email,
                     Phone = input.Phone,
                     PasswordHash = input.Password,
-                    RoleId = 3, // Staff/Receptionist Role
-                    IsActive = true
+                    RoleId = 3,
+                    IsActive = true,
+                    BusinessName = input.BusinessName
                 };
 
                 _context.Users.Add(staff);
@@ -61,12 +70,55 @@ namespace NexusArena.API.Controllers
                         u.FullName,
                         u.Email,
                         u.Phone,
-                        u.IsActive
+                        u.IsActive,
+                        u.BusinessName
                     }).ToListAsync();
 
                 return Ok(staffList);
             }
             catch (Exception ex) { return StatusCode(500, ex.Message); }
+        }
+
+        [HttpGet("GetByEmail/{email}")]
+        public async Task<IActionResult> GetStaffByEmail(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.RoleId == 3);
+            if (user == null) return NotFound("Staff not found");
+
+            return Ok(new
+            {
+                user.UserId,
+                user.FullName,
+                user.Email,
+                user.Phone,
+                user.IsActive,
+                user.BusinessName
+            });
+        }
+
+        [HttpPut("update/{email}")]
+        public async Task<IActionResult> UpdateStaff(string email, [FromBody] UpdateStaffRequest input)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.RoleId == 3);
+            if (user == null) return NotFound("Staff not found");
+
+            user.FullName = input.FullName;
+            user.Phone = input.Phone;
+            user.BusinessName = input.BusinessName;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Staff updated successfully" });
+        }
+
+        [HttpDelete("Delete/{email}")]
+        public async Task<IActionResult> DeleteStaff(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.RoleId == 3);
+            if (user == null) return NotFound("Staff not found");
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Staff deleted successfully" });
         }
     }
 }

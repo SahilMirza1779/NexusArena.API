@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NexusArena.MVC.Models;
 using NexusArena.Web.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Net.Mail;
+using System.Net;
 
 namespace NexusArena.Web.Controllers
 {
@@ -23,7 +26,47 @@ namespace NexusArena.Web.Controllers
             return client;
         }
 
-        // ================= DASHBOARD INDEX =========================
+        // ================= EMAIL SENDER LOGIC (FIXED: Synchronous Send) =========================
+        private bool SendStaffWelcomeEmail(string toEmail, string fullName, string password, string businessName)
+        {
+            try
+            {
+                string senderEmail = "sahilmirza01779@gmail.com";
+                string senderAppPassword = "xumb xpgu rrbd aimt";
+
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(senderEmail, "Nexus Arena");
+                mail.To.Add(toEmail);
+                mail.Subject = "🎉 Welcome to Nexus Arena - Your Staff Account!";
+                mail.IsBodyHtml = true;
+
+                mail.Body = $@"
+                <div style='font-family: Arial, sans-serif; background-color: #111; color: #fff; padding: 30px; border-radius: 12px; border: 1px solid #333; max-width: 600px; margin: auto;'>
+                    <h2 style='color: #3498db; margin-top: 0;'>Welcome, {fullName}! 🏢</h2>
+                    <p style='color: #ccc; font-size: 15px;'>Your staff account has been created successfully for <strong>{businessName}</strong>. You can now manage operations instantly!</p>
+                    <div style='background: #1a1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db;'>
+                        <p style='margin: 0 0 10px 0; color: #fff; font-weight: bold;'>Your Login Credentials:</p>
+                        <p style='margin: 5px 0;'>Email ID: <strong style='color: #3498db;'>{toEmail}</strong></p>
+                        <p style='margin: 5px 0;'>Password: <strong style='color: #3498db;'>{password}</strong></p>
+                    </div>
+                    <p style='font-size: 13px; color: #888; margin-top: 20px;'>Please login and change your password for security.</p>
+                </div>";
+
+                using (SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587))
+                {
+                    smtp.Credentials = new NetworkCredential(senderEmail, senderAppPassword);
+                    smtp.EnableSsl = true;
+                    smtp.Send(mail);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Email Error: " + ex.Message);
+                return false;
+            }
+        }
+
         [HttpGet]
         public IActionResult Index()
         {
@@ -31,10 +74,7 @@ namespace NexusArena.Web.Controllers
             {
                 TodayRevenue = 45200,
                 LiveOccupancy = "85%",
-                UpcomingBookings = new List<UpcomingBookingViewModel>
-                {
-                    new UpcomingBookingViewModel { BookingId = 1, CustomerName = "Rahul Sharma", FacilityName = "Turf Alpha", TimeSlot = "05:00 PM", Status = "Confirmed" }
-                }
+                UpcomingBookings = new List<UpcomingBookingViewModel> { new UpcomingBookingViewModel { BookingId = 1, CustomerName = "Rahul Sharma", FacilityName = "Turf Alpha", TimeSlot = "05:00 PM", Status = "Confirmed" } }
             };
             return View(viewModel);
         }
@@ -46,7 +86,6 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        // ================= MANAGE RESOURCES =========================
         [HttpGet]
         public async Task<IActionResult> ManageResources()
         {
@@ -64,10 +103,7 @@ namespace NexusArena.Web.Controllers
         {
             var sports = Request.Form["SelectedSports"].ToList();
             var payload = new { ResourceName = model.ResourceName, ResourceType = string.Join(", ", sports) };
-            using (var client = GetAuthenticatedClient())
-            {
-                await client.PostAsJsonAsync($"{_baseApiUrl}ResourceManager/add", payload);
-            }
+            using (var client = GetAuthenticatedClient()) { await client.PostAsJsonAsync($"{_baseApiUrl}ResourceManager/add", payload); }
             return RedirectToAction("ManageResources");
         }
 
@@ -102,7 +138,6 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("ManageResources");
         }
 
-        // ================= PRICING & SLOTS (RESTORED) =========================
         [HttpGet]
         public async Task<IActionResult> PricingAndSlots()
         {
@@ -110,21 +145,27 @@ namespace NexusArena.Web.Controllers
             using (var client = GetAuthenticatedClient())
             {
                 var resResponse = await client.GetAsync($"{_baseApiUrl}ResourceManager/GetAllFacilities");
-                if (resResponse.IsSuccessStatusCode)
-                {
-                    viewModel.Resources = await resResponse.Content.ReadFromJsonAsync<List<ResourceViewModel>>() ?? new List<ResourceViewModel>();
-                }
+                if (resResponse.IsSuccessStatusCode) viewModel.Resources = await resResponse.Content.ReadFromJsonAsync<List<ResourceViewModel>>() ?? new List<ResourceViewModel>();
 
                 var slotResponse = await client.GetAsync($"{_baseApiUrl}TimeSlot/GetAll");
-                if (slotResponse.IsSuccessStatusCode)
-                {
-                    viewModel.TimeSlots = await slotResponse.Content.ReadFromJsonAsync<List<TimeSlotViewModel>>() ?? new List<TimeSlotViewModel>();
-                }
+                if (slotResponse.IsSuccessStatusCode) viewModel.TimeSlots = await slotResponse.Content.ReadFromJsonAsync<List<TimeSlotViewModel>>() ?? new List<TimeSlotViewModel>();
             }
             return View(viewModel);
         }
 
-        // ================= MANAGE ARENAS (RESTORED) =========================
+        [HttpPost]
+        public async Task<IActionResult> AddTimeSlot(TimeSlotViewModel model)
+        {
+            model.IsPremium = Request.Form["IsPremium"] == "true";
+            using (var client = GetAuthenticatedClient())
+            {
+                var response = await client.PostAsJsonAsync($"{_baseApiUrl}TimeSlot/add", model);
+                if (response.IsSuccessStatusCode) TempData["Success"] = "Time Slot added successfully!";
+                else TempData["Error"] = "Error! Time Slot add nahi ho paya. Database ya API method check karo.";
+            }
+            return RedirectToAction("PricingAndSlots");
+        }
+
         [HttpGet]
         public async Task<IActionResult> ManageArenas()
         {
@@ -133,14 +174,13 @@ namespace NexusArena.Web.Controllers
                 var response = await client.GetAsync($"{_baseApiUrl}Arena/GetMyArenas");
                 if (response.IsSuccessStatusCode)
                 {
-                    var list = await response.Content.ReadFromJsonAsync<List<NexusArena.Web.Models.ArenaViewModel>>() ?? new List<NexusArena.Web.Models.ArenaViewModel>();
+                    var list = await response.Content.ReadFromJsonAsync<List<ArenaViewModel>>() ?? new List<ArenaViewModel>();
                     ViewBag.ArenasList = list;
                 }
             }
             return View();
         }
 
-        // ================= STAFF MANAGEMENT ====================
         [HttpGet]
         public async Task<IActionResult> Staff()
         {
@@ -150,6 +190,10 @@ namespace NexusArena.Web.Controllers
                 var response = await client.GetAsync($"{_baseApiUrl}Staff/GetAll");
                 if (response.IsSuccessStatusCode)
                     viewModel.StaffList = await response.Content.ReadFromJsonAsync<List<ManageReceptionistViewModel>>() ?? new List<ManageReceptionistViewModel>();
+
+                var resResponse = await client.GetAsync($"{_baseApiUrl}ResourceManager/GetAllFacilities");
+                if (resResponse.IsSuccessStatusCode)
+                    ViewBag.BusinessList = await resResponse.Content.ReadFromJsonAsync<List<ResourceViewModel>>() ?? new List<ResourceViewModel>();
             }
             return View(viewModel);
         }
@@ -157,7 +201,21 @@ namespace NexusArena.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> RegisterStaff(ManageReceptionistViewModel model)
         {
-            TempData["Success"] = "Staff Registered Successfully!";
+            model.Password = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+
+            using (var client = GetAuthenticatedClient())
+            {
+                var response = await client.PostAsJsonAsync($"{_baseApiUrl}Staff/add", model);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    bool isEmailSent = SendStaffWelcomeEmail(model.Email, model.FullName, model.Password, model.BusinessName ?? "Nexus Arena");
+
+                    if (isEmailSent) TempData["Success"] = $"Staff '{model.FullName}' registered successfully! Email sent to {model.Email}.";
+                    else TempData["Error"] = $"Staff '{model.FullName}' saved, BUT Email sending failed. Auto-generated Password is: {model.Password}";
+                }
+                else TempData["Error"] = "Error! API ne data save nahi kiya. Database check karo.";
+            }
             return RedirectToAction("Staff");
         }
 
@@ -166,6 +224,10 @@ namespace NexusArena.Web.Controllers
         {
             using (var client = GetAuthenticatedClient())
             {
+                var resResponse = await client.GetAsync($"{_baseApiUrl}ResourceManager/GetAllFacilities");
+                if (resResponse.IsSuccessStatusCode)
+                    ViewBag.BusinessList = await resResponse.Content.ReadFromJsonAsync<List<ResourceViewModel>>() ?? new List<ResourceViewModel>();
+
                 var response = await client.GetAsync($"{_baseApiUrl}Staff/GetByEmail/{email}");
                 if (response.IsSuccessStatusCode)
                 {
@@ -173,9 +235,9 @@ namespace NexusArena.Web.Controllers
                     ViewBag.OriginalEmail = email;
                     return View(model);
                 }
-                var dummyModel = new ManageReceptionistViewModel { Email = email, FullName = "Staff Member", Phone = "0000000000" };
-                ViewBag.OriginalEmail = email;
-                return View(dummyModel);
+
+                TempData["Error"] = "Error! Staff member not found in database.";
+                return RedirectToAction("Staff");
             }
         }
 
@@ -184,9 +246,24 @@ namespace NexusArena.Web.Controllers
         {
             using (var client = GetAuthenticatedClient())
             {
-                var response = await client.PutAsJsonAsync($"{_baseApiUrl}Staff/update/{originalEmail}", model);
+                var payload = new { FullName = model.FullName, Phone = model.Phone, BusinessName = model.BusinessName };
+                var response = await client.PutAsJsonAsync($"{_baseApiUrl}Staff/update/{originalEmail}", payload);
+
                 if (response.IsSuccessStatusCode) TempData["Success"] = "Staff Updated Successfully!";
-                else TempData["Success"] = "Staff Updated! (UI Test Mode)";
+                else TempData["Error"] = "Update failed! Check database/API.";
+            }
+            return RedirectToAction("Staff");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteStaff(string email)
+        {
+            using (var client = GetAuthenticatedClient())
+            {
+                var response = await client.DeleteAsync($"{_baseApiUrl}Staff/Delete/{email}");
+
+                if (response.IsSuccessStatusCode) TempData["Success"] = "Staff Deleted Successfully!";
+                else TempData["Error"] = "Failed to delete staff!";
             }
             return RedirectToAction("Staff");
         }

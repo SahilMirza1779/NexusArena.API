@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
+    // 🚨 1. Request model update kiya taaki front-end se data receive ho sake
     public class AddSlotRequest
     {
         public int ResourceId { get; set; }
@@ -15,6 +16,9 @@ namespace NexusArena.API.Controllers
         public TimeSpan EndTime { get; set; }
         public decimal BasePrice { get; set; }
         public bool IsPremium { get; set; }
+
+        public string? FestivalName { get; set; }
+        public int? DiscountPercent { get; set; }
     }
 
     [Authorize(Roles = "Owner")]
@@ -33,11 +37,14 @@ namespace NexusArena.API.Controllers
                 var slot = new TimeSlot
                 {
                     ResourceId = input.ResourceId,
-                    // FIX: TimeSpan ko TimeOnly mein convert kar diya hai
                     StartTime = TimeOnly.FromTimeSpan(input.StartTime),
                     EndTime = TimeOnly.FromTimeSpan(input.EndTime),
                     BasePrice = input.BasePrice,
-                    IsPremium = input.IsPremium
+                    IsPremium = input.IsPremium,
+
+                    // 🚨 2. Database mein save hone ke liye map kiya
+                    FestivalName = input.FestivalName,
+                    DiscountPercent = input.DiscountPercent
                 };
 
                 _context.TimeSlots.Add(slot);
@@ -61,7 +68,11 @@ namespace NexusArena.API.Controllers
                         t.StartTime,
                         t.EndTime,
                         t.BasePrice,
-                        t.IsPremium
+                        t.IsPremium,
+
+                        // 🚨 3. Database se waapas frontend me bhejne ke liye map kiya
+                        t.FestivalName,
+                        t.DiscountPercent
                     }).ToListAsync();
 
                 return Ok(slots);
