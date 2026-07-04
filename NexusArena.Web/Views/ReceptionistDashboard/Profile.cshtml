@@ -1,0 +1,232 @@
+﻿@{
+    ViewData["Title"] = "My Profile";
+    Layout = "~/Views/Shared/_ReceptionistLayout.cshtml";
+}
+
+<style>
+    .profile-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 15px;
+        padding: 40px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        max-width: 550px;
+        margin: 0 auto;
+        transition: transform 0.3s ease;
+    }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+        }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        background: #222;
+        border: 3px solid #00ff7f;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 55px;
+        color: #00ff7f;
+        margin: 0 auto 20px;
+        box-shadow: 0 0 25px rgba(0, 255, 127, 0.2);
+    }
+
+    .info-group {
+        background: #222;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        transition: border-color 0.3s ease;
+    }
+
+        .info-group:hover {
+            border-color: #00ff7f;
+            background: #252525;
+        }
+    
+    .info-icon {
+        color: #888;
+        font-size: 22px;
+        width: 45px;
+        text-align: left;
+    }
+
+    .info-group:hover .info-icon {
+        color: #00ff7f;
+    }
+
+    .info-content {
+        flex-grow: 1;
+    }
+
+    .info-label {
+        color: #aaa;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 3px;
+        font-weight: 600;
+    }
+
+    .info-value {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .btn-edit {
+        background: #00ff7f;
+        color: #000;
+        font-weight: 800;
+        border: none;
+        padding: 14px;
+        border-radius: 12px;
+        transition: 0.3s;
+        width: 100%;
+        margin-top: 25px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+        .btn-edit:hover {
+            background: #00cc66;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 255, 127, 0.4);
+        }
+
+    .premium-input {
+        background-color: #222 !important;
+        border: 1px solid #444 !important;
+        color: #fff !important;
+        border-radius: 8px;
+        padding: 12px;
+        transition: border-color 0.3s;
+    }
+
+        .premium-input:focus {
+            border-color: #00ff7f !important;
+            box-shadow: 0 0 8px rgba(0, 255, 127, 0.3) !important;
+        }
+
+        .premium-input:disabled {
+            background-color: #1a1a1a !important;
+            color: #777 !important;
+            cursor: not-allowed;
+        }
+</style>
+
+<div class="container-fluid mt-2">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert" style="background-color: rgba(0, 255, 127, 0.1); border: 1px solid #00ff7f; color: #00ff7f; border-radius: 8px;">
+            <i class="fas fa-check-circle me-2"></i> <strong>Success!</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 style="font-weight: 700; letter-spacing: 1px;">
+            <i class="fas fa-id-badge me-2" style="color: #00ff7f;"></i> Profile Details
+        </h2>
+        @if (ViewBag.ApiDebugError != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert" style="background-color: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; color: #ffc107; border-radius: 8px;">
+                <i class="fas fa-bug me-2"></i> <strong>API Fetch Failed:</strong> @ViewBag.ApiDebugError
+                <br /><small class="text-muted mt-1 d-block">Check if the API URL is correct and the Backend server is running.</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    </div>
+
+    <div class="profile-card text-center">
+        
+        <div class="profile-avatar">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        
+        <h3 style="font-weight: 800; color: #fff; margin-bottom: 5px; letter-spacing: 0.5px;">@ViewBag.Name</h3>
+        
+        <span class="badge bg-dark border border-secondary text-light mb-4 px-3 py-2" style="font-size: 13px;">
+            <i class="fas fa-shield-alt me-1" style="color: #00ff7f;"></i> @ViewBag.Role
+        </span>
+
+        <div class="text-start">
+            <div class="info-group">
+                <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                <div class="info-content">
+                    <div class="info-label">Registered Email</div>
+                    <div class="info-value">@ViewBag.Email</div>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
+                <div class="info-content">
+                    <div class="info-label">Contact Number</div>
+                    <div class="info-value">@ViewBag.Phone</div>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="info-content">
+                    <div class="info-label">Assigned Branch</div>
+                    <div class="info-value">@ViewBag.Branch</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-edit" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+            <i class="fas fa-user-edit me-2"></i> Edit Profile
+        </button>
+    </div>
+</div>
+
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: #1a1a1a; border: 1px solid #333; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div class="modal-header" style="border-bottom: 1px solid #333; padding: 20px;">
+                <h5 class="modal-title" id="editProfileModalLabel" style="color: #00ff7f; font-weight: 700;">
+                    <i class="fas fa-user-edit me-2"></i> Update Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form asp-action="UpdateProfile" method="post">
+                <div class="modal-body" style="padding: 25px;">
+                    
+                    <div class="mb-4">
+                        <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 12px; text-transform: uppercase;">Registered Email (Locked)</label>
+                        <input type="email" class="form-control premium-input" value="@ViewBag.Email" disabled>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 12px; text-transform: uppercase;">Full Name</label>
+                        <input type="text" name="fullName" class="form-control premium-input" value="@ViewBag.Name" required placeholder="Enter your full name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" style="color: #bbb; font-weight: 500; font-size: 12px; text-transform: uppercase;">Contact Number</label>
+                        <input type="text" name="phoneNumber" class="form-control premium-input" value="@ViewBag.Phone" required placeholder="Enter phone number">
+                    </div>
+
+                    <div class="alert mt-4 mb-0" style="background: rgba(255, 165, 0, 0.1); border: 1px solid rgba(255, 165, 0, 0.5); color: #ffb84d; font-size: 13px; border-radius: 8px;">
+                        <i class="fas fa-shield-alt me-2"></i> Password changes are disabled from this panel for security reasons.
+                    </div>
+
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #333; padding: 20px;">
+                    <button type="button" class="btn text-muted" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-edit" style="width: auto; margin-top: 0; padding: 10px 25px;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

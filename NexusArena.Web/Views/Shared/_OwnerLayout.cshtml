@@ -1,4 +1,39 @@
-﻿<!DOCTYPE html>
+﻿@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@{
+    string loggedInName = "User";
+    var jwToken = Context.Request.Cookies["JWToken"];
+
+    if (!string.IsNullOrEmpty(jwToken))
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(jwToken);
+
+            var nameClaim = jwt.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value;
+
+            if (!string.IsNullOrWhiteSpace(nameClaim))
+            {
+                loggedInName = nameClaim;
+            }
+            else
+            {
+                var emailClaim = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!string.IsNullOrWhiteSpace(emailClaim) && emailClaim.Contains("@"))
+                {
+                    loggedInName = emailClaim.Split('@')[0];
+                    loggedInName = char.ToUpper(loggedInName[0]) + loggedInName.Substring(1);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -24,7 +59,6 @@
                 overflow-x: hidden;
             }
 
-            /* Sidebar Styling */
             .sidebar {
                 width: 250px;
                 height: 100vh;
@@ -68,7 +102,6 @@
                     border-left: 4px solid var(--accent-green);
                 }
 
-            /* Topbar & Main Content */
             .main-content {
                 margin-left: 250px;
                 padding: 20px 30px;
@@ -123,7 +156,7 @@
         <header class="topbar">
             <h2>Owner Portal</h2>
             <div class="user-profile">
-                <span><i class="fas fa-user-circle"></i> Owner Profile</span>
+                <span><i class="fas fa-user-circle"></i> @loggedInName</span>
                 <a href="/Account/Logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </header>

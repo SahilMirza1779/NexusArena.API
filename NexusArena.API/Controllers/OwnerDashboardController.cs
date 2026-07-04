@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NexusArena.API.Models;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
@@ -28,11 +31,12 @@ namespace NexusArena.API.Controllers
 
             // 2. Live Occupancy
             var totalResources = await _context.Resources.CountAsync();
+
+            // 🌟 FIX: Purana Include(b => b.Slot) hata diya aur direct StartTime/EndTime use kiya
             var activeBookings = await _context.Bookings
-                .Include(b => b.Slot)
                 .Where(b => b.BookingDate == todayDate &&
-                            b.Slot.StartTime <= currentTime &&
-                            b.Slot.EndTime >= currentTime &&
+                            b.StartTime <= currentTime &&
+                            b.EndTime >= currentTime &&
                             b.Status == "Confirmed")
                 .CountAsync();
 
@@ -52,23 +56,23 @@ namespace NexusArena.API.Controllers
                 .ToListAsync();
 
             // 4. Upcoming Bookings
+            // 🌟 FIX: Purana Slot hata kar direct StartTime/EndTime use kiya
             var upcomingBookings = await _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Resource)
-                .Include(b => b.Slot)
-                .Where(b => b.BookingDate == todayDate && b.Slot.StartTime > currentTime)
-                .OrderBy(b => b.Slot.StartTime)
+                .Where(b => b.BookingDate == todayDate && b.StartTime > currentTime)
+                .OrderBy(b => b.StartTime)
                 .Select(b => new {
                     b.BookingId,
                     CustomerName = b.User.FullName,
                     FacilityName = b.Resource.ResourceName,
-                    TimeSlot = b.Slot.StartTime.ToString() + " - " + b.Slot.EndTime.ToString(),
+                    TimeSlot = b.StartTime != null ? b.StartTime.ToString() + " - " + b.EndTime.ToString() : "N/A",
                     Status = b.Status
                 })
                 .Take(5)
                 .ToListAsync();
 
-            // 5. Active Receptionists (Naya Add Kiya Hai)
+            // 5. Active Receptionists 
             var activeReceptionists = await _context.Users
                 .Include(u => u.Role)
                 .Where(u => u.Role.RoleName == "Receptionist" && u.IsActive == true)
@@ -80,14 +84,14 @@ namespace NexusArena.API.Controllers
                 })
                 .ToListAsync();
 
-            // Final Response (Sab data ek sath pack)
+            // Final Response
             return Ok(new
             {
                 TodayRevenue = todayRevenue,
                 LiveOccupancy = $"{Math.Round(occupancyPercent, 1)}% Booked",
                 TopSports = topSports,
                 UpcomingBookings = upcomingBookings,
-                Receptionists = activeReceptionists // Receptionist ka data bhi isi JSON me jayega
+                Receptionists = activeReceptionists
             });
         }
 

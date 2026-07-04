@@ -1,4 +1,5 @@
 ﻿@{
+    ViewData["Title"] = "Nexus Arena - Book Your Turf";
     Layout = null; 
 }
 
@@ -7,150 +8,275 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus Arena - Book Your Turf</title>
-    <link rel="icon" type="image/jpg" href="~/images/logo.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Montserrat', sans-serif; background-color: #0f0f0f; color: #fff; overflow-x: hidden; }
-
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 50px; background: rgba(26, 26, 26, 0.85);
-            backdrop-filter: blur(12px); position: fixed; width: 100%; top: 0; z-index: 100;
-            border-bottom: 1px solid #222;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-        }
-        
-        .nav-logo {
-            height: 45px; 
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 255, 127, 0.3);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: block;
-        }
-        .nav-logo:hover {
-            box-shadow: 0 0 20px rgba(0, 255, 127, 0.8);
-            transform: scale(1.05) translateY(-2px);
-            filter: brightness(1.1);
+        body {
+            background-color: #080808;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 30%, rgba(0, 255, 127, 0.08), transparent 60%);
         }
 
-        .nav-buttons { display: flex; gap: 15px; align-items: center; }
-        
-        .btn-login { background: transparent; color: #fff; border: 1px solid #555; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn-login:hover { border-color: #00ff7f; color: #00ff7f; background: rgba(0, 255, 127, 0.05); }
-        
-        .btn-register { background: #00ff7f; color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 0 10px rgba(0, 255, 127, 0.4); }
-        .btn-register:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 255, 127, 0.8); }
+        .custom-navbar { padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-img { height: 45px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,255,127,0.3); }
+        .nav-btns .btn-login { color: #fff; border: 1px solid #555; padding: 8px 24px; border-radius: 20px; text-decoration: none; margin-right: 15px; transition: 0.3s; }
+        .nav-btns .btn-login:hover { border-color: #00ff7f; color: #00ff7f; }
+        .nav-btns .btn-register { background: #00ff7f; color: #000; font-weight: 700; padding: 8px 24px; border-radius: 20px; text-decoration: none; transition: 0.3s; box-shadow: 0 0 15px rgba(0,255,127,0.4); }
+        .nav-btns .btn-register:hover { background: #00cc66; transform: scale(1.05); }
 
-        .hero {
-            height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
-            background: 
-                radial-gradient(circle at center, rgba(0, 255, 127, 0.08) 0%, #0f0f0f 60%),
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 40px 40px, 40px 40px;
-            padding: 0 20px;
-        }
-        .hero h1 { font-size: 55px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
-        .hero h1 span { color: #00ff7f; text-shadow: 0 0 25px rgba(0, 255, 127, 0.6); }
-        .hero p { font-size: 18px; color: #aaa; max-width: 600px; margin-bottom: 40px; line-height: 1.6; }
+        .hero-title { font-weight: 900; font-size: 4rem; text-align: center; margin-top: 50px; text-transform: uppercase; letter-spacing: 2px; }
+        .text-glow { color: #00ff7f; text-shadow: 0 0 20px rgba(0,255,127,0.6); }
+        .hero-sub { text-align: center; color: #aaa; font-size: 1.1rem; margin-top: 15px; margin-bottom: 40px; }
 
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; visibility: hidden; transition: 0.4s ease; z-index: 999;
+        .search-glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,127,0.1);
+            border-radius: 50px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .search-item { flex: 1; padding: 10px 20px; border-right: 1px solid rgba(255,255,255,0.1); }
+        .search-item:last-child { border-right: none; }
+        .search-label { font-size: 0.7rem; color: #00ff7f; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .search-input { background: transparent; border: none; color: #fff; font-weight: 600; width: 100%; outline: none; }
+        .btn-search-icon { background: #00ff7f; color: #000; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 1.2rem; transition: 0.3s; }
+        .btn-search-icon:hover { background: #00cc66; transform: scale(1.1); box-shadow: 0 0 15px rgba(0,255,127,0.5); }
+
+        .showcase-section { margin-top: 60px; padding: 0 80px 80px 80px; position: relative; }
+        .showcase-title { font-weight: 800; font-size: 1.8rem; margin-bottom: 25px; border-left: 4px solid #00ff7f; padding-left: 15px; }
         
-        .modal-content {
-            background: #111; padding: 40px; border-radius: 16px; border: 1px solid #333;
-            text-align: center; max-width: 600px; width: 90%;
-            transform: translateY(30px) scale(0.95); transition: 0.4s ease; box-shadow: 0 15px 40px rgba(0,255,127,0.15);
+        .iconic-card {
             position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            height: 500px; 
+            cursor: pointer;
+            border: 1px solid #333;
+            transition: all 0.4s ease;
         }
-        .modal-overlay.active .modal-content { transform: translateY(0) scale(1); }
-        
-        .close-btn { position: absolute; top: 15px; right: 20px; color: #666; font-size: 24px; cursor: pointer; transition: 0.3s; }
-        .close-btn:hover { color: #ff4d4d; transform: rotate(90deg); }
-
-        .modal-content h2 { margin-bottom: 10px; font-size: 26px; color: #fff; }
-        .modal-content p { color: #aaa; margin-bottom: 30px; font-size: 15px; }
-
-        .role-cards { display: flex; gap: 20px; justify-content: center; }
-        
-        .role-card {
-            background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 12px; padding: 30px 20px;
-            width: 220px; cursor: pointer; transition: 0.3s; text-decoration: none; color: #fff;
-            position: relative; overflow: hidden;
+        .iconic-card:hover {
+            border-color: #00ff7f;
+            box-shadow: 0 15px 50px rgba(0, 255, 127, 0.25);
+            transform: scale(1.01);
         }
-        .role-card i { font-size: 45px; margin-bottom: 15px; color: #555; transition: 0.3s; }
-        .role-card h3 { font-size: 19px; margin-bottom: 8px; font-weight: 700; }
-        .role-card span { font-size: 13px; color: #888; }
+        .iconic-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s ease;
+        }
+        .iconic-card:hover .iconic-img {
+            transform: scale(1.05); 
+        }
+        .iconic-overlay {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+            padding: 50px 40px 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .iconic-info h3 { font-weight: 900; font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+        .iconic-info p { color: #ddd; font-size: 1.2rem; margin-bottom: 0; font-weight: 600; }
+        
+        .iconic-price-tag {
+            background: rgba(0, 255, 127, 0.15);
+            color: #00ff7f;
+            border: 1px solid #00ff7f;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 900;
+            font-size: 1.4rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 20px rgba(0,255,127,0.2);
+        }
+        
+        .carousel-control-prev, .carousel-control-next { width: 5%; z-index: 5; }
+        .carousel-control-prev-icon, .carousel-control-next-icon { 
+            background-color: #00ff7f; 
+            border-radius: 50%; 
+            padding: 25px; 
+            background-size: 50%;
+        }
 
-        .role-card:hover { border-color: #00ff7f; background: rgba(0, 255, 127, 0.05); transform: translateY(-8px); box-shadow: 0 15px 25px rgba(0, 255, 127, 0.15); }
-        .role-card:hover i { color: #00ff7f; transform: scale(1.1); }
+        .modal-content { background-color: #111; border: 1px solid #333; border-radius: 20px; overflow: hidden; }
+        .modal-header { border-bottom: 1px solid #333; background: #1a1a1a; }
+        .modal-title { color: #00ff7f; font-weight: 800; }
+        .modal-body-img { width: 100%; height: 300px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; }
+        .modal-feature { background: #222; padding: 10px 15px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #00ff7f; margin-right: 10px; margin-bottom: 10px; display: inline-block; border: 1px solid #333; }
+        .btn-book-modal { background: #00ff7f; color: #000; font-weight: 800; width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 1.1rem; transition: 0.3s; margin-top: 20px; }
+        .btn-book-modal:hover { background: #00cc66; box-shadow: 0 0 20px rgba(0,255,127,0.4); transform: scale(1.02); }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="brand">
-            <a href="/Landing/Index" style="text-decoration: none;">
-                <img src="~/images/logo.jpg" alt="Nexus Arena Logo" class="nav-logo" />
-            </a>
-        </div>
-        <div class="nav-buttons">
-            <button class="btn-login" onclick="window.location.href='/Account/Login'">Login</button>
-            <button class="btn-register" onclick="openModal()">Register</button>
+    <nav class="custom-navbar">
+        <img src="/images/logo.png" alt="Nexus Arena" class="logo-img" onerror="this.src='https://via.placeholder.com/150x50/111/00ff7f?text=NEXUS+ARENA'">
+        <div class="nav-btns">
+            <a href="/Account/Login" class="btn-login">Log In</a>
+            <a href="/Account/Register" class="btn-register">Register</a>
         </div>
     </nav>
 
-    <div class="hero">
-        <h1>Unleash Your <span>Game</span></h1>
-        <p>Book the best turfs in your city instantly, or partner with us to manage your arena like a pro. The ultimate sports ecosystem is here.</p>
-        <button class="btn-register" style="padding: 15px 40px; font-size: 18px; letter-spacing: 1px;" onclick="openModal()">Get Started</button>
+    <div class="container mt-4">
+        <h1 class="hero-title">Unleash Your <span class="text-glow">Game</span></h1>
+        <p class="hero-sub">Book the best turfs instantly, or partner with us to manage your arena like a pro.<br>The ultimate sports ecosystem is here.</p>
+
+        <div class="search-glass">
+            <div class="search-item">
+                <div class="search-label">City</div>
+                <input type="text" class="search-input" value="Surat" placeholder="Enter City">
+            </div>
+            <div class="search-item">
+                <div class="search-label">Sport</div>
+                <input type="text" class="search-input" placeholder="Any Sport">
+            </div>
+            <div class="search-item">
+                <div class="search-label">Date</div>
+                <input type="date" class="search-input" style="color-scheme: dark;">
+            </div>
+            <button class="btn-search-icon"><i class="fas fa-search"></i></button>
+        </div>
     </div>
 
-    <div class="modal-overlay" id="registerModal">
-        <div class="modal-content">
-            <i class="fas fa-times close-btn" onclick="closeModal()"></i>
-            <h2>How do you want to join?</h2>
-            <p>Select your account type to proceed with registration.</p>
-            
-            <div class="role-cards">
-                <a href="/Account/PlayerRegistration" class="role-card">
-                    <i class="fas fa-running"></i>
-                    <h3>As a Player</h3>
-                    <span>Book turfs & play</span>
-                </a>
+    <div class="showcase-section">
+        <h3 class="showcase-title">Featured Arenas</h3>
+        
+        <div id="arenaCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+            <div class="carousel-inner" style="border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+                
+                <div class="carousel-item active" data-bs-interval="7000">
+                    <div class="iconic-card" onclick="openDetails('Surat Premium Arena', 'Surat, Gujarat', '₹ 1200/hr', 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
+                        <img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
+                        <div class="iconic-overlay">
+                            <div class="iconic-info">
+                                <h3>Surat Premium Arena</h3>
+                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Surat, Gujarat</p>
+                            </div>
+                            <div class="iconic-price-tag">₹ 1200 / hr</div>
+                        </div>
+                    </div>
+                </div>
 
-                <a href="/Landing/OwnerApplication" class="role-card">
-                    <i class="fas fa-building"></i>
-                    <h3>As an Owner</h3>
-                    <span>List & manage your turf</span>
-                </a>
+                <div class="carousel-item" data-bs-interval="7000">
+                    <div class="iconic-card" onclick="openDetails('Nexus Box Cricket', 'Vesu, Surat', '₹ 1000/hr', 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
+                        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
+                        <div class="iconic-overlay">
+                            <div class="iconic-info">
+                                <h3>Nexus Box Cricket</h3>
+                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Vesu, Surat</p>
+                            </div>
+                            <div class="iconic-price-tag">₹ 1000 / hr</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="carousel-item" data-bs-interval="7000">
+                    <div class="iconic-card" onclick="openDetails('Elite Football Ground', 'Adajan, Surat', '₹ 1500/hr', 'https://images.unsplash.com/photo-1459865264687-595d652de67e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
+                        <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
+                        <div class="iconic-overlay">
+                            <div class="iconic-info">
+                                <h3>Elite Football Ground</h3>
+                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Adajan, Surat</p>
+                            </div>
+                            <div class="iconic-price-tag">₹ 1500 / hr</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="carousel-item" data-bs-interval="7000">
+                    <div class="iconic-card" onclick="openDetails('Pro Tennis Court', 'Piplod, Surat', '₹ 800/hr', 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
+                        <img src="https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
+                        <div class="iconic-overlay">
+                            <div class="iconic-info">
+                                <h3>Pro Tennis Court</h3>
+                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Piplod, Surat</p>
+                            </div>
+                            <div class="iconic-price-tag">₹ 800 / hr</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <button class="carousel-control-prev" type="button" data-bs-target="#arenaCarousel" data-bs-slide="prev" style="left: -30px;">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#arenaCarousel" data-bs-slide="next" style="right: -30px;">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="turfModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Turf Name</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <img src="" id="modalImg" class="modal-body-img" alt="Turf Image">
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4 style="font-weight: 800; color: #fff; margin-bottom: 5px;" id="modalLocation">Location</h4>
+                            
+                            <p style="color: #e0e0e0; font-size: 1rem; line-height: 1.6; margin-bottom: 20px; font-weight: 500;">
+                                Experience the best sporting action on our premium quality artificial grass. Equipped with floodlights and excellent seating arrangements. Perfect for your next match!
+                            </p>
+                            
+                            <div>
+                                <span class="modal-feature"><i class="fas fa-parking"></i> Free Parking</span>
+                                <span class="modal-feature"><i class="fas fa-tint"></i> Drinking Water</span>
+                                <span class="modal-feature"><i class="fas fa-lightbulb"></i> Floodlights</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h2 style="color: #00ff7f; font-weight: 900;" id="modalPrice">₹ 0/hr</h2>
+                            <p style="color: #aaa; font-weight: 600;">Available Today</p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-book-modal" onclick="window.location.href='/Account/Login'">
+                        Book Now <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const modal = document.getElementById('registerModal');
+        document.addEventListener("DOMContentLoaded", function () {
+            var myCarousel = document.querySelector('#arenaCarousel');
+            var carousel = new bootstrap.Carousel(myCarousel, {
+                interval: 7000,
+                ride: 'carousel'
+            });
+        });
 
-        function openModal() {
-            modal.classList.add('active');
-        }
+        function openDetails(name, location, price, imgUrl) {
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalLocation').innerText = location;
+            document.getElementById('modalPrice').innerText = price;
+            document.getElementById('modalImg').src = imgUrl;
 
-        function closeModal() {
-            modal.classList.remove('active');
-        }
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                closeModal();
-            }
+            var myModal = new bootstrap.Modal(document.getElementById('turfModal'));
+            myModal.show();
         }
     </script>
 </body>

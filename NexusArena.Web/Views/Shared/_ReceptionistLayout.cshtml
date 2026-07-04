@@ -1,4 +1,39 @@
-﻿<!DOCTYPE html>
+﻿@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@{
+    string loggedInName = "User";
+    var jwToken = Context.Request.Cookies["JWToken"];
+
+    if (!string.IsNullOrEmpty(jwToken))
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(jwToken);
+
+            var nameClaim = jwt.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value;
+
+            if (!string.IsNullOrWhiteSpace(nameClaim))
+            {
+                loggedInName = nameClaim;
+            }
+            else
+            {
+                var emailClaim = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!string.IsNullOrWhiteSpace(emailClaim) && emailClaim.Contains("@"))
+                {
+                    loggedInName = emailClaim.Split('@')[0];
+                    loggedInName = char.ToUpper(loggedInName[0]) + loggedInName.Substring(1);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -6,9 +41,11 @@
     <title>@ViewData["Title"] - Nexus Arena</title>
     <link rel="icon" type="image/jpg" href="~/images/logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         body {
             margin: 0;
@@ -88,66 +125,52 @@
             justify-content: space-between;
             padding: 0 30px;
         }
-        .topbar .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-        .logout-btn {
-            color: #ff4c4c;
-            text-decoration: none;
-            font-weight: 600;
-        }
 
         .page-content {
             padding: 30px;
         }
 
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 45px;
-            background-color: #1a1a1a;
-            min-width: 200px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-            border: 1px solid #333;
-            border-radius: 8px;
-            z-index: 1000;
-            overflow: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
+        .dropdown-menu-dark {
+            background-color: #1a1a1a !important;
+            border: 1px solid #333 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+            padding: 12px 0 !important;
+            margin-top: 10px !important;
         }
-
-        .dropdown-content.show {
-            display: block;
-            transform: translateY(0);
-        }
-
-        .dropdown-item {
-            color: #ddd;
-            padding: 12px 18px;
-            text-decoration: none;
+        .dropdown-menu-dark .dropdown-item {
+            padding: 14px 20px !important;
+            font-weight: 500;
+            font-size: 15px;
+            color: #ccc !important;
+            transition: 0.3s;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            transition: background 0.2s;
+            gap: 15px;
         }
-
-        .dropdown-item i { width: 18px; color: #00ff7f; text-align: center; }
-
-        .dropdown-item:hover { background-color: #2a2a2a; color: #fff; text-decoration: none; }
-
-        .dropdown-divider { height: 1px; background-color: #333; margin: 0; }
-
-        .logout-text { color: #ff4d4d !important; }
-        .logout-text i { color: #ff4d4d !important; }
-        .logout-text:hover { background-color: rgba(255, 77, 77, 0.1) !important; }
+        .dropdown-menu-dark .dropdown-item:hover {
+            background-color: #252525 !important;
+            color: #00ff7f !important;
+        }
+        .dropdown-menu-dark .dropdown-item i {
+            color: #888;
+            width: 22px;
+            text-align: center;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+        .dropdown-menu-dark .dropdown-item:hover i {
+            color: #00ff7f;
+        }
+        
+        .dropdown-menu-dark .logout-text { color: #ff4d4d !important; font-weight: 600; }
+        .dropdown-menu-dark .logout-text i { color: #ff4d4d !important; }
+        .dropdown-menu-dark .logout-text:hover,
+        .dropdown-menu-dark .logout-text:hover i {
+            color: #ff4d4d !important;
+            background-color: rgba(255, 77, 77, 0.08) !important;
+        }
     </style>
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.all.min.js"></script>
 </head>
 <body>
 
@@ -179,22 +202,28 @@
     <div class="main-content">
         <div class="topbar">
             <div>
-                <h3 style="margin:0; color:#00ff7f;">Receptionist Portal</h3>
+                <h3 style="margin:0; color:#00ff7f; font-weight: 700;">Receptionist Portal</h3>
             </div>
-            <div class="profile-dropdown-wrapper" style="position: relative; display: inline-block;">
-                <button class="profile-btn" onclick="toggleProfileDropdown()" style="background: none; border: none; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-user-circle" style="font-size: 22px;"></i> Receptionist <i class="fas fa-caret-down" style="font-size: 14px; margin-left: 5px;"></i>
+            
+            <div class="dropdown">
+                <button class="btn text-white d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border: none; box-shadow: none; padding: 5px 10px; transition: 0.3s;">
+                    <i class="fas fa-user-circle" style="font-size: 26px; color: #00ff7f;"></i>
+                    <span style="font-weight: 600; font-size: 16px;">@loggedInName</span>
+                    <i class="fas fa-chevron-down ms-1" style="font-size: 12px; color: #888;"></i>
                 </button>
- 
-                <div id="profileMenu" class="dropdown-content">
-                    <a href="/ReceptionistDashboard/Profile" class="dropdown-item">
-                        <i class="fas fa-id-card"></i> Profile Details
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="javascript:void(0)" class="dropdown-item logout-text" onclick="confirmLogout()">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" style="min-width: 240px;">
+                    <li>
+                        <a class="dropdown-item" href="/ReceptionistDashboard/Profile">
+                            <i class="fas fa-id-badge"></i> Profile Details
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider" style="border-color: #333; margin: 10px 0;"></li>
+                    <li>
+                        <a class="dropdown-item logout-text" href="javascript:void(0)" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
 
@@ -203,12 +232,10 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
-        function toggleProfileDropdown() {
-            document.getElementById("profileMenu").classList.toggle("show");
-        }
-
         function confirmLogout() {
             Swal.fire({
                 title: 'Are you sure?',
@@ -225,21 +252,9 @@
                 borderRadius: '12px'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = '/Account/Login';
+                    window.location.href = '/Account/Logout';
                 }
             });
-        }
-
-        window.onclick = function(event) {
-            if (!event.target.closest('.profile-btn')) {
-                var dropdowns = document.getElementsByClassName("dropdown-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
         }
     </script>
     @await RenderSectionAsync("Scripts", required: false)

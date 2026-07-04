@@ -1,6 +1,7 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization; 
 
 namespace NexusArena.API.Models;
 
@@ -15,19 +16,18 @@ public partial class Resource
     public string ResourceName { get; set; } = null!;
 
     public int? Capacity { get; set; }
-    public decimal BasePricePerHour { get; set; }
-    public string ResourceType { get; set; } = null!;
-    public bool IsActive { get; set; }
 
-    [JsonIgnore]
-    public virtual Arena? Arena { get; set; }
+    public string? ResourceType { get; set; }
 
-    [JsonIgnore]
+    public bool? IsActive { get; set; }
+
+    public decimal? BasePricePerHour { get; set; }
+
+    public virtual Arena Arena { get; set; } = null!;
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    [JsonIgnore]
-    public virtual SportCategory? Category { get; set; }
+    public virtual SportCategory Category { get; set; } = null!;
 
-    [JsonIgnore]
     public virtual ICollection<TimeSlot> TimeSlots { get; set; } = new List<TimeSlot>();
 }

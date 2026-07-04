@@ -1,19 +1,18 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NexusArena.Web.Models;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System;
 
 namespace NexusArena.Web.Controllers
 {
     public class ReceptionistDashboardController : Controller
     {
         private readonly HttpClient _httpClient;
-
-        private readonly string _apiUrl = "https://localhost:5092/api/Receptionist";
 
         public ReceptionistDashboardController(HttpClient httpClient)
         {
@@ -127,11 +126,11 @@ namespace NexusArena.Web.Controllers
                     var content = new StringContent(System.Text.Json.JsonSerializer.Serialize("Completed"), System.Text.Encoding.UTF8, "application/json");
                     HttpResponseMessage response = await client.PutAsync($"http://localhost:5092/api/Receptionist/update-status/{bookingId}", content);
 
-                    if (response.IsSuccessStatusCode)
+                     if (response.IsSuccessStatusCode)
                     {
                         TempData["SuccessMessage"] = $"Booking #{bookingId} successfully checked out! 🏏";
 
-                        Response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+                        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
                     }
                     else
                     {
@@ -208,7 +207,7 @@ namespace NexusArena.Web.Controllers
                     {
                         TempData["SuccessMessage"] = $"Got the money! Booking #{bookingId} The payment has been cleared. 💸";
 
-                        Response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+                        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
                     }
                     else
                     {
@@ -260,6 +259,97 @@ namespace NexusArena.Web.Controllers
             }
 
             return View(new List<NexusArena.Web.Models.AvailableTurfViewModel>());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var token = Request.Cookies["JWToken"];
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
+
+            ViewBag.Name = "Sahil Mirza";
+            ViewBag.Email = "sahilmirza@nexus.com";
+            ViewBag.Phone = "+91 9876543210";
+            ViewBag.Role = "Receptionist";
+            ViewBag.Branch = "Surat Arena";
+
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                string apiUrl = "http://localhost:5092/api/Auth/GetProfile";
+
+                var response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+                    using JsonDocument doc = JsonDocument.Parse(responseData);
+                    var root = doc.RootElement;
+
+                    if (root.TryGetProperty("data", out var dataObj) && dataObj.ValueKind == JsonValueKind.Object)
+                    {
+                        root = dataObj;
+                    }
+
+                    if (root.TryGetProperty("fullName", out var n) && !string.IsNullOrWhiteSpace(n.GetString())) ViewBag.Name = n.GetString();
+                    else if (root.TryGetProperty("FullName", out var n2) && !string.IsNullOrWhiteSpace(n2.GetString())) ViewBag.Name = n2.GetString();
+
+                    if (root.TryGetProperty("email", out var e) && !string.IsNullOrWhiteSpace(e.GetString())) ViewBag.Email = e.GetString();
+                    else if (root.TryGetProperty("Email", out var e2) && !string.IsNullOrWhiteSpace(e2.GetString())) ViewBag.Email = e2.GetString();
+
+                    if (root.TryGetProperty("phone", out var p) && !string.IsNullOrWhiteSpace(p.GetString())) ViewBag.Phone = p.GetString();
+                    else if (root.TryGetProperty("Phone", out var p2) && !string.IsNullOrWhiteSpace(p2.GetString())) ViewBag.Phone = p2.GetString();
+
+                    if (root.TryGetProperty("roleName", out var r) && !string.IsNullOrWhiteSpace(r.GetString())) ViewBag.Role = r.GetString();
+                    else if (root.TryGetProperty("RoleName", out var r2) && !string.IsNullOrWhiteSpace(r2.GetString())) ViewBag.Role = r2.GetString();
+
+                    if (root.TryGetProperty("branch", out var b) && !string.IsNullOrWhiteSpace(b.GetString())) ViewBag.Branch = b.GetString();
+                    else if (root.TryGetProperty("Branch", out var b2) && !string.IsNullOrWhiteSpace(b2.GetString())) ViewBag.Branch = b2.GetString();
+                }
+                else
+                {
+                    ViewBag.ApiDebugError = $"API Error: Status Code {response.StatusCode} | URL Tried: {apiUrl}";
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ApiDebugError = $"Connection Exception: {ex.Message}";
+            }
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateProfile(string fullName, string phoneNumber)
+        {
+            var token = Request.Cookies["JWToken"];
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
+
+            var updateData = new { FullName = fullName, Phone = phoneNumber };
+            var content = new StringContent(JsonSerializer.Serialize(updateData), Encoding.UTF8, "application/json");
+
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.PostAsync("http://localhost:5092/api/Auth/UpdateProfile", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Your profile details have been updated successfully!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to update profile. Please check the details and try again.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "API Connection Error: " + ex.Message;
+            }
+
+            return RedirectToAction("Profile");
         }
     }
 }

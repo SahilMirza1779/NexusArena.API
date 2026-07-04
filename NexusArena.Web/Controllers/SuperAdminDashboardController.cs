@@ -77,13 +77,13 @@ namespace NexusArena.Web.Controllers
                         Id = p.Id,
                         ArenaName = p.ArenaName,
                         OwnerName = p.OwnerName,
-                        Status = p.Status,
+                        Status = p.Status ?? string.Empty,
 
                         Category = "Sports Turf",
-                        Address = p.Address,
+                        Address = p.Address ?? string.Empty,
                         Latitude = p.Latitude,
                         Longitude = p.Longitude,
-                        ImagePaths = p.ImagePaths
+                        ImagePaths = p.ImagePaths ?? string.Empty
                     }).ToList();
                 }
             }

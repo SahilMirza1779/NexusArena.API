@@ -1,5 +1,7 @@
 ﻿using System;
 
+#nullable disable
+
 namespace NexusArena.Web.Models
 {
     public class ManageReviewViewModel

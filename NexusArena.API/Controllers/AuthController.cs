@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NexusArena.API.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BCrypt.Net;
 
 namespace NexusArena.API.Controllers
 {
@@ -21,15 +23,34 @@ namespace NexusArena.API.Controllers
             _configuration = configuration;
         }
 
+        [HttpGet("debug-roles")]
+        [AllowAnonymous]
+        public IActionResult DebugRoles()
+        {
+            var roles = _context.Roles.ToList();
+            var users = _context.Users.Include(u => u.Role).ToList();
+
+            return Ok(new
+            {
+                roles = roles.Select(r => new { r.RoleId, r.RoleName }),
+                users = users.Select(u => new { u.UserId, u.Email, u.FullName, u.IsActive, Role = u.Role?.RoleName, PasswordHashLength = u.PasswordHash.Length })
+            });
+        }
+
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Email == request.Email && u.PasswordHash == request.Password);
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null || user.IsActive == false)
+            {
+                return Unauthorized(new { message = "Invalid Email or Password" });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Unauthorized(new { message = "Invalid Email or Password" });
             }
@@ -54,7 +75,6 @@ namespace NexusArena.API.Controllers
 
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-            // 🌟 PRO FIX: Token ko Cookie mein save kar rahe hain taaki MVC Views isko padh sakein!
             Response.Cookies.Append("JWToken", tokenString, new CookieOptions
             {
                 HttpOnly = true,
@@ -69,6 +89,160 @@ namespace NexusArena.API.Controllers
                 role = user.Role.RoleName,
                 message = "Login Successful"
             });
+        }
+
+        [HttpPost("Register")]
+        [AllowAnonymous]
+        public IActionResult Register([FromBody] RegisterRequestDto request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+            {
+                return BadRequest(new { message = "Email and Password are required." });
+            }
+
+            if (_context.Users.Any(u => u.Email == request.Email))
+            {
+                return BadRequest(new { message = "Email already exists." });
+            }
+
+            var role = _context.Roles.FirstOrDefault(r => r.RoleName == request.RoleName);
+            if (role == null)
+            {
+                return BadRequest(new { message = $"Role '{request.RoleName}' not found in database. Available roles: Customer, Owner, Receptionist, SuperAdmin" });
+            }
+
+            try
+            {
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+                var newUser = new User
+                {
+                    FullName = request.FullName,
+                    Email = request.Email,
+                    Phone = request.Phone,
+                    PasswordHash = hashedPassword,
+                    RoleId = role.RoleId,
+                    IsActive = true
+                };
+
+                _context.Users.Add(newUser);
+                _context.SaveChanges();
+
+                return Ok(new { message = "Registration successful", userId = newUser.UserId, email = newUser.Email });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Registration failed", error = ex.Message });
+            }
+        }
+
+        [HttpGet("GetProfile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized(new { message = "Invalid token or user not found" });
+                }
+
+                var user = await _context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null) return NotFound(new { message = "User not found in database" });
+
+                return Ok(new
+                {
+                    fullName = user.FullName,
+                    email = user.Email,
+                    phone = user.Phone,
+                    roleName = user.Role?.RoleName ?? "Receptionist",
+                    branch = "Surat Arena" 
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error fetching profile", error = ex.Message });
+            }
+        }
+
+        [HttpPost("UpdateProfile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
+        {
+            try
+            {
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized(new { message = "Invalid token or user not found" });
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null) return NotFound(new { message = "User not found" });
+
+                user.FullName = request.FullName;
+                user.Phone = request.Phone;
+
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Profile updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error updating profile", error = ex.Message });
+            }
+        }
+
+
+        [HttpPost("VerifyEmail")]
+        [AllowAnonymous]
+        public IActionResult VerifyEmail([FromBody] ForgotPasswordRequestDto request)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
+            if (user == null)
+            {
+                return NotFound(new { message = "Email not found" });
+            }
+            return Ok();
+        }
+
+        [HttpPost("ResetUserPassword")]
+        [AllowAnonymous]
+        public IActionResult ResetUserPassword([FromBody] ResetPasswordDto request)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
+            if (user == null) return NotFound();
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            _context.SaveChanges();
+
+            return Ok(new { message = "Password updated successfully" });
+        }
+
+        public class ForgotPasswordRequestDto { public string Email { get; set; } }
+        public class ResetPasswordDto { public string Email { get; set; } public string NewPassword { get; set; } }
+
+        public class RegisterRequestDto
+        {
+            public string FullName { get; set; }
+            public string Email { get; set; }
+            public string Phone { get; set; }
+            public string Password { get; set; }
+            public string RoleName { get; set; }
+        }
+
+        public class UpdateProfileDto
+        {
+            public string FullName { get; set; }
+            public string Phone { get; set; }
         }
     }
 }

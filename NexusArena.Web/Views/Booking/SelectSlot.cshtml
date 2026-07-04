@@ -1,151 +1,392 @@
-﻿@model List<NexusArena.Web.Controllers.SlotViewModel>
-@{
-    ViewData["Title"] = "Available Slots";
-    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+﻿@{
+    ViewData["Title"] = "Book Your Turf";
+    Layout = "_PlayerLayout";
 }
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
 
+@Html.Raw(@"
 <style>
-    .slots-wrapper { max-width: 1100px; margin: 30px auto; padding-bottom: 50px; }
-    
-    .page-header { margin-bottom: 30px; }
-    .page-header h1 { color: #fff; font-size: 36px; font-weight: 800; margin: 0; }
+    .booking-wrapper { max-width: 950px; margin: 40px auto; padding-bottom: 50px; }
+    .page-header { margin-bottom: 30px; text-align: center; }
+    .page-header h1 { color: #fff; font-size: 36px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
     .page-header h1 span { color: #00ff7f; }
     .page-header p { color: #888; margin-top: 10px; font-size: 16px; }
 
-    .filter-card { background-color: #161616; padding: 25px 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.5); margin-bottom: 40px; border: 1px solid #2a2a2a; }
-    .filter-form { display: flex; align-items: stretch; gap: 20px; width: 100%; flex-wrap: wrap; }
-    .filter-label { color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; }
+    .engine-card { background: linear-gradient(145deg, #111, #161616); padding: 40px; border-radius: 16px; border: 1px solid #2a2a2a; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
     
-    .premium-date-input { 
-        padding: 12px 20px !important; 
-        border-radius: 8px !important; 
-        border: 1px solid #333 !important; 
-        background-color: #0a0a0a !important; 
-        color: #fff !important; 
-        font-size: 16px !important; 
-        outline: none !important; 
-        transition: all 0.3s ease !important; 
-        font-family: inherit !important; 
-        min-width: 260px;
-        cursor: pointer !important;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-    .premium-date-input:focus, .premium-date-input:hover { 
-        border-color: #00ff7f !important; 
-        box-shadow: 0 0 15px rgba(0,255,127,0.15) !important; 
-        background-color: #111 !important;
-    }
+    .date-strip-wrapper { margin-bottom: 30px; }
+    .date-strip-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .date-strip-title { color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
     
-    .btn-check { display: flex; align-items: center; gap: 8px; background-color: #00ff7f; color: #000; border: none; padding: 0 35px; border-radius: 8px; font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
-    .btn-check:hover { background-color: #00cc66; box-shadow: 0 6px 20px rgba(0, 255, 127, 0.4); transform: translateY(-2px); }
-
-    .error-alert { background-color: rgba(255, 76, 76, 0.1); border-left: 4px solid #ff4c4c; color: #ff4c4c; padding: 15px; border-radius: 6px; margin-bottom: 25px; font-weight: 600; font-size: 15px; }
-
-    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
+    .calendar-trigger { background: #1a1a1a; border: 1px solid #333; color: #00ff7f; padding: 8px 15px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 6px; }
+    .calendar-trigger:hover { border-color: #00ff7f; background: rgba(0,255,127,0.1); }
     
-    .slot-card { background: linear-gradient(145deg, #1a1a1a, #111); border: 1px solid #2a2a2a; padding: 30px 20px; border-radius: 14px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: all 0.4s ease; position: relative; overflow: hidden; }
-    .slot-card:hover { transform: translateY(-8px); border-color: #00ff7f; box-shadow: 0 10px 25px rgba(0, 255, 127, 0.15); }
+    .date-strip { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; scrollbar-width: thin; scrollbar-color: #333 #111; scroll-behavior: smooth; }
+    .date-strip::-webkit-scrollbar { height: 6px; }
+    .date-strip::-webkit-scrollbar-thumb { background-color: #333; border-radius: 10px; }
     
-    .slot-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: transparent; transition: 0.4s ease; }
-    .slot-card:hover::before { background: #00ff7f; }
+    .date-card { min-width: 80px; background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.3s; }
+    .date-card:hover { border-color: #00ff7f; background: rgba(0, 255, 127, 0.05); }
+    .date-card.active { border-color: #00ff7f; background: rgba(0, 255, 127, 0.1); box-shadow: 0 4px 15px rgba(0,255,127,0.2); }
+    .date-card .d-day { color: #888; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+    .date-card .d-date { color: #fff; font-size: 22px; font-weight: 900; margin: 0; }
+    .date-card.active .d-day, .date-card.active .d-date { color: #00ff7f; }
 
-    .slot-time { color: #fff; font-size: 18px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: 0.5px; }
-    .slot-price { color: #00ff7f; font-size: 28px; font-weight: 800; margin: 0 0 25px 0; }
+    .mode-selector { display: flex; gap: 15px; margin-bottom: 30px; background: #0a0a0a; padding: 5px; border-radius: 10px; border: 1px solid #222; }
+    .mode-btn { flex: 1; padding: 15px; text-align: center; background: transparent; color: #666; border-radius: 8px; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px; }
+    .mode-btn.active { background: #00ff7f; color: #000; box-shadow: 0 4px 15px rgba(0,255,127,0.3); }
 
-    .btn-book { display: block; background-color: rgba(0, 255, 127, 0.05); color: #00ff7f; border: 2px solid #00ff7f; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 800; transition: all 0.3s ease; letter-spacing: 1px; text-transform: uppercase; }
-    .btn-book:hover { background-color: #00ff7f; color: #000; box-shadow: 0 5px 20px rgba(0, 255, 127, 0.4); }
-
-    .btn-booked { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background-color: #1a1a1a; color: #555; border: 2px solid #333; padding: 12px; border-radius: 8px; font-weight: 800; cursor: not-allowed; letter-spacing: 1px; text-transform: uppercase; }
+    .time-grid-wrapper { margin-bottom: 30px; }
+    .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 15px; }
+    .time-box { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.2s; user-select: none; position: relative; }
+    .time-box:hover:not(.booked) { border-color: #00ff7f; background: rgba(0, 255, 127, 0.05); }
+    .time-box .t-time { color: #fff; font-size: 14px; font-weight: 700; margin: 0; }
     
-    .no-slots { grid-column: 1 / -1; background-color: #161616; padding: 60px; text-align: center; border-radius: 12px; border: 1px dashed #333; }
-    .no-slots i { font-size: 50px; margin-bottom: 20px; color: #444; }
-    .no-slots p { color: #888; font-size: 16px; margin: 0; }
+    .time-box .selection-tag { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0; transition: 0.3s; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    
+    .time-box.is-start { background: rgba(0, 255, 127, 0.2); border-color: #00ff7f; }
+    .time-box.is-start .t-time { color: #00ff7f; }
+    .time-box.is-start .selection-tag { opacity: 1; background: #00ff7f; color: #000; }
+    
+    .time-box.is-end { background: rgba(0, 195, 255, 0.2); border-color: #00c3ff; }
+    .time-box.is-end .t-time { color: #00c3ff; }
+    .time-box.is-end .selection-tag { opacity: 1; background: #00c3ff; color: #000; }
+    
+    .time-box.in-range { background: rgba(0, 255, 127, 0.08); border-color: #00cc66; border-style: dashed; }
+    .time-box.in-range .t-time { color: #00ff7f; }
+    
+    .time-box.booked { background: rgba(255, 76, 76, 0.15); border-color: #ff4c4c; cursor: not-allowed; opacity: 0.4; }
+    .time-box.booked .t-time { color: #ff4c4c; text-decoration: line-through; }
+
+    .selection-info { margin-top: 25px; padding: 15px; border-radius: 8px; background: #0a0a0a; border: 1px solid #222; color: #aaa; font-size: 16px; font-weight: 700; text-align: center; transition: 0.3s; }
+    .selection-info.step-1 { border-color: #00ff7f; color: #00ff7f; background: rgba(0, 255, 127, 0.05); }
+    .selection-info.step-2 { border-color: #00c3ff; color: #00c3ff; background: rgba(0, 195, 255, 0.05); }
+
+    .premium-input { width: 100%; padding: 15px 20px; border-radius: 8px; border: 1px solid #333; background-color: #0a0a0a; color: #fff; font-size: 16px; outline: none; transition: 0.3s; font-weight: 600; cursor: pointer; }
+    .premium-input:focus { border-color: #00ff7f; }
+
+    .bill-card { background: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 25px; margin-top: 30px; text-align: center; position: relative; overflow: hidden; }
+    .bill-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #00ff7f; }
+    .bill-title { color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 700; }
+    .bill-amount { color: #00ff7f; font-size: 42px; font-weight: 900; margin: 0; }
+    
+    .btn-submit { width: 100%; background: #00ff7f; color: #000; border: none; padding: 18px; border-radius: 8px; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; transition: 0.3s; margin-top: 25px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+    .btn-submit:hover { background: #00cc52; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,255,102,0.4); }
 </style>
+")
 
-<div class="slots-wrapper">
-    
+<div class="booking-wrapper">
     <div class="page-header">
-        <h1>Book Your <span>Slot</span> ⏱️</h1>
-        <p>Select a date and time for your match.</p>
+        <h1>Smart <span>Booking</span> ⚡</h1>
+        <p>Dynamic engine activated. Select your exact playtime visually.</p>
     </div>
 
-    <div class="filter-card">
-        <form method="get" action="/Booking/SelectSlot" class="filter-form">
+    @if (TempData["ErrorMessage"] != null || ViewBag.Error != null)
+    {
+        <div style="background-color: rgba(255, 76, 76, 0.1); border-left: 4px solid #ff4c4c; color: #ff4c4c; padding: 15px; border-radius: 6px; margin-bottom: 25px; font-weight: 600; font-size: 15px;">
+            <i class="fas fa-exclamation-triangle"></i> @(TempData["ErrorMessage"] ?? ViewBag.Error)
+        </div>
+    }
+
+    <div class="engine-card">
+        <form method="post" action="@Url.Action("Review", "Booking")" id="bookingForm">
             <input type="hidden" name="arenaId" value="@ViewBag.ArenaId" />
+            <input type="hidden" id="playDate" name="playDate" value="@ViewBag.SelectedDate" />
             
-            <label class="filter-label"><i class="far fa-calendar-alt" style="color: #00ff7f; margin-right: 10px; font-size: 20px;"></i> Select Date:</label>
-            
-            <input type="text" id="customDatePicker" name="date" required placeholder="Pick a Date" />
-            
-            <button type="submit" class="btn-check">
-                Check Slots <i class="fas fa-search"></i>
+            <input type="hidden" name="bookingMode" id="bookingMode" value="Hourly" />
+            <input type="hidden" name="startTime" id="startTime" value="" />
+            <input type="hidden" name="endTime" id="endTime" value="" />
+            <input type="hidden" name="totalBill" id="totalBill" value="0" />
+
+            <div class="date-strip-wrapper">
+                <div class="date-strip-header">
+                    <div class="date-strip-title"><i class="far fa-calendar-check" style="color: #00ff7f;"></i> Select Date</div>
+                    <div style="position: relative;">
+                        <input type="text" id="miniCalendarInput" style="position: absolute; opacity: 0; pointer-events: none; right: 0; top: 100%;" />
+                        <div class="calendar-trigger" onclick="document.getElementById('miniCalendarInput')._flatpickr.open();">
+                            <i class="fas fa-calendar-alt"></i> Open Calendar
+                        </div>
+                    </div>
+                </div>
+                <div class="date-strip" id="dateContainer"></div>
+            </div>
+
+            <div class="mode-selector">
+                <div class="mode-btn active" id="btnHourly" onclick="switchMode('Hourly')"><i class="fas fa-stopwatch"></i> Hourly Play</div>
+                <div class="mode-btn" id="btnTournament" onclick="switchMode('Tournament')"><i class="fas fa-trophy"></i> Tournament Event</div>
+            </div>
+
+            <div id="hourlySection" class="time-grid-wrapper">
+                <div class="date-strip-title"><i class="far fa-clock" style="color: #00ff7f;"></i> Select Slots (Tap Start & End)</div>
+                <div class="time-grid" id="timeGridContainer"></div>
+                <div class="selection-info" id="selectionText">
+                    <i class="fas fa-hand-pointer"></i> Please tap on a box to select your <b>Start Time</b>.
+                </div>
+            </div>
+
+            <div id="tournamentSection" style="display:none; margin-bottom:30px;">
+                <label style="color:#fff; font-weight:700; margin-bottom:10px; display:block;">Select Package</label>
+                <select name="tournamentPackage" id="tournamentPackage" class="premium-input" onchange="calculateBill()">
+                    <option value="">-- Choose Package --</option>
+                    <option value="HalfDayMorning">Morning Half-Day (7 AM - 2 PM)</option>
+                    <option value="HalfDayEvening">Evening Half-Day (2 PM - 9 PM)</option>
+                    <option value="FullDay">Full Day (7 AM - 10 PM)</option>
+                </select>
+            </div>
+
+            <div class="bill-card">
+                <div class="bill-title">Estimated Live Total</div>
+                <h2 class="bill-amount">₹ <span id="displayBill">0</span></h2>
+            </div>
+
+            <button type="button" class="btn-submit" onclick="submitBooking()">
+                Proceed to Review <i class="fas fa-arrow-right"></i>
             </button>
         </form>
     </div>
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="error-alert"><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> @TempData["ErrorMessage"]</div>
-    }
-    @if (ViewBag.Error != null)
-    {
-        <div class="error-alert"><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> @ViewBag.Error</div>
-    }
-
-    <div class="slots-grid">
-        @if (Model != null && Model.Any())
-        {
-            foreach (var slot in Model)
-            {
-                <div class="slot-card">
-                    <h3 class="slot-time">@slot.timeDisplay</h3>
-                    <h2 class="slot-price">₹ @slot.price</h2>
-
-                    @if (!slot.isBooked)
-                    {
-                        <a href="@Url.Action("Review", "Booking", new { arenaId = ViewBag.ArenaId, date = ViewBag.SelectedDate, slotId = slot.slotId, timeDisplay = slot.timeDisplay, price = slot.price })" class="btn-book">
-                            BOOK NOW
-                        </a>
-                    }
-                    else
-                    {
-                        <button disabled class="btn-booked">BOOKED <i class="fas fa-lock"></i></button>
-                    }
-                </div>
-            }
-        }
-        else
-        {
-            <div class="no-slots">
-                <i class="far fa-calendar-times"></i>
-                <h3 style="color: #ccc; margin: 0 0 10px 0;">No Slots Available</h3>
-                <p>There are no slots available on this date. Please try another date.</p>
-            </div>
-        }
-    </div>
 </div>
+
+<input type="hidden" id="hfBookedTimes" value="@(string.IsNullOrEmpty(ViewBag.BookedTimesJson?.ToString()) ? "[]" : ViewBag.BookedTimesJson)" />
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let today = new Date();
-            let lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const dateContainer = document.getElementById('dateContainer');
+        const playDateInput = document.getElementById('playDate');
+        let selectedDateRaw = playDateInput.value;
 
-            flatpickr("#customDatePicker", {
-                minDate: "today",               
-                maxDate: lastDayOfMonth,        
-                dateFormat: "Y-m-d",            
-                disableMobile: "true",          
-                altInput: true,                 
-                altFormat: "F j, Y",            
-                defaultDate: "@ViewBag.SelectedDate",
-                altInputClass: "premium-date-input"
-            });
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const daysArray = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+        function generateDateStrip() {
+        dateContainer.innerHTML = '';
+        let startDay = today.getDate();
+        for (let i = startDay; i <= daysInMonth; i++) {
+        let d = new Date(currentYear, currentMonth, i);
+        let m = (d.getMonth() + 1).toString().padStart(2, '0');
+        let dayNum = d.getDate().toString().padStart(2, '0');
+        let formattedDate = `${d.getFullYear()}-${m}-${dayNum}`;
+        let dayName = daysArray[d.getDay()];
+        let isActive = (formattedDate === selectedDateRaw) ? 'active' : '';
+
+        let cardHtml = `
+        <div class="date-card ${isActive}" id="date-${formattedDate}" onclick="selectDate('${formattedDate}', this)">
+        <div class="d-day">${dayName}</div>
+        <div class="d-date">${dayNum}</div>
+        </div>
+        `;
+        dateContainer.insertAdjacentHTML('beforeend', cardHtml);
+        }
+        let activeCard = document.getElementById(`date-${selectedDateRaw}`);
+        if(activeCard) activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+        generateDateStrip();
+
+        function selectDate(dateStr, element) {
+        document.querySelectorAll('.date-card').forEach(c => c.classList.remove('active'));
+        element.classList.add('active');
+        playDateInput.value = dateStr;
+        resetSelection();
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+
+        flatpickr("#miniCalendarInput", {
+        minDate: "today",
+        maxDate: new Date(currentYear, currentMonth, daysInMonth),
+        dateFormat: "Y-m-d",
+        position: "auto right",
+        onChange: function(selectedDates, dateStr, instance) {
+        let targetCard = document.getElementById(`date-${dateStr}`);
+        if(targetCard) selectDate(dateStr, targetCard);
+        }
         });
+
+        const allTimes = [];
+        for (let h = 6; h <= 24; h++) {
+        let displayHour = h > 12 ? (h === 24 ? 12 : h - 12) : (h === 0 ? 12 : h);
+        let ampm = (h >= 12 && h < 24) ? "PM" : "AM";
+        let val = (h === 24 ? "00" : h.toString().padStart(2, '0')) + ":00";
+        allTimes.push({ label: `${displayHour}:00 ${ampm}`, value: val, hour: h });
+        }
+
+        const timeGridContainer = document.getElementById('timeGridContainer');
+        const selectionText = document.getElementById('selectionText');
+        
+        let bookedRanges = [];
+        try {
+        const rawJson = document.getElementById('hfBookedTimes').value;
+        bookedRanges = JSON.parse(rawJson);
+        } catch (e) { console.error("JSON Error:", e); }
+
+        function isBoxBooked(boxHour) {
+        return bookedRanges.some(b => {
+        let s = b.start || b.Start;
+        let e = b.end || b.End;
+        if (!s || !e) return false;
+                
+        let startHour = parseInt(s.split(':')[0], 10);
+        let endHour = parseInt(e.split(':')[0], 10);
+        if (endHour === 0 || endHour < startHour) endHour += 24;
+                
+        return boxHour >= startHour && boxHour < endHour;
+        });
+        }
+
+        allTimes.forEach((t, index) => {
+        let isBookedClass = isBoxBooked(t.hour) ? 'booked' : '';
+        if (t.hour === 24) isBookedClass = '';
+
+        let boxHtml = `
+        <div class="time-box ${isBookedClass}" id="box-${index}" data-idx="${index}" onclick="handleBoxClick(${index})">
+        <div class="selection-tag" id="tag-${index}"></div>
+        <p class="t-time">${t.label}</p>
+        </div>
+        `;
+        timeGridContainer.insertAdjacentHTML('beforeend', boxHtml);
+        });
+
+        let selectionStep = 0;
+        let startIndex = -1;
+        let endIndex = -1;
+
+        function handleBoxClick(idx) {
+        const boxes = document.querySelectorAll('.time-box');
+        if (boxes[idx].classList.contains('booked')) return;
+
+        if (selectionStep === 0 || selectionStep === 2) {
+        if (idx === allTimes.length - 1) {
+        Swal.fire({ icon: 'warning', title: 'Invalid Selection', text: 'You cannot select midnight as a Start Time.', background: '#1a1a1a', color: '#fff' });
+        return;
+        }
+        resetSelection();
+        startIndex = idx;
+        selectionStep = 1;
+                
+        boxes[idx].classList.add('is-start');
+        document.getElementById(`tag-${idx}`).innerText = "START";
+        selectionText.innerHTML = `<i class="fas fa-hand-pointer"></i> Great! Now select your <b>End Time</b>.`;
+        selectionText.className = "selection-info step-1";
+        }
+        else if (selectionStep === 1) {
+        if (idx <= startIndex) {
+        resetSelection();
+        startIndex = idx;
+        selectionStep = 1;
+        boxes[idx].classList.add('is-start');
+        document.getElementById(`tag-${idx}`).innerText = "START";
+        selectionText.className = "selection-info step-1";
+        }
+        else {
+        let hasBookedInBetween = false;
+        for(let i = startIndex; i < idx; i++) {
+        if (isBoxBooked(allTimes[i].hour)) hasBookedInBetween = true;
+        }
+
+        if (hasBookedInBetween) {
+        Swal.fire({ icon: 'error', title: 'Slot Unavailable', text: 'Some slots in your selection are already booked!', background: '#1a1a1a', color: '#fff' });
+        resetSelection();
+        return;
+        }
+
+        endIndex = idx;
+        selectionStep = 2;
+                    
+        for(let i = startIndex; i <= endIndex; i++) {
+        if (i === startIndex) {
+        boxes[i].classList.add('is-start');
+        document.getElementById(`tag-${i}`).innerText = "START";
+        } else if (i === endIndex) {
+        boxes[i].classList.add('is-end');
+        document.getElementById(`tag-${i}`).innerText = "END";
+        } else {
+        boxes[i].classList.add('in-range');
+        }
+        }
+
+        document.getElementById('startTime').value = allTimes[startIndex].value;
+        document.getElementById('endTime').value = allTimes[endIndex].value;
+
+        let duration = endIndex - startIndex;
+        selectionText.innerHTML = `<i class="fas fa-check-circle"></i> Locked: <b>${allTimes[startIndex].label} to ${allTimes[endIndex].label}</b> (${duration} Hour${duration > 1 ? 's' : ''})`;
+        selectionText.className = "selection-info step-2";
+        calculateBill();
+        }
+        }
+        }
+
+        function resetSelection() {
+        document.querySelectorAll('.time-box').forEach(b => b.classList.remove('is-start', 'is-end', 'in-range'));
+        document.querySelectorAll('.selection-tag').forEach(t => t.innerText = "");
+        startIndex = -1;
+        endIndex = -1;
+        selectionStep = 0;
+        document.getElementById('startTime').value = "";
+        document.getElementById('endTime').value = "";
+        selectionText.innerHTML = `<i class="fas fa-hand-pointer"></i> Please tap on a box to select your <b>Start Time</b>.`;
+        selectionText.className = "selection-info";
+        calculateBill();
+        }
+
+        function switchMode(mode) {
+        document.getElementById('bookingMode').value = mode;
+        if (mode === 'Hourly') {
+        document.getElementById('btnHourly').classList.add('active');
+        document.getElementById('btnTournament').classList.remove('active');
+        document.getElementById('hourlySection').style.display = 'block';
+        document.getElementById('tournamentSection').style.display = 'none';
+        } else {
+        document.getElementById('btnTournament').classList.add('active');
+        document.getElementById('btnHourly').classList.remove('active');
+        document.getElementById('hourlySection').style.display = 'none';
+        document.getElementById('tournamentSection').style.display = 'block';
+        }
+        calculateBill();
+        }
+
+        function calculateBill() {
+        let regularRate = 1200;
+        let peakRate = 1800;
+        let total = 0;
+        let mode = document.getElementById('bookingMode').value;
+            
+        if (mode === 'Hourly') {
+        if (startIndex !== -1 && endIndex !== -1) {
+        for (let i = startIndex; i < endIndex; i++) {
+        let h = allTimes[i].hour;
+        if (h >= 6 && h < 17) total += regularRate;
+        else total += peakRate;
+        }
+        }
+        } else {
+        let pkg = document.getElementById('tournamentPackage').value;
+        if (pkg === 'HalfDayMorning') total = 5000;
+        if (pkg === 'HalfDayEvening') total = 7000;
+        if (pkg === 'FullDay') total = 10000;
+        }
+
+        document.getElementById('displayBill').innerText = total.toLocaleString('en-IN');
+        document.getElementById('totalBill').value = total;
+        }
+
+        function submitBooking() {
+        let mode = document.getElementById('bookingMode').value;
+        let total = parseInt(document.getElementById('totalBill').value, 10);
+
+        if (mode === 'Hourly' && (startIndex === -1 || endIndex === -1)) {
+        Swal.fire({ icon: 'warning', title: 'Time Missing', text: 'Please select both a Start Time and an End Time.', background: '#1a1a1a', color: '#fff' });
+        return;
+        }
+        if (total <= 0) {
+        Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please complete your selection.', background: '#1a1a1a', color: '#fff' });
+        return;
+        }
+        document.getElementById('bookingForm').submit();
+        }
     </script>
 }

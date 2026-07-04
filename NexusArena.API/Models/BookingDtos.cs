@@ -1,12 +1,19 @@
 ﻿namespace NexusArena.API.Models
 {
+    // 🌟 SMART ENGINE BOOKING REQUEST
     public class CreateBookingRequest
     {
-        public int ArenaId { get; set; }
-        public int SlotId { get; set; }
-        public string PlayDate { get; set; } = null!; // Format: "yyyy-MM-dd"
+        public int ResourceId { get; set; }
+        public string PlayDate { get; set; } = string.Empty; // Format: "yyyy-MM-dd"
 
-        // Default mode ab 'Advance50' rahega (PayAtTurf hatane ke baad)
+        // Naye Smart Time fields string mein, taaki JSON parse hone mein crash na ho
+        public string StartTime { get; set; } = string.Empty;
+        public string EndTime { get; set; } = string.Empty;
+
+        public string BookingMode { get; set; } = "Hourly";
+        public string? TournamentPackage { get; set; }
+
+        // Default mode 'Advance50'
         public string PaymentMode { get; set; } = "Advance50";
     }
 
@@ -28,7 +35,7 @@
         public string RazorpaySignature { get; set; } = null!;
     }
 
-    // 🌟 NAYA DTO: Booking History ke real data ke liye
+    // Booking History ke real data ke liye
     public class UserBookingHistoryDto
     {
         public int BookingId { get; set; }

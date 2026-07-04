@@ -5,8 +5,6 @@
     Layout = "~/Views/Shared/_ReceptionistLayout.cshtml";
 }
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
 <style>
     body {
         background-color: #121212;
@@ -287,239 +285,237 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        loadCustomers();
-        loadTurfs();
-        initializeTimeSelects();
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCustomers();
+            loadTurfs();
+            initializeTimeSelects();
 
-        const modal = document.getElementById('walkInModal');
-        if(modal) {
-            modal.addEventListener('show.bs.modal', function() {
-                initializeTimeSelects();
+            const modal = document.getElementById('walkInModal');
+            if(modal) {
+                modal.addEventListener('show.bs.modal', function() {
+                    initializeTimeSelects();
+                });
+            }
+        });
+
+        function loadCustomers() {
+            fetch('/api/receptionist/get-customers')
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById('customerSelect');
+                    if(select){
+                        select.innerHTML = '<option value="">-- Select Customer --</option>';
+                        data.forEach(customer => {
+                            let option = document.createElement('option');
+                            option.value = customer.id;
+                            option.text = `${customer.name} (ID: ${customer.id})`;
+                            option.setAttribute('data-phone', customer.phone);
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading customers:', error));
+        }
+
+        function loadTurfs() {
+            fetch('/api/receptionist/get-turfs')
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById('resourceSelect');
+                    select.innerHTML = '<option value="">-- Select Turf --</option>';
+                    data.forEach(turf => {
+                        let option = document.createElement('option');
+                        option.value = turf.id;
+                        option.text = `${turf.name} (${turf.type}) - ₹${turf.pricePerHour}/hr`;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading turfs:', error));
+        }
+
+        function populateCustomerDetails() {
+            let select = document.getElementById('customerSelect');
+            let selected = select.options[select.selectedIndex];
+            let phone = selected.getAttribute('data-phone') || '';
+            document.getElementById('customerPhone').value = phone;
+        }
+
+        function populateTimeSlots() {
+            let resourceId = document.getElementById('resourceSelect').value;
+            if (!resourceId) {
+                document.getElementById('startTimeSelect').innerHTML = '<option value="">-- Select Start Time --</option>';
+                document.getElementById('endTimeSelect').innerHTML = '<option value="">-- Select End Time --</option>';
+                return;
+            }
+
+            fetch(`/api/receptionist/get-available-slots/${resourceId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let startSelect = document.getElementById('startTimeSelect');
+                    let endSelect = document.getElementById('endTimeSelect');
+
+                    startSelect.innerHTML = '<option value="">-- Select Start Time --</option>';
+                    endSelect.innerHTML = '<option value="">-- Select End Time --</option>';
+
+                    data.forEach(slot => {
+                        let startOpt = document.createElement('option');
+                        startOpt.value = slot.startTime;
+                        startOpt.text = `${slot.displayTime}`;
+                        startSelect.appendChild(startOpt);
+
+                        let endOpt = document.createElement('option');
+                        endOpt.value = slot.endTime;
+                        endOpt.text = `${slot.endTimeDisplay}`;
+                        endSelect.appendChild(endOpt);
+                    });
+                })
+                .catch(error => console.error('Error loading slots:', error));
+        }
+
+        function initializeTimeSelects() {
+            const hours = document.querySelectorAll('[id$="Hour"]');
+            hours.forEach(select => {
+                select.innerHTML = '';
+                for(let h=1; h<=12; h++) {
+                    let opt = document.createElement('option');
+                    opt.value = h.toString().padStart(2,'0');
+                    opt.text = h.toString().padStart(2,'0');
+                    select.appendChild(opt);
+                }
+            });
+
+            const minutes = document.querySelectorAll('[id$="Minute"]');
+            minutes.forEach(select => {
+                select.innerHTML = '';
+                for(let m=0; m<=55; m+=5) {
+                    let opt = document.createElement('option');
+                    opt.value = m.toString().padStart(2,'0');
+                    opt.text = m.toString().padStart(2,'0');
+                    select.appendChild(opt);
+                }
+            });
+
+            const now = new Date();
+            let mins = now.getMinutes();
+            let rounded = (mins < 15 ? 0 : (mins < 45 ? 30 : 0));
+            if(rounded === 0) now.setHours(now.getHours() + 1);
+            now.setMinutes(rounded, 0, 0);
+
+            function setTimeSelects(prefix, dt) {
+                let hr = dt.getHours();
+                let ap = hr >= 12 ? 'PM' : 'AM';
+                let hr12 = hr % 12;
+                if(hr12 === 0) hr12 = 12;
+
+                document.getElementById(prefix + 'Hour').value = hr12.toString().padStart(2,'0');
+                document.getElementById(prefix + 'Minute').value = dt.getMinutes().toString().padStart(2,'0');
+                document.getElementById(prefix + 'AmPm').value = ap;
+                timeToHidden(prefix);
+            }
+
+            setTimeSelects('start', now);
+            let end = new Date(now.getTime() + 60*60*1000);
+            setTimeSelects('end', end);
+
+            ['startHour','startMinute','startAmPm','endHour','endMinute','endAmPm'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('change', function() {
+                        let prefix = id.substring(0, id === 'startHour' || id === 'startMinute' || id === 'startAmPm' ? 5 : 3);
+                        timeToHidden(prefix);
+                        ensureEndAfterStart();
+                    });
+                }
             });
         }
-    });
 
-    function loadCustomers() {
-        fetch('/api/receptionist/get-customers')
-            .then(response => response.json())
-            .then(data => {
-                let select = document.getElementById('customerSelect');
-                select.innerHTML = '<option value="">-- Select Customer --</option>';
-                data.forEach(customer => {
-                    let option = document.createElement('option');
-                    option.value = customer.id;
-                    option.text = `${customer.name} (ID: ${customer.id})`;
-                    option.setAttribute('data-phone', customer.phone);
-                    select.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error loading customers:', error));
-    }
+        function timeToHidden(prefix) {
+            let h = parseInt(document.getElementById(prefix + 'Hour').value, 10);
+            let m = parseInt(document.getElementById(prefix + 'Minute').value, 10);
+            let ap = document.getElementById(prefix + 'AmPm').value;
 
-    function loadTurfs() {
-        fetch('/api/receptionist/get-turfs')
-            .then(response => response.json())
-            .then(data => {
-                let select = document.getElementById('resourceSelect');
-                select.innerHTML = '<option value="">-- Select Turf --</option>';
-                data.forEach(turf => {
-                    let option = document.createElement('option');
-                    option.value = turf.id;
-                    option.text = `${turf.name} (${turf.type}) - ₹${turf.pricePerHour}/hr`;
-                    select.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error loading turfs:', error));
-    }
+            if(isNaN(h) || isNaN(m)) return;
+            if(ap === 'PM' && h < 12) h += 12;
+            if(ap === 'AM' && h === 12) h = 0;
 
-    function populateCustomerDetails() {
-        let select = document.getElementById('customerSelect');
-        let selected = select.options[select.selectedIndex];
-        let phone = selected.getAttribute('data-phone') || '';
-        document.getElementById('customerPhone').value = phone;
-    }
-
-    function populateTimeSlots() {
-        let resourceId = document.getElementById('resourceSelect').value;
-        if (!resourceId) {
-            document.getElementById('startTimeSelect').innerHTML = '<option value="">-- Select Start Time --</option>';
-            document.getElementById('endTimeSelect').innerHTML = '<option value="">-- Select End Time --</option>';
-            return;
+            document.getElementById(prefix + 'TimeHidden').value = h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
         }
 
-        fetch(`/api/receptionist/get-available-slots/${resourceId}`)
-            .then(response => response.json())
-            .then(data => {
-                let startSelect = document.getElementById('startTimeSelect');
-                let endSelect = document.getElementById('endTimeSelect');
+        function ensureEndAfterStart() {
+            let sh = parseInt(document.getElementById('startHour').value, 10);
+            let sm = parseInt(document.getElementById('startMinute').value, 10);
+            let sap = document.getElementById('startAmPm').value;
+            let eh = parseInt(document.getElementById('endHour').value, 10);
+            let em = parseInt(document.getElementById('endMinute').value, 10);
+            let eap = document.getElementById('endAmPm').value;
 
-                startSelect.innerHTML = '<option value="">-- Select Start Time --</option>';
-                endSelect.innerHTML = '<option value="">-- Select End Time --</option>';
-
-                data.forEach(slot => {
-                    let startOpt = document.createElement('option');
-                    startOpt.value = slot.startTime;
-                    startOpt.text = `${slot.displayTime}`;
-                    startSelect.appendChild(startOpt);
-
-                    let endOpt = document.createElement('option');
-                    endOpt.value = slot.endTime;
-                    endOpt.text = `${slot.endTimeDisplay}`;
-                    endSelect.appendChild(endOpt);
-                });
-            })
-            .catch(error => console.error('Error loading slots:', error));
-    }
-
-    function initializeTimeSelects() {
-        // Populate hours (1-12)
-        const hours = document.querySelectorAll('[id$="Hour"]');
-        hours.forEach(select => {
-            select.innerHTML = '';
-            for(let h=1; h<=12; h++) {
-                let opt = document.createElement('option');
-                opt.value = h.toString().padStart(2,'0');
-                opt.text = h.toString().padStart(2,'0');
-                select.appendChild(opt);
+            function toDate(h,m,ap) {
+                let hh = h;
+                if(ap === 'PM' && hh < 12) hh += 12;
+                if(ap === 'AM' && hh === 12) hh = 0;
+                let d = new Date();
+                d.setHours(hh, m, 0, 0);
+                return d;
             }
-        });
 
-        // Populate minutes (0-55 in 5 min steps)
-        const minutes = document.querySelectorAll('[id$="Minute"]');
-        minutes.forEach(select => {
-            select.innerHTML = '';
-            for(let m=0; m<=55; m+=5) {
-                let opt = document.createElement('option');
-                opt.value = m.toString().padStart(2,'0');
-                opt.text = m.toString().padStart(2,'0');
-                select.appendChild(opt);
+            let sdt = toDate(sh, sm, sap);
+            let edt = toDate(eh, em, eap);
+
+            if(edt.getTime() <= sdt.getTime() + 29*60000) {
+                let newEnd = new Date(sdt.getTime() + 60*60000);
+                let hr = newEnd.getHours();
+                let ap = hr >= 12 ? 'PM' : 'AM';
+                let hr12 = hr % 12;
+                if(hr12 === 0) hr12 = 12;
+
+                document.getElementById('endHour').value = hr12.toString().padStart(2,'0');
+                document.getElementById('endMinute').value = newEnd.getMinutes().toString().padStart(2,'0');
+                document.getElementById('endAmPm').value = ap;
+                timeToHidden('end');
             }
-        });
-
-        // Set default times
-        const now = new Date();
-        let mins = now.getMinutes();
-        let rounded = (mins < 15 ? 0 : (mins < 45 ? 30 : 0));
-        if(rounded === 0) now.setHours(now.getHours() + 1);
-        now.setMinutes(rounded, 0, 0);
-
-        function setTimeSelects(prefix, dt) {
-            let hr = dt.getHours();
-            let ap = hr >= 12 ? 'PM' : 'AM';
-            let hr12 = hr % 12;
-            if(hr12 === 0) hr12 = 12;
-
-            document.getElementById(prefix + 'Hour').value = hr12.toString().padStart(2,'0');
-            document.getElementById(prefix + 'Minute').value = dt.getMinutes().toString().padStart(2,'0');
-            document.getElementById(prefix + 'AmPm').value = ap;
-            timeToHidden(prefix);
         }
 
-        setTimeSelects('start', now);
-        let end = new Date(now.getTime() + 60*60*1000);
-        setTimeSelects('end', end);
-
-        // Sync hidden fields on change
-        ['startHour','startMinute','startAmPm','endHour','endMinute','endAmPm'].forEach(id => {
-            let el = document.getElementById(id);
-            if(el) {
-                el.addEventListener('change', function() {
-                    let prefix = id.substring(0, id === 'startHour' || id === 'startMinute' || id === 'startAmPm' ? 5 : 3);
-                    timeToHidden(prefix);
-                    ensureEndAfterStart();
-                });
-            }
-        });
-    }
-
-    function timeToHidden(prefix) {
-        let h = parseInt(document.getElementById(prefix + 'Hour').value, 10);
-        let m = parseInt(document.getElementById(prefix + 'Minute').value, 10);
-        let ap = document.getElementById(prefix + 'AmPm').value;
-
-        if(isNaN(h) || isNaN(m)) return;
-        if(ap === 'PM' && h < 12) h += 12;
-        if(ap === 'AM' && h === 12) h = 0;
-
-        document.getElementById(prefix + 'TimeHidden').value = h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
-    }
-
-    function ensureEndAfterStart() {
-        let sh = parseInt(document.getElementById('startHour').value, 10);
-        let sm = parseInt(document.getElementById('startMinute').value, 10);
-        let sap = document.getElementById('startAmPm').value;
-        let eh = parseInt(document.getElementById('endHour').value, 10);
-        let em = parseInt(document.getElementById('endMinute').value, 10);
-        let eap = document.getElementById('endAmPm').value;
-
-        function toDate(h,m,ap) {
-            let hh = h;
-            if(ap === 'PM' && hh < 12) hh += 12;
-            if(ap === 'AM' && hh === 12) hh = 0;
-            let d = new Date();
-            d.setHours(hh, m, 0, 0);
-            return d;
+        function confirmCollect(bookingId) {
+            Swal.fire({
+                title: 'Payment Received?',
+                text: "Are you sure you have collected the cash for Booking #" + bookingId + "?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#00ff7f',
+                cancelButtonColor: '#ff4d4d',  
+                confirmButtonText: '<i class="fas fa-check" style="color: black;"></i> <span style="color: black; font-weight: bold;">Yes, Collected!</span>',
+                cancelButtonText: 'Cancel',
+                background: '#1a1a1a', 
+                color: '#fff', 
+                border: '1px solid #333'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('collectForm_' + bookingId).submit();
+                }
+            });
         }
 
-        let sdt = toDate(sh, sm, sap);
-        let edt = toDate(eh, em, eap);
-
-        if(edt.getTime() <= sdt.getTime() + 29*60000) {
-            let newEnd = new Date(sdt.getTime() + 60*60000);
-            let hr = newEnd.getHours();
-            let ap = hr >= 12 ? 'PM' : 'AM';
-            let hr12 = hr % 12;
-            if(hr12 === 0) hr12 = 12;
-
-            document.getElementById('endHour').value = hr12.toString().padStart(2,'0');
-            document.getElementById('endMinute').value = newEnd.getMinutes().toString().padStart(2,'0');
-            document.getElementById('endAmPm').value = ap;
-            timeToHidden('end');
+        function confirmCheckout(bookingId) {
+            Swal.fire({
+                title: 'Checkout Booking?',
+                text: "Do you want to checkout Booking #" + bookingId + "?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3498db',
+                cancelButtonColor: '#ff4d4d',
+                confirmButtonText: 'Yes, Checkout!',
+                background: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid #333'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('checkoutForm_' + bookingId).submit();
+                }
+            });
         }
-    }
-
-    function confirmCollect(bookingId) {
-        Swal.fire({
-            title: 'Payment Received?',
-            text: "Are you sure you have collected the cash for Booking #" + bookingId + "?",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#00ff7f',
-            cancelButtonColor: '#ff4d4d',  
-            confirmButtonText: '<i class="fas fa-check" style="color: black;"></i> <span style="color: black; font-weight: bold;">Yes, Collected!</span>',
-            cancelButtonText: 'Cancel',
-            background: '#1a1a1a', 
-            color: '#fff', 
-            border: '1px solid #333'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('collectForm_' + bookingId).submit();
-            }
-        });
-    }
-
-    function confirmCheckout(bookingId) {
-        Swal.fire({
-            title: 'Checkout Booking?',
-            text: "Do you want to checkout Booking #" + bookingId + "?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3498db',
-            cancelButtonColor: '#ff4d4d',
-            confirmButtonText: 'Yes, Checkout!',
-            background: '#1a1a1a',
-            color: '#fff',
-            border: '1px solid #333'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('checkoutForm_' + bookingId).submit();
-            }
-        });
-    }
-</script>
+    </script>
+}

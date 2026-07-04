@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NexusArena.API.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,7 +11,6 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "User")]
     public class ExploreController : ControllerBase
     {
         private readonly NexusArenaDbContext _context;
@@ -20,79 +20,101 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        [HttpGet("arenas")]
-        public async Task<IActionResult> GetAllArenas([FromQuery] string? searchTerm, [FromQuery] string? area)
+        // ==============================================================
+        // 1. SMART OMNI-SEARCH ENGINE (WITH PAGINATION & DTO MAPPING)
+        // ==============================================================
+        [AllowAnonymous] // Koi bhi bina login ke turfs dekh sakta hai
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchTurfs(
+            [FromQuery] string? query,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
             try
             {
-                var query = _context.Arenas
-                    .Where(a => a.IsActive == true)
-                    .Include(a => a.Reviews)
-                    .AsQueryable();
+                // 1. Base Query with Relationships
+                var arenasQuery = _context.Arenas
+                    .Include(a => a.ArenaSports)
+                        .ThenInclude(map => map.SportCategory)
+                    .Where(a => a.IsActive == true);
 
-                if (!string.IsNullOrWhiteSpace(searchTerm))
+                // 2. Apply Smart Filter if user searched something
+                if (!string.IsNullOrWhiteSpace(query))
                 {
-                    var term = searchTerm.ToLower();
-                    query = query.Where(a => (a.Name != null && a.Name.ToLower().Contains(term)) ||
-                                             (a.City != null && a.City.ToLower().Contains(term)));
+                    var search = query.ToLower().Trim();
+
+                    // Checking Name, Location, City, or any mapped Sport Name
+                    arenasQuery = arenasQuery.Where(a =>
+                        a.Name.ToLower().Contains(search) ||
+                        (a.Location != null && a.Location.ToLower().Contains(search)) ||
+                        a.City.ToLower().Contains(search) ||
+                        a.ArenaSports.Any(map => map.SportCategory.Name.ToLower().Contains(search))
+                    );
                 }
 
-                if (!string.IsNullOrWhiteSpace(area))
-                {
-                    var areaTerm = area.ToLower();
-                    query = query.Where(a => a.Location != null && a.Location.ToLower().Contains(areaTerm));
-                }
+                // 3. Total Count for Pagination Logic
+                var totalRecords = await arenasQuery.CountAsync();
+                var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
 
-                var arenas = await query
-                    .Select(a => new
+                // 4. Execute Query, Apply Pagination, and Map to DTOs
+                var arenas = await arenasQuery
+                    .OrderBy(a => a.Name)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(a => new ArenaExploreDto
                     {
                         ArenaId = a.ArenaId,
                         Name = a.Name,
-                        Location = a.Location,
                         City = a.City,
-                        AverageRating = a.Reviews.Any() ? Math.Round(a.Reviews.Average(r => r.Rating), 1) : 0.0,
-                        TotalReviews = a.Reviews.Count()
+                        Location = a.Location ?? "Not Specified",
+                        HourlyRegularPrice = a.HourlyRegularPrice,
+                        HourlyPeakPrice = a.HourlyPeakPrice,
+                        // Mapping nested sports into a simple list of strings
+                        SupportedSports = a.ArenaSports.Select(map => map.SportCategory.Name).ToList()
                     })
                     .ToListAsync();
 
-                if (!arenas.Any())
-                    return NotFound(new { message = "Abhi koi arenas available nahi hain." });
+                // 5. Professional Standard Response Wrap
+                var response = new ExploreResponseDto
+                {
+                    Success = true,
+                    TotalRecords = totalRecords,
+                    TotalPages = totalPages,
+                    CurrentPage = page,
+                    Data = arenas
+                };
 
-                return Ok(new { message = "Arenas fetched successfully", data = arenas });
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+                // High-level error handling logging
+                return StatusCode(500, new { success = false, message = "Internal Server Error: " + ex.Message });
             }
         }
+    }
 
-        [HttpGet("arena/{arenaId}/resources")]
-        public async Task<IActionResult> GetArenaResources(int arenaId)
-        {
-            try
-            {
-                var resources = await _context.Resources
-                    .Include(r => r.Category)
-                    .Where(r => r.ArenaId == arenaId)
-                    .Select(r => new
-                    {
-                        ResourceId = r.ResourceId,
-                        ResourceName = r.ResourceName,
-                        // 🌟 THE FIX: Agar Category null hui toh crash nahi hoga, "General" likh dega
-                        SportCategory = r.Category != null ? r.Category.Name : "General",
-                        Capacity = r.Capacity
-                    })
-                    .ToListAsync();
+    // ==============================================================
+    // DTOs (Data Transfer Objects) FOR CLEAN API CONTRACTS
+    // ==============================================================
 
-                if (!resources.Any())
-                    return NotFound(new { message = "Is arena me abhi koi resources available nahi hain." });
+    public class ArenaExploreDto
+    {
+        public int ArenaId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public decimal HourlyRegularPrice { get; set; }
+        public decimal HourlyPeakPrice { get; set; }
+        public List<string> SupportedSports { get; set; } = new List<string>();
+    }
 
-                return Ok(new { message = "Resources fetched successfully", data = resources });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
-        }
+    public class ExploreResponseDto
+    {
+        public bool Success { get; set; }
+        public int TotalRecords { get; set; }
+        public int TotalPages { get; set; }
+        public int CurrentPage { get; set; }
+        public List<ArenaExploreDto> Data { get; set; } = new List<ArenaExploreDto>();
     }
 }

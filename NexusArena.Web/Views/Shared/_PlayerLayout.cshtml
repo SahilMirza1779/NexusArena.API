@@ -1,4 +1,39 @@
-﻿<!DOCTYPE html>
+﻿@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@{
+    string loggedInName = "User";
+    var jwToken = Context.Request.Cookies["JWToken"];
+
+    if (!string.IsNullOrEmpty(jwToken))
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(jwToken);
+
+            var nameClaim = jwt.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value;
+
+            if (!string.IsNullOrWhiteSpace(nameClaim))
+            {
+                loggedInName = nameClaim;
+            }
+            else
+            {
+                var emailClaim = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!string.IsNullOrWhiteSpace(emailClaim) && emailClaim.Contains("@"))
+                {
+                    loggedInName = emailClaim.Split('@')[0];
+                    loggedInName = char.ToUpper(loggedInName[0]) + loggedInName.Substring(1);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -141,9 +176,9 @@
                 </div>
                 <div class="wallet-badge"><i class="fas fa-wallet"></i> ₹ 1,200</div>
                 <a href="/Profile/Index" style="color: #fff; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='#00ff66'" onmouseout="this.style.color='#fff'">
-                    <i class="fas fa-user-circle" style="font-size: 24px; color: #00ff66; vertical-align: middle;"></i> Zubeir
+                    <i class="fas fa-user-circle" style="font-size: 24px; color: #00ff66; vertical-align: middle;"></i> @loggedInName
                 </a>
-                <a href="/Account/Login" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="/Account/Logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
 
@@ -232,7 +267,10 @@
                         notifList.innerHTML = "<div style='padding: 30px; text-align: center; color: #666;'><i class='fas fa-bell-slash' style='font-size: 2rem; margin-bottom: 10px;'></i><br/>No alerts for you.</div>";
                     }
                 })
-                .catch(err => console.log("Silent error:", err));
+                .catch(err => {
+                    console.log("Silent error:", err);
+                    document.getElementById("notif-list").innerHTML = "<div style='padding: 30px; text-align: center; color: #666;'>Failed to load notifications.</div>";
+                });
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
