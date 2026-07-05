@@ -21,6 +21,9 @@ public partial class User
 
     public bool? IsActive { get; set; }
 
+    // 🚨 NAYA FIELD: Database me Business Name save karne ke liye
+    public string? BusinessName { get; set; }
+
     public virtual ICollection<Arena> Arenas { get; set; } = new List<Arena>();
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();

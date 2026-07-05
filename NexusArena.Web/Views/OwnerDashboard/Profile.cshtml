@@ -1,0 +1,131 @@
+﻿@model NexusArena.Web.Models.OwnerProfileViewModel
+@{
+    ViewData["Title"] = "Owner Details";
+    Layout = "~/Views/Shared/_OwnerLayout.cshtml";
+}
+
+<style>
+    .profile-card {
+        background-color: #1a1a1d;
+        border-radius: 12px;
+        padding: 40px;
+        margin: auto;
+        max-width: 800px;
+        border: 1px solid #333;
+    }
+
+    .profile-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid #00e676;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #00e676;
+        margin: 0 auto 15px auto;
+    }
+
+    .profile-name {
+        text-align: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+    }
+
+    .profile-role {
+        text-align: center;
+        color: #00e676;
+        font-weight: 600;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        margin-bottom: 40px;
+    }
+
+    .info-box {
+        background-color: #252528;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .info-label {
+        color: #888;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        color: white;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-edit-profile {
+        background-color: #00e676;
+        color: black;
+        font-weight: bold;
+        padding: 12px 30px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        transition: 0.3s;
+    }
+
+        .btn-edit-profile:hover {
+            background-color: #00c853;
+            color: black;
+        }
+</style>
+
+<div class="container-fluid mt-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="profile-card shadow">
+        <div class="profile-icon">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        <div class="profile-name">@Model?.FullName</div>
+        <div class="profile-role"><i class="fas fa-crown"></i> TURF OWNER</div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="info-box">
+                    <div class="info-label">Display Name</div>
+                    <div class="info-value"><i class="fas fa-user" style="color:#00e676;"></i> @Model?.FullName</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-box">
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value"><i class="fas fa-envelope" style="color:#00e676;"></i> @Model?.Email</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-box">
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value"><i class="fas fa-phone-alt" style="color:#00e676;"></i> @Model?.Phone</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-box">
+                    <div class="info-label">Location / Base</div>
+                    <div class="info-value"><i class="fas fa-map-marker-alt" style="color:#00e676;"></i> Surat, Gujarat, India</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="/OwnerDashboard/UpdateProfile" class="btn-edit-profile"><i class="fas fa-pen"></i> Edit Profile</a>
+        </div>
+    </div>
+</div>

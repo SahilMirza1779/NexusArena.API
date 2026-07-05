@@ -4,6 +4,101 @@
     Layout = "~/Views/Shared/_OwnerLayout.cshtml";
 }
 
+<style>
+    body {
+        background-color: #121212;
+        color: white;
+    }
+
+    .card {
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        padding: 25px;
+        border-radius: 8px;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    .form-control, .form-select {
+        background-color: #2b2b2b;
+        border: 1px solid #444;
+        color: white;
+    }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #333;
+            border-color: #00e676;
+            box-shadow: none;
+            color: white;
+        }
+
+    .btn-green {
+        background-color: #219653;
+        color: white;
+        font-weight: bold;
+        padding: 10px;
+        border: none;
+        transition: 0.3s;
+    }
+
+        .btn-green:hover {
+            background-color: #27ae60;
+            color: white;
+        }
+
+    table {
+        width: 100%;
+        color: white;
+        border-collapse: collapse;
+    }
+
+    th {
+        border-bottom: 2px solid #444;
+        padding: 12px 10px;
+        color: #ccc;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    td {
+        border-bottom: 1px solid #333;
+        padding: 15px 10px;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .badge-standard {
+        background-color: rgba(108, 117, 125, 0.2);
+        color: #ced4da;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        border: 1px solid #6c757d;
+        display: inline-block;
+    }
+
+    .badge-premium {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        border: 1px solid #ffc107;
+        display: inline-block;
+    }
+
+    .badge-festival {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #ff6b6b;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        border: 1px solid #dc3545;
+        font-weight: bold;
+        display: inline-block;
+    }
+</style>
+
 <div class="container-fluid mt-4">
     @if (TempData["Success"] != null)
     {
@@ -15,88 +110,108 @@
     }
 
     <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card p-4 text-white" style="background-color: #1a1d20; border: 1px solid #333; border-radius: 10px;">
-                <h4 class="mb-4">Add Time Slot</h4>
-                <form asp-action="AddTimeSlot" asp-controller="OwnerDashboard" method="post">
-
+        <div class="col-md-4">
+            <div class="card">
+                <h5 class="mb-4 fw-bold">Add Time Slot</h5>
+                <form asp-action="AddTimeSlot" method="post">
                     <div class="mb-3">
-                        <label class="form-label">Select Facility (Turf/Table)</label>
-                        <select asp-for="NewSlot.ResourceId" class="form-select bg-dark text-white border-secondary" required>
+                        <label class="form-label text-light">Select Facility</label>
+                        <select name="ResourceId" class="form-select" required>
                             <option value="">-- Choose Facility --</option>
-                            @foreach (var res in Model.Resources)
+                            @if (Model?.Resources != null)
                             {
-                                <option value="@res.ResourceId">@res.ResourceName</option>
+                                foreach (var res in Model.Resources)
+                                {
+                                    <option value="@res.ResourceId">@res.ResourceName</option>
+                                }
                             }
                         </select>
                     </div>
 
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Start Time</label>
-                            <input asp-for="NewSlot.StartTime" type="time" class="form-control bg-dark text-white border-secondary" required />
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-light">Start Time</label>
+                            <input type="time" name="StartTime" class="form-control" required />
                         </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label">End Time</label>
-                            <input asp-for="NewSlot.EndTime" type="time" class="form-control bg-dark text-white border-secondary" required />
+                        <div class="col-md-6">
+                            <label class="form-label text-light">End Time</label>
+                            <input type="time" name="EndTime" class="form-control" required />
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Price (₹)</label>
-                        <input asp-for="NewSlot.BasePrice" type="number" step="0.01" class="form-control bg-dark text-white border-secondary" required />
+                        <label class="form-label text-light">Base Price (₹)</label>
+                        <input type="number" name="BasePrice" class="form-control" required min="0" />
                     </div>
 
-                    <div class="mb-4 form-check">
-                        <input asp-for="NewSlot.IsPremium" type="checkbox" class="form-check-input bg-dark border-secondary" />
-                        <label class="form-check-label">Mark as Premium Slot</label>
+                    <div class="row mb-4">
+                        <div class="col-md-7">
+                            <label class="form-label text-light" style="color: #ff6b6b !important; font-weight: 500;">Festive Offer Name</label>
+                            <input type="text" name="FestivalName" class="form-control" placeholder="e.g. Diwali, Eid" />
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label text-light" style="color: #ff6b6b !important; font-weight: 500;">Discount %</label>
+                            <input type="number" name="DiscountPercent" class="form-control" placeholder="e.g. 10" min="0" max="100" />
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100">Save Time Slot</button>
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="IsPremium" id="premiumCheck" value="true">
+                        <label class="form-check-label text-light" for="premiumCheck">
+                            Mark as Premium Slot
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-green w-100 rounded">Save Time Slot</button>
                 </form>
             </div>
         </div>
 
         <div class="col-md-8">
-            <div class="card p-4 text-white" style="background-color: #1a1d20; border: 1px solid #333; border-radius: 10px;">
-                <h4 class="mb-4">Existing Time Slots</h4>
+            <div class="card">
+                <h5 class="mb-4 fw-bold">Existing Time Slots</h5>
                 <div class="table-responsive">
-                    <table class="table table-dark table-hover border-secondary">
+                    <table>
                         <thead>
                             <tr>
                                 <th>Facility</th>
                                 <th>Timing</th>
-                                <th>Price</th>
+                                <th>Base Price</th>
                                 <th>Type</th>
+                                <th>Festival Offer</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @if (Model.TimeSlots != null && Model.TimeSlots.Count > 0)
+                            @if (Model != null && Model.TimeSlots != null && Model.TimeSlots.Any())
                             {
-                                @foreach (var slot in Model.TimeSlots)
+                                foreach (var slot in Model.TimeSlots)
                                 {
                                     <tr>
                                         <td>@slot.ResourceName</td>
                                         <td>@slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")</td>
-                                        <td class="text-success fw-bold">₹@slot.BasePrice</td>
+                                        <td style="color: #00e676;">₹@slot.BasePrice</td>
                                         <td>
                                             @if (slot.IsPremium)
                                             {
-                                                <span class="badge bg-warning text-dark">Premium</span>
+                                                <span class="badge-premium">Premium</span>
                                             }
                                             else
                                             {
-                                                <span class="badge bg-secondary">Standard</span>
+                                                <span class="badge-standard">Standard</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(slot.FestivalName))
+                                            {
+                                                <span class="badge-festival"><i class="fas fa-gift"></i> @slot.FestivalName (-@slot.DiscountPercent%)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
                                             }
                                         </td>
                                     </tr>
                                 }
-                            }
-                            else
-                            {
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">No time slots added yet.</td>
-                                </tr>
                             }
                         </tbody>
                     </table>

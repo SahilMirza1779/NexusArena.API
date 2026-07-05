@@ -1,0 +1,130 @@
+﻿@model NexusArena.Web.Models.OwnerProfileViewModel
+@{
+    ViewData["Title"] = "Update Details";
+    Layout = "~/Views/Shared/_OwnerLayout.cshtml";
+}
+
+<style>
+    .update-card {
+        background-color: #1a1a1d;
+        border-radius: 12px;
+        padding: 40px;
+        margin: auto;
+        max-width: 700px;
+        border: 1px solid #333;
+    }
+
+    .update-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+        .update-header h3 {
+            color: white;
+            font-weight: bold;
+        }
+
+        .update-header p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+    .form-label {
+        color: #00e676;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .form-control {
+        background-color: #252528;
+        border: 1px solid #333;
+        color: white;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+        .form-control:focus {
+            background-color: #2b2b2e;
+            border-color: #00e676;
+            box-shadow: none;
+            color: white;
+        }
+
+        .form-control:disabled {
+            background-color: #1e1e1e;
+            color: #777;
+            border-color: #222;
+        }
+
+    .btn-save {
+        background-color: #00e676;
+        color: black;
+        font-weight: bold;
+        padding: 12px;
+        border-radius: 6px;
+        border: none;
+        transition: 0.3s;
+        width: 100%;
+    }
+
+        .btn-save:hover {
+            background-color: #00c853;
+        }
+
+    .btn-cancel {
+        background-color: #333;
+        color: white;
+        font-weight: bold;
+        padding: 12px;
+        border-radius: 6px;
+        border: none;
+        text-decoration: none;
+        text-align: center;
+        display: block;
+        width: 100%;
+    }
+
+        .btn-cancel:hover {
+            background-color: #444;
+            color: white;
+        }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="update-card shadow">
+        <div class="update-header">
+            <h3><i class="fas fa-user-edit" style="color:#00e676;"></i> Update Profile</h3>
+            <p>Modify your owner details here.</p>
+        </div>
+
+        <form asp-action="UpdateProfile" method="post">
+            <label class="form-label">Full Name / Display Name</label>
+            <input type="text" name="FullName" class="form-control" value="@Model?.FullName" required />
+
+            <label class="form-label">Email Address (Not Editable)</label>
+            <input type="email" class="form-control" value="@Model?.Email" disabled />
+
+            <label class="form-label">Phone Number</label>
+            <input type="text" name="Phone" class="form-control" value="@Model?.Phone" required />
+
+            <label class="form-label">Location (Not Editable)</label>
+            <input type="text" class="form-control" value="Surat, Gujarat, India" disabled />
+
+            <label class="form-label">Role (Not Editable)</label>
+            <input type="text" class="form-control" value="Turf Owner" disabled />
+
+            <div class="row mt-4">
+                <div class="col-md-6 mb-2">
+                    <a href="/OwnerDashboard/Profile" class="btn-cancel"><i class="fas fa-times"></i> Cancel</a>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -19,13 +19,13 @@
         margin-bottom: 20px;
     }
 
-    .form-control {
+    .form-control, .form-select {
         background-color: #2b2b2b;
         border: 1px solid #444;
         color: white;
     }
 
-        .form-control:focus {
+        .form-control:focus, .form-select:focus {
             background-color: #333;
             border-color: #00e676;
             box-shadow: none;
@@ -36,42 +36,79 @@
         background-color: #219653;
         color: white;
         font-weight: bold;
-        padding: 10px;
+        padding: 10px 20px;
         border: none;
+        border-radius: 4px;
     }
 
         .btn-green:hover {
             background-color: #27ae60;
             color: white;
         }
+
+    .btn-cancel {
+        background-color: #444;
+        color: white;
+        font-weight: bold;
+        padding: 10px 20px;
+        border: none;
+        text-decoration: none;
+        border-radius: 4px;
+    }
+
+        .btn-cancel:hover {
+            background-color: #555;
+            color: white;
+        }
 </style>
 
 <div class="container-fluid mt-4">
-    <h2 class="text-success fw-bold mb-4">Edit Staff Member</h2>
-
-    <div class="row">
+    <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card">
-                <h5 class="mb-4 fw-bold">Update Details for @Model.FullName</h5>
+                <h4 class="mb-4 text-light fw-bold">Update Details for Staff Member</h4>
                 <form asp-action="EditStaff" method="post">
                     <input type="hidden" name="originalEmail" value="@ViewBag.OriginalEmail" />
 
                     <div class="mb-3">
                         <label class="form-label text-light">Full Name</label>
-                        <input type="text" asp-for="FullName" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-light">Email Address</label>
-                        <input type="email" asp-for="Email" class="form-control" required />
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label text-light">Phone Number</label>
-                        <input type="text" asp-for="Phone" class="form-control" required />
+                        <input type="text" name="FullName" class="form-control" value="@Model?.FullName" required />
                     </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-green w-50 rounded">Save Changes</button>
-                        <a href="/OwnerDashboard/Staff" class="btn btn-secondary w-50 rounded" style="padding: 10px;">Cancel</a>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Email Address</label>
+                        <input type="email" class="form-control text-muted" value="@Model?.Email" readonly disabled />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-light">Phone Number</label>
+                        <input type="text" name="Phone" class="form-control" value="@Model?.Phone" required />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-light">Assigned Business</label>
+                        <select name="BusinessName" class="form-select" required>
+                            <option value="">-- Select Business --</option>
+                            @if (ViewBag.BusinessList != null)
+                            {
+                                foreach (var biz in ViewBag.BusinessList)
+                                {
+                                    if (Model?.BusinessName == biz.ResourceName)
+                                    {
+                                        <option value="@biz.ResourceName" selected>@biz.ResourceName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@biz.ResourceName">@biz.ResourceName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-green w-50">Save Changes</button>
+                        <a href="/OwnerDashboard/Staff" class="btn btn-cancel w-50 text-center">Cancel</a>
                     </div>
                 </form>
             </div>

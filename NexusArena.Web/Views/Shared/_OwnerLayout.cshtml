@@ -1,7 +1,7 @@
 ﻿@using System.IdentityModel.Tokens.Jwt
 @using System.Security.Claims
 @{
-    string loggedInName = "User";
+    string loggedInName = "Owner";
     var jwToken = Context.Request.Cookies["JWToken"];
 
     if (!string.IsNullOrEmpty(jwToken))
@@ -32,7 +32,6 @@
         }
     }
 }
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,18 +120,6 @@
                     font-weight: bold;
                     margin: 0;
                 }
-
-            .user-profile {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
-
-            .logout-btn {
-                color: #ff4d4d;
-                text-decoration: none;
-                font-weight: 500;
-            }
     </style>
     @RenderSection("Styles", required: false)
 </head>
@@ -155,10 +142,35 @@
     <main class="main-content">
         <header class="topbar">
             <h2>Owner Portal</h2>
-            <div class="user-profile">
-                <span><i class="fas fa-user-circle"></i> @loggedInName</span>
-                <a href="/Account/Logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            
+            <div class="dropdown ms-auto">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="ownerDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight: 600; font-size: 1.1rem; cursor: pointer;">
+                    <i class="fas fa-user-circle me-2" style="font-size: 1.4rem;"></i> @loggedInName
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="ownerDropdown" style="background-color: #1a1a1d; border: 1px solid #333; border-radius: 8px; margin-top: 15px; min-width: 200px;">
+                    
+                    <li>
+                        <a class="dropdown-item py-2 d-flex align-items-center" href="/OwnerDashboard/Profile" style="color: #ccc; transition: 0.3s;" onmouseover="this.style.color='white'; this.style.backgroundColor='#2b2b2b'" onmouseout="this.style.color='#ccc'; this.style.backgroundColor='transparent'">
+                            <i class="fas fa-id-card me-3" style="color: #00e676; font-size: 1.1rem;"></i> Owner Details
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a class="dropdown-item py-2 d-flex align-items-center" href="/OwnerDashboard/UpdateProfile" style="color: #ccc; transition: 0.3s;" onmouseover="this.style.color='white'; this.style.backgroundColor='#2b2b2b'" onmouseout="this.style.color='#ccc'; this.style.backgroundColor='transparent'">
+                            <i class="fas fa-user-edit me-3" style="color: #00e676; font-size: 1.1rem;"></i> Update Details
+                        </a>
+                    </li>
+                    
+                    <li><hr class="dropdown-divider" style="border-color: #333; margin: 0.5rem 0;"></li>
+                    
+                    <li>
+                        <a class="dropdown-item py-2 d-flex align-items-center" href="/Account/Logout" style="color: #ff6b6b; transition: 0.3s;" onmouseover="this.style.backgroundColor='#2b2b2b'" onmouseout="this.style.backgroundColor='transparent'">
+                            <i class="fas fa-sign-out-alt me-3" style="font-size: 1.1rem;"></i> Logout
+                        </a>
+                    </li>
+                </ul>
             </div>
+            
         </header>
 
         @RenderBody()
