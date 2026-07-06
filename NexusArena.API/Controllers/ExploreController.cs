@@ -20,7 +20,7 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        [AllowAnonymous] 
+        [AllowAnonymous]
         [HttpGet("search")]
         public async Task<IActionResult> SearchTurfs(
             [FromQuery] string? query,
@@ -29,15 +29,17 @@ namespace NexusArena.API.Controllers
         {
             try
             {
+                var totalInDb = await _context.Arenas.CountAsync();
+                Console.WriteLine($"DEBUG: Total Arenas in DB: {totalInDb}");
+
                 var arenasQuery = _context.Arenas
                     .Include(a => a.Resources)
                         .ThenInclude(r => r.Category)
-                    .Where(a => a.IsActive == true);
+                    .AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(query))
                 {
                     var search = query.ToLower().Trim();
-
                     arenasQuery = arenasQuery.Where(a =>
                         a.Name.ToLower().Contains(search) ||
                         (a.Location != null && a.Location.ToLower().Contains(search)) ||
@@ -47,7 +49,7 @@ namespace NexusArena.API.Controllers
                 }
 
                 var totalRecords = await arenasQuery.CountAsync();
-                var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                Console.WriteLine($"DEBUG: Arenas after filter: {totalRecords}");
 
                 var arenas = await arenasQuery
                     .OrderBy(a => a.Name)
@@ -61,7 +63,6 @@ namespace NexusArena.API.Controllers
                         Location = a.Location ?? "Not Specified",
                         HourlyRegularPrice = a.HourlyRegularPrice,
                         HourlyPeakPrice = a.HourlyPeakPrice,
-
                         SupportedSports = a.Resources
                                             .Where(r => r.Category != null)
                                             .Select(r => r.Category.Name)
@@ -70,20 +71,20 @@ namespace NexusArena.API.Controllers
                     })
                     .ToListAsync();
 
-                var response = new ExploreResponseDto
+                Console.WriteLine($"DEBUG: Arenas sent to Frontend: {arenas.Count}");
+
+                return Ok(new ExploreResponseDto
                 {
                     Success = true,
                     TotalRecords = totalRecords,
-                    TotalPages = totalPages,
+                    TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
                     CurrentPage = page,
                     Data = arenas
-                };
-
-                return Ok(response);
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
     }
