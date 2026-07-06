@@ -92,7 +92,7 @@
 
     <div class="engine-card">
         <form method="post" action="@Url.Action("Review", "Booking")" id="bookingForm">
-            <input type="hidden" name="arenaId" value="@ViewBag.ArenaId" />
+            <input type="hidden" name="arenaId" id="arenaId" value="@ViewBag.ArenaId" />
             <input type="hidden" id="playDate" name="playDate" value="@ViewBag.SelectedDate" />
             
             <input type="hidden" name="bookingMode" id="bookingMode" value="Hourly" />
@@ -156,17 +156,20 @@
     <script>
         const dateContainer = document.getElementById('dateContainer');
         const playDateInput = document.getElementById('playDate');
+        const arenaIdInput = document.getElementById('arenaId').value;
         let selectedDateRaw = playDateInput.value;
 
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth();
+        const selectedDateObj = new Date(selectedDateRaw);
+        const currentYear = selectedDateObj.getFullYear();
+        const currentMonth = selectedDateObj.getMonth();
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const daysArray = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
         function generateDateStrip() {
         dateContainer.innerHTML = '';
-        let startDay = today.getDate();
+        let todayObj = new Date();
+        let startDay = (currentMonth === todayObj.getMonth() && currentYear === todayObj.getFullYear()) ? todayObj.getDate() : 1;
+            
         for (let i = startDay; i <= daysInMonth; i++) {
         let d = new Date(currentYear, currentMonth, i);
         let m = (d.getMonth() + 1).toString().padStart(2, '0');
@@ -176,7 +179,7 @@
         let isActive = (formattedDate === selectedDateRaw) ? 'active' : '';
 
         let cardHtml = `
-        <div class="date-card ${isActive}" id="date-${formattedDate}" onclick="selectDate('${formattedDate}', this)">
+        <div class="date-card ${isActive}" id="date-${formattedDate}" onclick="selectDate('${formattedDate}')">
         <div class="d-day">${dayName}</div>
         <div class="d-date">${dayNum}</div>
         </div>
@@ -188,22 +191,17 @@
         }
         generateDateStrip();
 
-        function selectDate(dateStr, element) {
-        document.querySelectorAll('.date-card').forEach(c => c.classList.remove('active'));
-        element.classList.add('active');
-        playDateInput.value = dateStr;
-        resetSelection();
-        element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        function selectDate(dateStr) {
+        if(dateStr === selectedDateRaw) return;
+        window.location.href = `/Booking/SelectSlot?arenaId=${arenaIdInput}&date=${dateStr}`;
         }
 
         flatpickr("#miniCalendarInput", {
         minDate: "today",
-        maxDate: new Date(currentYear, currentMonth, daysInMonth),
         dateFormat: "Y-m-d",
         position: "auto right",
         onChange: function(selectedDates, dateStr, instance) {
-        let targetCard = document.getElementById(`date-${dateStr}`);
-        if(targetCard) selectDate(dateStr, targetCard);
+        selectDate(dateStr);
         }
         });
 
@@ -225,19 +223,31 @@
         } catch (e) { console.error("JSON Error:", e); }
 
         function isBoxBooked(boxHour) {
-        return bookedRanges.some(b => {
-        let s = b.start || b.Start;
-        let e = b.end || b.End;
-        if (!s || !e) return false;
+        let isBooked = false;
+        for (let i = 0; i < bookedRanges.length; i++) {
+        let s = bookedRanges[i].start || bookedRanges[i].Start;
+        let e = bookedRanges[i].end || bookedRanges[i].End;
+        if (!s || !e) continue;
                 
         let startHour = parseInt(s.split(':')[0], 10);
         let endHour = parseInt(e.split(':')[0], 10);
-        if (endHour === 0 || endHour < startHour) endHour += 24;
                 
-        return boxHour >= startHour && boxHour < endHour;
-        });
+        if (e.includes("59") || e === "00:00" || e === "24:00") {
+        endHour = 24;
+        } else if (endHour < startHour) {
+        endHour += 24;
+        }
+                
+        if (boxHour >= startHour && boxHour < endHour) {
+        isBooked = true;
+        break;
+        }
+        }
+        return isBooked;
         }
 
+        function generateTimeGrid() {
+        timeGridContainer.innerHTML = '';
         allTimes.forEach((t, index) => {
         let isBookedClass = isBoxBooked(t.hour) ? 'booked' : '';
         if (t.hour === 24) isBookedClass = '';
@@ -250,6 +260,8 @@
         `;
         timeGridContainer.insertAdjacentHTML('beforeend', boxHtml);
         });
+        }
+        generateTimeGrid();
 
         let selectionStep = 0;
         let startIndex = -1;
@@ -257,9 +269,13 @@
 
         function handleBoxClick(idx) {
         const boxes = document.querySelectorAll('.time-box');
-        if (boxes[idx].classList.contains('booked')) return;
+        const isBooked = boxes[idx].classList.contains('booked');
 
         if (selectionStep === 0 || selectionStep === 2) {
+        if (isBooked) {
+        Swal.fire({ icon: 'error', title: 'Slot Booked', text: 'You cannot start on a booked slot.', background: '#1a1a1a', color: '#fff' });
+        return;
+        }
         if (idx === allTimes.length - 1) {
         Swal.fire({ icon: 'warning', title: 'Invalid Selection', text: 'You cannot select midnight as a Start Time.', background: '#1a1a1a', color: '#fff' });
         return;
@@ -275,6 +291,7 @@
         }
         else if (selectionStep === 1) {
         if (idx <= startIndex) {
+        if (isBooked) return;
         resetSelection();
         startIndex = idx;
         selectionStep = 1;
@@ -285,7 +302,10 @@
         else {
         let hasBookedInBetween = false;
         for(let i = startIndex; i < idx; i++) {
-        if (isBoxBooked(allTimes[i].hour)) hasBookedInBetween = true;
+        if (boxes[i].classList.contains('booked')) {
+        hasBookedInBetween = true;
+        break;
+        }
         }
 
         if (hasBookedInBetween) {
@@ -378,6 +398,27 @@
         let mode = document.getElementById('bookingMode').value;
         let total = parseInt(document.getElementById('totalBill').value, 10);
 
+        // 🌟 1-DAY ADVANCE TOURNAMENT CHECK
+        if (mode === 'Tournament') {
+        let today = new Date();
+        let yyyy = today.getFullYear();
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
+        let dd = String(today.getDate()).padStart(2, '0');
+        let todayStr = `${yyyy}-${mm}-${dd}`;
+
+        if (selectedDateRaw === todayStr) {
+        Swal.fire({
+        icon: 'error',
+        title: 'Booking Not Allowed',
+        text: 'Tournament Event kam se kam 1 din pehle book karna padega! Same-day booking allowed nahi hai.',
+        background: '#1a1a1a',
+        color: '#fff',
+        confirmButtonColor: '#00ff7f'
+        });
+        return;
+        }
+        }
+
         if (mode === 'Hourly' && (startIndex === -1 || endIndex === -1)) {
         Swal.fire({ icon: 'warning', title: 'Time Missing', text: 'Please select both a Start Time and an End Time.', background: '#1a1a1a', color: '#fff' });
         return;
@@ -386,6 +427,32 @@
         Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please complete your selection.', background: '#1a1a1a', color: '#fff' });
         return;
         }
+
+        // 🌟 36,600 REVERSE MATH BUG FIX
+        if (mode === 'Hourly') {
+        let sTime = allTimes[startIndex].value;
+        let eTime = allTimes[endIndex].value;
+        if (eTime === "00:00") {
+        eTime = "24:00"; // 24:00 bhejenge taaki C# backend 1 ghanta calculate kare
+        }
+        document.getElementById('startTime').value = sTime;
+        document.getElementById('endTime').value = eTime;
+        }
+        // 🌟 TOURNAMENT UI BUG FIX (Blank time fix)
+        else if (mode === 'Tournament') {
+        let pkg = document.getElementById('tournamentPackage').value;
+        if (pkg === 'HalfDayMorning') {
+        document.getElementById('startTime').value = "07:00";
+        document.getElementById('endTime').value = "14:00";
+        } else if (pkg === 'HalfDayEvening') {
+        document.getElementById('startTime').value = "14:00";
+        document.getElementById('endTime').value = "21:00";
+        } else {
+        document.getElementById('startTime').value = "06:00";
+        document.getElementById('endTime').value = "23:59"; // Tournament ke liye DB mein exact save hoga aur UI block karega
+        }
+        }
+
         document.getElementById('bookingForm').submit();
         }
     </script>

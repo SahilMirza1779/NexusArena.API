@@ -20,8 +20,8 @@
     public class SlotAvailabilityDto
     {
         public int SlotId { get; set; }
-        public string StartTime { get; set; } = null!;
-        public string EndTime { get; set; } = null!;
+        public string StartTime { get; set; } = string.Empty;
+        public string EndTime { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public bool IsAvailable { get; set; }
     }
@@ -30,15 +30,19 @@
     public class PaymentVerificationDto
     {
         public int BookingId { get; set; }
-        public string RazorpayPaymentId { get; set; } = null!;
-        public string RazorpayOrderId { get; set; } = null!;
-        public string RazorpaySignature { get; set; } = null!;
+        public string RazorpayPaymentId { get; set; } = string.Empty;
+        public string RazorpayOrderId { get; set; } = string.Empty;
+        public string RazorpaySignature { get; set; } = string.Empty;
     }
 
     // Booking History ke real data ke liye
     public class UserBookingHistoryDto
     {
         public int BookingId { get; set; }
+
+        // 🌟 ENTERPRISE UPGRADE: ArenaId added for 'Rate Turf' modal
+        public int ArenaId { get; set; }
+
         public string ArenaName { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string PlayDate { get; set; } = string.Empty;
@@ -48,5 +52,8 @@
         public decimal PendingAmount { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+
+        // 🌟 ENTERPRISE UPGRADE: CanCancel added to sync perfectly with Web ViewModel
+        public bool CanCancel { get; set; }
     }
 }

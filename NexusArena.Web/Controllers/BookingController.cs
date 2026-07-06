@@ -68,12 +68,16 @@ namespace NexusArena.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Confirm(int arenaId, string playDate, string startTime, string endTime, string bookingMode, string? tournamentPackage, string paymentMode)
+        public async Task<IActionResult> Confirm(int arenaId, string playDate, string startTime, string endTime, string bookingMode, string? tournamentPackage, string paymentMode, decimal totalBill)
         {
             var token = Request.Cookies["JWToken"];
             if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            // 🌟 MASTER FIX: C# ab time ko bilkul nahi chhedega! 
+            // JavaScript se jo ekdum perfect time aayega (jaise 23:59 ya actual Tournament hours), 
+            // hum wahi direct API ko bhejenge taaki DB aur Booking History mein exact time save ho.
 
             var bookingData = new
             {
@@ -82,8 +86,10 @@ namespace NexusArena.Web.Controllers
                 startTime = startTime,
                 endTime = endTime,
                 bookingMode = bookingMode,
-                tournamentPackage = tournamentPackage,
-                paymentMode = paymentMode
+                tournamentPackage = string.IsNullOrWhiteSpace(tournamentPackage) ? null : tournamentPackage,
+                paymentMode = paymentMode,
+                amount = totalBill,        // 🌟 FORCE Exact Price
+                totalBill = totalBill      // 🌟 FORCE Exact Price
             };
 
             var content = new StringContent(JsonSerializer.Serialize(bookingData), Encoding.UTF8, "application/json");
@@ -126,13 +132,10 @@ namespace NexusArena.Web.Controllers
             return View();
         }
 
-        // 🌟 THE FIX: Is method ko ab Web Controller properly handle karega
         [HttpPost]
         public async Task<IActionResult> VerifyPayment(int bookingId, string paymentId, string orderId, string signature)
         {
             var token = Request.Cookies["JWToken"];
-
-            // SECURITY GUARD: Agar token nahi hai toh API ko call mat karo, login pe bhejo
             if (string.IsNullOrEmpty(token))
             {
                 TempData["Error"] = "Session expired. Please login again.";
