@@ -63,6 +63,9 @@ namespace NexusArena.API.Controllers
                         Location = a.Location ?? "Not Specified",
                         HourlyRegularPrice = a.HourlyRegularPrice,
                         HourlyPeakPrice = a.HourlyPeakPrice,
+
+                        ImagePaths = null,
+
                         SupportedSports = a.Resources
                                             .Where(r => r.Category != null)
                                             .Select(r => r.Category.Name)
@@ -97,6 +100,7 @@ namespace NexusArena.API.Controllers
         public string Location { get; set; } = string.Empty;
         public decimal HourlyRegularPrice { get; set; }
         public decimal HourlyPeakPrice { get; set; }
+        public string? ImagePaths { get; set; }
         public List<string> SupportedSports { get; set; } = new List<string>();
     }
 

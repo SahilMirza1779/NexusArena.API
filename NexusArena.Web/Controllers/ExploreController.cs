@@ -21,7 +21,6 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Index(string? searchTerm, string? sport, string? area, int page = 1)
         {
             var token = Request.Cookies["JWToken"];
-            // Guest mode: Token na bhi ho toh chalega kyunki Explore page API AllowAnonymous hai
             if (!string.IsNullOrEmpty(token))
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -29,15 +28,13 @@ namespace NexusArena.Web.Controllers
 
             try
             {
-                // API Call with Pagination & Omni-Search filters
                 var apiUrl = $"api/Explore/search?page={page}&pageSize=12";
                 if (!string.IsNullOrEmpty(searchTerm)) apiUrl += $"&query={Uri.EscapeDataString(searchTerm)}";
-                if (!string.IsNullOrEmpty(area)) apiUrl += $"&query={Uri.EscapeDataString(area)}"; // Using same query parameter for area search
-                if (!string.IsNullOrEmpty(sport)) apiUrl += $"&query={Uri.EscapeDataString(sport)}"; // Using same query parameter for sport search
+                if (!string.IsNullOrEmpty(area)) apiUrl += $"&query={Uri.EscapeDataString(area)}"; 
+                if (!string.IsNullOrEmpty(sport)) apiUrl += $"&query={Uri.EscapeDataString(sport)}"; 
 
                 var response = await _httpClient.GetAsync(apiUrl);
 
-                // ViewBags for UI State
                 ViewBag.CurrentSearch = searchTerm;
                 ViewBag.CurrentArea = area;
                 ViewBag.CurrentSport = sport;
@@ -47,7 +44,6 @@ namespace NexusArena.Web.Controllers
                     var jsonString = await response.Content.ReadAsStringAsync();
                     var apiResult = JsonSerializer.Deserialize<ExploreApiResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                    // Pagination info send to View
                     if (apiResult != null)
                     {
                         ViewBag.TotalPages = apiResult.totalPages;
@@ -72,7 +68,6 @@ namespace NexusArena.Web.Controllers
         }
     }
 
-    // 🌟 API MAPPING MODELS (Fixed Exact Casing for CSHTML)
     public class ExploreApiResponse
     {
         public bool success { get; set; }
@@ -89,12 +84,12 @@ namespace NexusArena.Web.Controllers
         public string city { get; set; } = string.Empty;
         public string location { get; set; } = string.Empty;
 
-        // 🌟 FIX: Capital letters lagaye hain taaki CSHTML se match ho jaye
         public decimal HourlyRegularPrice { get; set; }
         public decimal HourlyPeakPrice { get; set; }
         public List<string> SupportedSports { get; set; } = new List<string>();
 
         public double averageRating { get; set; }
         public int totalReviews { get; set; }
+        public string? ImagePaths { get; set; }
     }
 }
