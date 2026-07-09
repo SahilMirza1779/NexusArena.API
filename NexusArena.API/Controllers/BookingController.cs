@@ -9,21 +9,15 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net;
-using System.Net.Mail;
 
 namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BookingController : ControllerBase
+    // 🌟 IDE0290 FIX: Primary Constructor use kiya (Modern C# Standard)
+    public class BookingController(NexusArenaDbContext context) : ControllerBase
     {
-        private readonly NexusArenaDbContext _context;
-
-        public BookingController(NexusArenaDbContext context)
-        {
-            _context = context;
-        }
+        private readonly NexusArenaDbContext _context = context;
 
         // =========================================================
         // 1. GET BOOKED SLOTS
@@ -57,7 +51,7 @@ namespace NexusArena.API.Controllers
         }
 
         // =========================================================
-        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
+        // 2. CREATE SMART BOOKING (WITH SAHIL BUG FIX)
         // =========================================================
         [Authorize]
         [HttpPost("create")]
@@ -127,6 +121,12 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
+                // 🌟 SAHIL BUG FIX: Agar local DB mein price 0 hai, toh booking reject karo, free mein bypass mat hone do!
+                if (totalAmount <= 0)
+                {
+                    return BadRequest(new { message = "Pricing Error: Calculated amount is ₹0. Please check Turf prices in the Database." });
+                }
+
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
                 var newBooking = new Booking
@@ -146,10 +146,17 @@ namespace NexusArena.API.Controllers
                 };
 
                 _context.Bookings.Add(newBooking);
-
-                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
                 await _context.SaveChangesAsync();
 
+                // 🌟 OFFLINE PAYMENT FIX: Agar payment mode 'PayAtTurf' hai, toh Razorpay open hi mat karo
+                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
+                {
+                    newBooking.Status = "Confirmed";
+                    await _context.SaveChangesAsync();
+                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
+                }
+
+                // ONLINE PAYMENT LOGIC
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
@@ -157,10 +164,12 @@ namespace NexusArena.API.Controllers
 
                     try
                     {
-                        RazorpayClient client = new RazorpayClient(key, secret);
+                        // 🌟 IDE0090 FIX: Simplified 'new' expression
+                        RazorpayClient client = new(key, secret);
                         int amountInPaisa = Convert.ToInt32(amountToPay * 100);
 
-                        Dictionary<string, object> options = new Dictionary<string, object>
+                        // 🌟 IDE0090 FIX: Simplified 'new' expression
+                        Dictionary<string, object> options = new()
                         {
                             { "amount", amountInPaisa },
                             { "currency", "INR" },
@@ -186,27 +195,18 @@ namespace NexusArena.API.Controllers
                     }
                 }
 
-                newBooking.Status = "Confirmed";
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Booking successful!", bookingId = newBooking.BookingId, requiresPayment = false });
+                return BadRequest(new { message = "Invalid Payment Mode or Amount." });
             }
             catch (DbUpdateException dbEx)
             {
-                // 🚨 THE FIX: Extracting the deepest SQL Error message
                 Exception inner = dbEx;
-                while (inner.InnerException != null)
-                {
-                    inner = inner.InnerException;
-                }
+                while (inner.InnerException != null) inner = inner.InnerException;
                 return StatusCode(500, new { message = "SQL DATABASE ERROR: " + inner.Message });
             }
             catch (Exception ex)
             {
                 Exception inner = ex;
-                while (inner.InnerException != null)
-                {
-                    inner = inner.InnerException;
-                }
+                while (inner.InnerException != null) inner = inner.InnerException;
                 return StatusCode(500, new { message = "SERVER CRASH ERROR: " + inner.Message });
             }
         }
@@ -222,12 +222,14 @@ namespace NexusArena.API.Controllers
             {
                 string secret = "R4wy1mnJL59R0z76VKetdkGM";
                 string payload = $"{request.RazorpayOrderId}|{request.RazorpayPaymentId}";
-                string generatedSignature = "";
+                string generatedSignature;
 
                 using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret)))
                 {
                     var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-                    generatedSignature = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+                    // 🌟 CA1872 WARNING FIX: Modern way to convert Hash to Hex String
+                    generatedSignature = Convert.ToHexStringLower(hash);
                 }
 
                 if (generatedSignature != request.RazorpaySignature?.ToLower())
@@ -252,14 +254,9 @@ namespace NexusArena.API.Controllers
             catch (Exception ex)
             {
                 Exception inner = ex;
-                while (inner.InnerException != null)
-                {
-                    inner = inner.InnerException;
-                }
+                while (inner.InnerException != null) inner = inner.InnerException;
                 return StatusCode(500, new { message = "Verification Error: " + inner.Message });
             }
         }
     }
-
-
 }

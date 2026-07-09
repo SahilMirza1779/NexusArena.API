@@ -20,26 +20,32 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // 🌟 NAYA METHOD: Dropdown bharne ke liye saare Turfs bhejo
-        [HttpGet("arenas")]
-        public async Task<IActionResult> GetArenasForDropdown()
+        // 🌟 ENTERPRISE FIX: Sirf user ki past Confirmed/Completed bookings bhejo
+        [HttpGet("eligible-bookings")]
+        public async Task<IActionResult> GetEligibleBookings()
         {
             try
             {
-                var arenas = await _context.Arenas
-                    .Where(a => a.IsActive == true)
-                    .Select(a => new
+                var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
+                if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId)) return Unauthorized();
+
+                var pastBookings = await _context.Bookings
+                    .Where(b => b.UserId == userId && b.Status == "Confirmed") // Status match karna apne hisaab se
+                    .Select(b => new
                     {
-                        arenaId = a.ArenaId,
-                        name = a.Name
+                        bookingId = b.BookingId,
+                        arenaId = b.ResourceId,
+                        arenaName = _context.Arenas.FirstOrDefault(a => a.ArenaId == b.ResourceId).Name,
+                        playDate = b.BookingDate
                     })
+                    .OrderByDescending(b => b.playDate)
                     .ToListAsync();
 
-                return Ok(new { data = arenas });
+                return Ok(new { data = pastBookings });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error fetching arenas: " + ex.Message });
+                return StatusCode(500, new { message = "Error fetching bookings: " + ex.Message });
             }
         }
 
@@ -58,6 +64,7 @@ namespace NexusArena.API.Controllers
                 {
                     UserId = userId,
                     ArenaId = request.ArenaId,
+                    BookingId = request.BookingId, // 🌟 Save Booking ID
                     Rating = request.Rating,
                     Comment = request.Comment,
                     CreatedAt = DateTime.Now
@@ -87,6 +94,7 @@ namespace NexusArena.API.Controllers
                         reviewId = r.ReviewId,
                         arenaId = r.ArenaId,
                         arenaName = r.Arena.Name,
+                        bookingId = r.BookingId, // 🌟 Return Booking ID
                         rating = r.Rating,
                         comment = r.Comment,
                         date = r.CreatedAt ?? DateTime.Now
@@ -142,6 +150,7 @@ namespace NexusArena.API.Controllers
     public class CreateReviewDto
     {
         public int ArenaId { get; set; }
+        public int BookingId { get; set; } // 🌟 Added
         public int Rating { get; set; }
         public string? Comment { get; set; }
     }

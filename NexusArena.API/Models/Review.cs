@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 using System;
 using System.Collections.Generic;
 
@@ -12,6 +11,9 @@ public partial class Review
     public int UserId { get; set; }
 
     public int ArenaId { get; set; }
+
+    // 🌟 ENTERPRISE FIX: Yahi missing tha! Iske bina match aur review link nahi ho sakte.
+    public int? BookingId { get; set; }
 
     public int Rating { get; set; }
 
