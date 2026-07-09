@@ -20,20 +20,17 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // 🌟 FULL UPDATED: Personal + Broadcast Notifications dono fetch karega
         [HttpGet("my-notifications")]
         public async Task<IActionResult> GetMyNotifications()
         {
             try
             {
-                // Token se User ID nikalo
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
 
-                // 🌟 THE LOGIC: UserID match ho YA phir UserId NULL ho (Broadcast message)
                 var notifications = await _context.Notifications
-                    .Where(n => n.UserId == userId || !n.UserId.HasValue)
+                    .Where(n => n.UserId == userId || n.Type == "System Broadcast")
                     .OrderByDescending(n => n.CreatedAt)
                     .Take(10)
                     .Select(n => new
@@ -41,6 +38,7 @@ namespace NexusArena.API.Controllers
                         id = n.NotificationId,
                         title = n.Type ?? "System Alert",
                         message = n.Message,
+
                         date = n.CreatedAt.HasValue ? n.CreatedAt.Value.ToString("dd MMM, hh:mm tt") : "Just now"
                     })
                     .ToListAsync();

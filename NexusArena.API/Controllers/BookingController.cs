@@ -25,9 +25,6 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // =========================================================
-        // 1. GET BOOKED SLOTS
-        // =========================================================
         [AllowAnonymous]
         [HttpGet("booked-times")]
         public async Task<IActionResult> GetBookedTimes(int resourceId, string date)
@@ -56,15 +53,17 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // =========================================================
-        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
-        // =========================================================
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {
             try
             {
+                if (string.IsNullOrEmpty(request.BookingMode))
+                {
+                    request.BookingMode = "Hourly";
+                }
+
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
@@ -127,6 +126,8 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
+                if (totalAmount <= 0) totalAmount = 800;
+
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
                 var newBooking = new Booking
@@ -146,8 +147,6 @@ namespace NexusArena.API.Controllers
                 };
 
                 _context.Bookings.Add(newBooking);
-
-                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
                 await _context.SaveChangesAsync();
 
                 if (amountToPay > 0)
@@ -192,7 +191,6 @@ namespace NexusArena.API.Controllers
             }
             catch (DbUpdateException dbEx)
             {
-                // 🚨 THE FIX: Extracting the deepest SQL Error message
                 Exception inner = dbEx;
                 while (inner.InnerException != null)
                 {
@@ -211,9 +209,6 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // =========================================================
-        // 3. SECURE PAYMENT VERIFICATION
-        // =========================================================
         [Authorize]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] PaymentVerificationDto request)
@@ -260,6 +255,4 @@ namespace NexusArena.API.Controllers
             }
         }
     }
-
-
 }

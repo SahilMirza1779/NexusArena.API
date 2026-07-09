@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NexusArena.API.Models; // Ek hi baar rakha hai
+using NexusArena.API.Models; 
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace NexusArena.API.Controllers
 {
-    // Naam change kar diya taaki duplicate ka error na aaye
     public class NewArenaDto
     {
         public string Name { get; set; } = string.Empty;
@@ -25,7 +24,6 @@ namespace NexusArena.API.Controllers
         private readonly NexusArenaDbContext _context;
         public ArenaController(NexusArenaDbContext context) => _context = context;
 
-        // Helper method to get Logged in Owner's ID from Token
         private int GetOwnerId()
         {
             var claim = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == ClaimTypes.NameIdentifier);
@@ -33,7 +31,7 @@ namespace NexusArena.API.Controllers
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> AddArena([FromBody] NewArenaDto input) // Yahan bhi naam update kiya
+        public async Task<IActionResult> AddArena([FromBody] NewArenaDto input)
         {
             try
             {
@@ -65,6 +63,27 @@ namespace NexusArena.API.Controllers
                         a.ArenaId,
                         a.Name,
                         a.Location,
+                        a.City,
+                        a.IsActive
+                    }).ToListAsync();
+
+                return Ok(arenas);
+            }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
+        }
+
+        [Authorize(Roles = "SuperAdmin")]
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetAllArenas()
+        {
+            try
+            {
+                var arenas = await _context.Arenas
+                    .Include(a => a.Owner) 
+                    .Select(a => new {
+                        a.ArenaId,
+                        a.Name,
+                        OwnerName = a.Owner != null ? a.Owner.FullName : "No Owner", 
                         a.City,
                         a.IsActive
                     }).ToListAsync();

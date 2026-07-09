@@ -66,7 +66,8 @@ namespace NexusArena.API.Controllers
                     b.BookingId,
                     CustomerName = b.User.FullName,
                     FacilityName = b.Resource.ResourceName,
-                    TimeSlot = b.StartTime != null ? b.StartTime.ToString() + " - " + b.EndTime.ToString() : "N/A",
+                    TimeSlot = b.StartTime != null ?
+                    b.StartTime.Value.ToString("hh:mm tt") + " - " + b.EndTime.Value.ToString("hh:mm tt") : "N/A",
                     Status = b.Status
                 })
                 .Take(5)
