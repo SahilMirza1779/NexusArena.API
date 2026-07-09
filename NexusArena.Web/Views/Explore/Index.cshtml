@@ -1,4 +1,4 @@
-﻿@model IEnumerable<dynamic> 
+﻿@model IEnumerable<NexusArena.Web.Controllers.ExploreArenaViewModel> 
 @{
     ViewData["Title"] = "Explore Turfs";
     Layout = "_PlayerLayout";
@@ -24,7 +24,7 @@
     .turf-card { background: #161616; border: 1px solid #2a2a2a; border-radius: 16px; overflow: hidden; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
     .turf-card:hover { transform: translateY(-5px); border-color: #00ff7f; box-shadow: 0 10px 30px rgba(0,255,127,0.1); }
     
-    .turf-image { height: 200px; background: #0a0a0a; position: relative; border-bottom: 1px solid #2a2a2a; }
+    .turf-image { height: 200px; background: #0a0a0a; position: relative; border-bottom: 1px solid #2a2a2a; overflow: hidden; }
     .badge-new { position: absolute; top: 15px; right: 15px; background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.3); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; z-index: 2; }
     .badge-price { position: absolute; bottom: 15px; left: 15px; background: #00ff7f; color: #000; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 900; z-index: 2; }
 
@@ -32,7 +32,7 @@
     .turf-title { color: #fff; font-size: 20px; font-weight: 800; margin: 0 0 10px 0; text-transform: uppercase; }
     .turf-location { color: #888; font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
     .turf-tags { margin-bottom: 25px; flex-grow: 1; }
-    .tag { display: inline-block; background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.2); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .tag { display: inline-block; background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.2); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-right: 5px; margin-bottom: 5px; }
     
     .btn-reserve { display: block; text-align: center; width: 100%; background: transparent; color: #00ff7f; border: 1px solid #00ff7f; padding: 12px; border-radius: 8px; font-weight: 800; text-transform: uppercase; text-decoration: none; transition: 0.3s; letter-spacing: 1px; box-sizing: border-box; }
     .turf-card:hover .btn-reserve { background: #00ff7f; color: #000; }
@@ -48,68 +48,112 @@
     
     <select id="sportSelect" class="filter-select">
         <option value="all">⚽ All Sports</option>
-        <option value="football" selected="@(Context.Request.Query["sport"] == "Football" ? "selected" : null)">Football</option>
-        <option value="cricket" selected="@(Context.Request.Query["sport"] == "Cricket" ? "selected" : null)">Cricket</option>
+        <option value="football">Football</option>
+        <option value="cricket">Cricket</option>
+        <option value="box cricket">Box Cricket</option>
+        <option value="tennis">Tennis</option>
+        <option value="basketball">Basketball</option>
+        <option value="badminton">Badminton</option>
+        <option value="volleyball">Volleyball</option>
+        <option value="pickleball">Pickleball</option>
     </select>
     
     <select id="areaSelect" class="filter-select">
         <option value="all">📍 All Areas</option>
-        <option value="adajan" selected="@(Context.Request.Query["area"] == "Adajan" ? "selected" : null)">Adajan</option>
-        <option value="vesu" selected="@(Context.Request.Query["area"] == "Vesu" ? "selected" : null)">Vesu</option>
+        <option value="adajan">Adajan</option>
+        <option value="vesu">Vesu</option>
+        <option value="jahangirpura">Jahangirpura</option>
+        <option value="pal">Pal</option>
+        <option value="rander">Rander</option>
+        <option value="piplod">Piplod</option>
+        <option value="city light">City Light</option>
+        <option value="katargam">Katargam</option>
+        <option value="varachha">Varachha</option>
+        <option value="dumas">Dumas</option>
     </select>
     
     <button type="button" id="searchBtn" class="btn-search"><i class="fas fa-search"></i> Search</button>
     <button type="button" id="resetBtn" class="btn-reset" onclick="window.location.href='/Explore/Index'">Reset</button>
 </div>
 
-<!-- 🚨 YAHAN SE TURF GRID SHURU HO RAHA HAI 🚨 -->
 <div class="turf-grid">
-    
-    <div class="turf-card" data-turf-card>
-        <div class="turf-image" style="background-image: url('https://images.unsplash.com/photo-1518605368461-1e128222204c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center;">
-            <div class="badge-new"><i class="fas fa-star"></i> New</div>
-            <div class="badge-price">Starts ₹1200.00/hr</div>
-        </div>
-        <div class="turf-info">
-            <h3 class="turf-title">DREAM BOX CRICKET</h3>
-            <div class="turf-location"><i class="fas fa-map-marker-alt" style="color:#00c3ff;"></i> Vesu, Surat</div>
-            <div class="turf-tags">
-                <span class="tag">Multi-Sport Arena</span>
-            </div>
-            <a href="/Booking/SelectSlot?arenaId=1" class="btn-reserve">Reserve Slot ⚡</a>
-        </div>
-    </div>
-    
-</div> <!-- 🚨 YEH WALA DIV MISSING THA! JISKE LIYE ERROR AA RAHA THA 🚨 -->
+    @if (Model != null && Model.Any())
+    {
+        var defaultImages = new string[] {
+            "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80", 
+            "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=800&q=80", 
+            "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=800&q=80"
+        };
 
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            
-            function runFilter() {
-                const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
-                const sportVal = document.getElementById("sportSelect").value.toLowerCase();
-                const areaVal = document.getElementById("areaSelect").value.toLowerCase();
+        @foreach (var turf in Model)
+        {
+            var fallbackImg = defaultImages[turf.arenaId % defaultImages.Length];
+            var imageUrl = string.IsNullOrEmpty(turf.ImagePaths) ? fallbackImg : turf.ImagePaths.Split(',')[0];
 
-                const cards = document.querySelectorAll("[data-turf-card]");
+            <div class="turf-card" data-turf-card>
                 
-                cards.forEach(card => {
-                    const text = card.innerText.toLowerCase();
-                    let show = true;
+                <div class="turf-image">
+                    <img src="@imageUrl" 
+                         alt="@turf.name" 
+                         style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;" />
+                    
+                    <div class="badge-new" style="z-index: 2;"><i class="fas fa-star"></i> New</div>
+                    <div class="badge-price" style="z-index: 2;">Starts ₹@turf.HourlyRegularPrice/hr</div>
+                </div>
+                
+                <div class="turf-info">
+                    <h3 class="turf-title">@turf.name</h3>
+                    <div class="turf-location"><i class="fas fa-map-marker-alt" style="color:#00c3ff;"></i> @turf.location, @turf.city</div>
+                    
+                    <div class="turf-tags">
+                        @if(turf.SupportedSports != null)
+                        {
+                            @foreach (var sport in turf.SupportedSports)
+                            {
+                                <span class="tag">@sport</span>
+                            }
+                        }
+                    </div>
+                    
+                    <a href="/Booking/SelectSlot?arenaId=@turf.arenaId" class="btn-reserve">Reserve Slot ⚡</a>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p style="color:white; text-align:center; width:100%;">No turfs found matching your criteria.</p>
+    }
+</div>
 
-                    if (searchVal && !text.includes(searchVal)) show = false;
-                    if (sportVal !== 'all' && !text.includes(sportVal)) show = false;
-                    if (areaVal !== 'all' && !text.includes(areaVal)) show = false;
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        function runFilter() {
+            const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
+            const sportVal = document.getElementById("sportSelect").value.toLowerCase();
+            const areaVal = document.getElementById("areaSelect").value.toLowerCase();
 
-                    card.style.display = show ? "block" : "none";
-                });
-            }
+            const cards = document.querySelectorAll("[data-turf-card]");
+            
+            cards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                let show = true;
 
-            document.getElementById("searchBtn").addEventListener("click", runFilter);
+                if (searchVal && !text.includes(searchVal)) show = false;
+                if (sportVal !== 'all' && !text.includes(sportVal)) show = false;
+                if (areaVal !== 'all' && !text.includes(areaVal)) show = false;
 
-            if (window.location.search) {
-                runFilter();
-            }
-        });
-    </script>
-}
+                card.style.display = show ? "flex" : "none";
+            });
+        }
+
+        document.getElementById("searchBtn").addEventListener("click", runFilter);
+        document.getElementById("sportSelect").addEventListener("change", runFilter);
+        document.getElementById("areaSelect").addEventListener("change", runFilter);
+        document.getElementById("searchInput").addEventListener("keyup", runFilter);
+
+        runFilter();
+    });
+</script>

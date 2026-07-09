@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace NexusArena.API.Models;
@@ -17,11 +15,11 @@ public partial class Resource
 
     public int? Capacity { get; set; }
 
-    public string? ResourceType { get; set; }
+    public decimal BasePricePerHour { get; set; }
 
-    public bool? IsActive { get; set; }
+    public string ResourceType { get; set; } = null!;
 
-    public decimal? BasePricePerHour { get; set; }
+    public bool IsActive { get; set; }
 
     public virtual Arena Arena { get; set; } = null!;
 

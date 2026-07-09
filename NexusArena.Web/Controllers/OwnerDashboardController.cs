@@ -26,7 +26,6 @@ namespace NexusArena.Web.Controllers
             return client;
         }
 
-        // ================= HELPER: Token se Email nikalne ke liye (Profile me kaam aayega) =========================
         private string GetLoggedInUserEmail()
         {
             var token = Request.Cookies["JWToken"];
@@ -40,7 +39,6 @@ namespace NexusArena.Web.Controllers
             catch { return ""; }
         }
 
-        // ================= EMAIL SENDER LOGIC (FIXED: Synchronous Send) =========================
         private bool SendStaffWelcomeEmail(string toEmail, string fullName, string password, string businessName)
         {
             try
@@ -82,15 +80,32 @@ namespace NexusArena.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var viewModel = new OwnerDashboardViewModel
+            var viewModel = new OwnerDashboardViewModel();
+
+            using (var client = GetAuthenticatedClient())
             {
-                TodayRevenue = 45200,
-                LiveOccupancy = "85%",
-                UpcomingBookings = new List<UpcomingBookingViewModel> { new UpcomingBookingViewModel { BookingId = 1, CustomerName = "Rahul Sharma", FacilityName = "Turf Alpha", TimeSlot = "05:00 PM", Status = "Confirmed" } }
-            };
-            return View(viewModel);
+                try
+                {
+                    var response = await client.GetAsync($"{_baseApiUrl}OwnerDashboard/stats");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        viewModel = await response.Content.ReadFromJsonAsync<OwnerDashboardViewModel>();
+                    }
+                    else
+                    {
+                        TempData["Error"] = "Failed to load real-time dashboard stats!";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Connection Error: " + ex.Message;
+                }
+            }
+
+            return View(viewModel ?? new OwnerDashboardViewModel());
         }
 
         [HttpPost]
@@ -100,7 +115,6 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        // ================= OWNER PROFILE MANAGEMENT (NAYA LOGIC) ====================
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
@@ -148,7 +162,6 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("Profile");
         }
 
-        // ================= MANAGE RESOURCES =========================
         [HttpGet]
         public async Task<IActionResult> ManageResources()
         {
@@ -201,7 +214,6 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("ManageResources");
         }
 
-        // ================= PRICING & SLOTS =========================
         [HttpGet]
         public async Task<IActionResult> PricingAndSlots()
         {
@@ -230,7 +242,6 @@ namespace NexusArena.Web.Controllers
             return RedirectToAction("PricingAndSlots");
         }
 
-        // ================= MANAGE ARENAS =========================
         [HttpGet]
         public async Task<IActionResult> ManageArenas()
         {
@@ -246,7 +257,6 @@ namespace NexusArena.Web.Controllers
             return View();
         }
 
-        // ================= STAFF MANAGEMENT ====================
         [HttpGet]
         public async Task<IActionResult> Staff()
         {

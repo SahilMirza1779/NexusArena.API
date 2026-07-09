@@ -20,10 +20,7 @@ namespace NexusArena.API.Controllers
             _context = context;
         }
 
-        // ==============================================================
-        // 1. SMART OMNI-SEARCH ENGINE (WITH PAGINATION & DTO MAPPING)
-        // ==============================================================
-        [AllowAnonymous] // Koi bhi bina login ke turfs dekh sakta hai
+        [AllowAnonymous]
         [HttpGet("search")]
         public async Task<IActionResult> SearchTurfs(
             [FromQuery] string? query,
@@ -32,31 +29,28 @@ namespace NexusArena.API.Controllers
         {
             try
             {
-                // 1. Base Query with Relationships
-                var arenasQuery = _context.Arenas
-                    .Include(a => a.ArenaSports)
-                        .ThenInclude(map => map.SportCategory)
-                    .Where(a => a.IsActive == true);
+                var totalInDb = await _context.Arenas.CountAsync();
+                Console.WriteLine($"DEBUG: Total Arenas in DB: {totalInDb}");
 
-                // 2. Apply Smart Filter if user searched something
+                var arenasQuery = _context.Arenas
+                    .Include(a => a.Resources)
+                        .ThenInclude(r => r.Category)
+                    .AsQueryable();
+
                 if (!string.IsNullOrWhiteSpace(query))
                 {
                     var search = query.ToLower().Trim();
-
-                    // Checking Name, Location, City, or any mapped Sport Name
                     arenasQuery = arenasQuery.Where(a =>
                         a.Name.ToLower().Contains(search) ||
                         (a.Location != null && a.Location.ToLower().Contains(search)) ||
                         a.City.ToLower().Contains(search) ||
-                        a.ArenaSports.Any(map => map.SportCategory.Name.ToLower().Contains(search))
+                        a.Resources.Any(r => r.Category != null && r.Category.Name.ToLower().Contains(search))
                     );
                 }
 
-                // 3. Total Count for Pagination Logic
                 var totalRecords = await arenasQuery.CountAsync();
-                var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                Console.WriteLine($"DEBUG: Arenas after filter: {totalRecords}");
 
-                // 4. Execute Query, Apply Pagination, and Map to DTOs
                 var arenas = await arenasQuery
                     .OrderBy(a => a.Name)
                     .Skip((page - 1) * pageSize)
@@ -69,34 +63,34 @@ namespace NexusArena.API.Controllers
                         Location = a.Location ?? "Not Specified",
                         HourlyRegularPrice = a.HourlyRegularPrice,
                         HourlyPeakPrice = a.HourlyPeakPrice,
-                        // Mapping nested sports into a simple list of strings
-                        SupportedSports = a.ArenaSports.Select(map => map.SportCategory.Name).ToList()
+
+                        ImagePaths = null,
+
+                        SupportedSports = a.Resources
+                                            .Where(r => r.Category != null)
+                                            .Select(r => r.Category.Name)
+                                            .Distinct()
+                                            .ToList()
                     })
                     .ToListAsync();
 
-                // 5. Professional Standard Response Wrap
-                var response = new ExploreResponseDto
+                Console.WriteLine($"DEBUG: Arenas sent to Frontend: {arenas.Count}");
+
+                return Ok(new ExploreResponseDto
                 {
                     Success = true,
                     TotalRecords = totalRecords,
-                    TotalPages = totalPages,
+                    TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
                     CurrentPage = page,
                     Data = arenas
-                };
-
-                return Ok(response);
+                });
             }
             catch (Exception ex)
             {
-                // High-level error handling logging
-                return StatusCode(500, new { success = false, message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
     }
-
-    // ==============================================================
-    // DTOs (Data Transfer Objects) FOR CLEAN API CONTRACTS
-    // ==============================================================
 
     public class ArenaExploreDto
     {
@@ -106,6 +100,7 @@ namespace NexusArena.API.Controllers
         public string Location { get; set; } = string.Empty;
         public decimal HourlyRegularPrice { get; set; }
         public decimal HourlyPeakPrice { get; set; }
+        public string? ImagePaths { get; set; }
         public List<string> SupportedSports { get; set; } = new List<string>();
     }
 

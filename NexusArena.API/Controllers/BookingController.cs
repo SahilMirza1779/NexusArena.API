@@ -19,6 +19,11 @@ namespace NexusArena.API.Controllers
     {
         private readonly NexusArenaDbContext _context = context;
 
+        public BookingController(NexusArenaDbContext context)
+        {
+            _context = context;
+        }
+
         // =========================================================
         // 1. GET BOOKED SLOTS
         // =========================================================
@@ -51,7 +56,7 @@ namespace NexusArena.API.Controllers
         }
 
         // =========================================================
-        // 2. CREATE SMART BOOKING (WITH SAHIL BUG FIX)
+        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
         // =========================================================
         [Authorize]
         [HttpPost("create")]
@@ -59,6 +64,11 @@ namespace NexusArena.API.Controllers
         {
             try
             {
+                if (string.IsNullOrEmpty(request.BookingMode))
+                {
+                    request.BookingMode = "Hourly";
+                }
+
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
@@ -121,12 +131,6 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
-                // 🌟 SAHIL BUG FIX: Agar local DB mein price 0 hai, toh booking reject karo, free mein bypass mat hone do!
-                if (totalAmount <= 0)
-                {
-                    return BadRequest(new { message = "Pricing Error: Calculated amount is ₹0. Please check Turf prices in the Database." });
-                }
-
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
                 var newBooking = new Booking
@@ -146,15 +150,9 @@ namespace NexusArena.API.Controllers
                 };
 
                 _context.Bookings.Add(newBooking);
-                await _context.SaveChangesAsync();
 
-                // 🌟 OFFLINE PAYMENT FIX: Agar payment mode 'PayAtTurf' hai, toh Razorpay open hi mat karo
-                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
-                {
-                    newBooking.Status = "Confirmed";
-                    await _context.SaveChangesAsync();
-                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
-                }
+                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
+                await _context.SaveChangesAsync();
 
                 // ONLINE PAYMENT LOGIC
                 if (amountToPay > 0)
@@ -211,9 +209,6 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // =========================================================
-        // 3. SECURE PAYMENT VERIFICATION
-        // =========================================================
         [Authorize]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] PaymentVerificationDto request)
