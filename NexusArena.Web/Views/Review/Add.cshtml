@@ -1,0 +1,38 @@
+﻿@{
+    ViewData["Title"] = "Rate Match";
+    Layout = "~/Views/Shared/_PlayerLayout.cshtml";
+}
+
+<div style="max-width: 600px; margin: 50px auto; background: linear-gradient(145deg, #161616, #1a1a1a); padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid #2a2a2a;">
+    <h2 style="color: #fff; margin-top: 0; margin-bottom: 10px; font-size: 2rem; font-weight: 800; text-align: center;">
+        Rate Your <span style="color: #00ff66;">Match</span> ⚽
+    </h2>
+    <p style="color: #888; text-align: center; margin-bottom: 30px;">Booking Reference: #@ViewBag.BookingId</p>
+    
+    <form method="post" action="/Review/Add">
+        <!-- 🌟 Hidden fields automatically send data to controller -->
+        <input type="hidden" name="bookingId" value="@ViewBag.BookingId" />
+        <input type="hidden" name="arenaId" value="@ViewBag.ArenaId" />
+
+        <div style="margin-bottom: 25px;">
+            <label style="color: #bbb; font-size: 1rem; font-weight: 600; display: block; margin-bottom: 10px;">Overall Match Rating</label>
+            <select name="rating" required style="width: 100%; padding: 15px; background-color: #0a0a0a; border: 1px solid #333; color: #fff; border-radius: 8px; outline: none; font-size: 1.1rem;">
+                <option value="" disabled selected>-- Select Rating --</option>
+                <option value="5">⭐⭐⭐⭐⭐ - Mind Blowing!</option>
+                <option value="4">⭐⭐⭐⭐ - Great Experience</option>
+                <option value="3">⭐⭐⭐ - Average</option>
+                <option value="2">⭐⭐ - Not Good</option>
+                <option value="1">⭐ - Terrible</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 35px;">
+            <label style="color: #bbb; font-size: 1rem; font-weight: 600; display: block; margin-bottom: 10px;">Review Comment</label>
+            <textarea name="comment" rows="5" placeholder="How was the turf quality, lighting, and overall vibe?" required style="width: 100%; padding: 15px; background-color: #0a0a0a; border: 1px solid #333; color: #fff; border-radius: 8px; outline: none; resize: vertical; font-size: 1rem;"></textarea>
+        </div>
+
+        <button type="submit" style="width: 100%; background-color: #00ff66; color: #000; border: none; padding: 18px; border-radius: 8px; font-weight: 900; font-size: 1.2rem; cursor: pointer; text-transform: uppercase; transition: transform 0.2s;">
+            Submit Match Review
+        </button>
+    </form>
+</div>

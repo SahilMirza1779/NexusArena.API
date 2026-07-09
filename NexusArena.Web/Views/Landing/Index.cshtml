@@ -1,4 +1,5 @@
-﻿@{
+﻿@model IEnumerable<NexusArena.Web.Controllers.ExploreArenaViewModel>
+@{
     ViewData["Title"] = "Nexus Arena - Book Your Turf";
     Layout = null; 
 }
@@ -9,19 +10,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+    <link rel="icon" type="image/jpg" href="/images/logo.jpg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
-        body {
-            background-color: #080808;
-            color: #fff;
-            font-family: 'Montserrat', sans-serif;
-            overflow-x: hidden;
-            background-image: radial-gradient(circle at 50% 30%, rgba(0, 255, 127, 0.08), transparent 60%);
-        }
-
+        body { background-color: #080808; color: #fff; font-family: 'Montserrat', sans-serif; overflow-x: hidden; background-image: radial-gradient(circle at 50% 30%, rgba(0, 255, 127, 0.08), transparent 60%); }
         .custom-navbar { padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; }
         .logo-img { height: 45px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,255,127,0.3); }
         .nav-btns .btn-login { color: #fff; border: 1px solid #555; padding: 8px 24px; border-radius: 20px; text-decoration: none; margin-right: 15px; transition: 0.3s; }
@@ -33,96 +28,65 @@
         .text-glow { color: #00ff7f; text-shadow: 0 0 20px rgba(0,255,127,0.6); }
         .hero-sub { text-align: center; color: #aaa; font-size: 1.1rem; margin-top: 15px; margin-bottom: 40px; }
 
-        .search-glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,127,0.1);
-            border-radius: 50px;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            max-width: 800px;
-            margin: 0 auto;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-        }
+        .search-glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,127,0.1); border-radius: 50px; padding: 10px 20px; display: flex; align-items: center; max-width: 800px; margin: 0 auto; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
         .search-item { flex: 1; padding: 10px 20px; border-right: 1px solid rgba(255,255,255,0.1); }
         .search-item:last-child { border-right: none; }
         .search-label { font-size: 0.7rem; color: #00ff7f; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
         .search-input { background: transparent; border: none; color: #fff; font-weight: 600; width: 100%; outline: none; }
+        .search-input option { background-color: #111; color: #fff; padding: 10px; }
+        .search-input:focus { outline: none; }
         .btn-search-icon { background: #00ff7f; color: #000; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 1.2rem; transition: 0.3s; }
         .btn-search-icon:hover { background: #00cc66; transform: scale(1.1); box-shadow: 0 0 15px rgba(0,255,127,0.5); }
 
         .showcase-section { margin-top: 60px; padding: 0 80px 80px 80px; position: relative; }
         .showcase-title { font-weight: 800; font-size: 1.8rem; margin-bottom: 25px; border-left: 4px solid #00ff7f; padding-left: 15px; }
         
-        .iconic-card {
-            position: relative;
-            border-radius: 24px;
-            overflow: hidden;
-            height: 500px; 
-            cursor: pointer;
-            border: 1px solid #333;
-            transition: all 0.4s ease;
-        }
-        .iconic-card:hover {
-            border-color: #00ff7f;
-            box-shadow: 0 15px 50px rgba(0, 255, 127, 0.25);
-            transform: scale(1.01);
-        }
-        .iconic-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.8s ease;
-        }
-        .iconic-card:hover .iconic-img {
-            transform: scale(1.05); 
-        }
-        .iconic-overlay {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
-            padding: 50px 40px 30px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
+        .iconic-card { position: relative; border-radius: 24px; overflow: hidden; height: 500px; cursor: pointer; border: 1px solid #333; transition: all 0.4s ease; }
+        .iconic-card:hover { border-color: #00ff7f; box-shadow: 0 15px 50px rgba(0, 255, 127, 0.25); transform: scale(1.01); }
+        .iconic-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; }
+        .iconic-card:hover .iconic-img { transform: scale(1.05); }
+        .iconic-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 60%, transparent 100%); padding: 50px 40px 30px 40px; display: flex; justify-content: space-between; align-items: flex-end; }
         .iconic-info h3 { font-weight: 900; font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
         .iconic-info p { color: #ddd; font-size: 1.2rem; margin-bottom: 0; font-weight: 600; }
         
-        .iconic-price-tag {
-            background: rgba(0, 255, 127, 0.15);
-            color: #00ff7f;
-            border: 1px solid #00ff7f;
-            padding: 12px 30px;
-            border-radius: 30px;
-            font-weight: 900;
-            font-size: 1.4rem;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 0 20px rgba(0,255,127,0.2);
-        }
+        .iconic-price-tag { background: rgba(0, 255, 127, 0.15); color: #00ff7f; border: 1px solid #00ff7f; padding: 12px 30px; border-radius: 30px; font-weight: 900; font-size: 1.4rem; backdrop-filter: blur(8px); box-shadow: 0 0 20px rgba(0,255,127,0.2); }
         
         .carousel-control-prev, .carousel-control-next { width: 5%; z-index: 5; }
-        .carousel-control-prev-icon, .carousel-control-next-icon { 
-            background-color: #00ff7f; 
-            border-radius: 50%; 
-            padding: 25px; 
-            background-size: 50%;
-        }
+        .carousel-control-prev-icon, .carousel-control-next-icon { background-color: #00ff7f; border-radius: 50%; padding: 25px; background-size: 50%; }
 
-        .modal-content { background-color: #111; border: 1px solid #333; border-radius: 20px; overflow: hidden; }
-        .modal-header { border-bottom: 1px solid #333; background: #1a1a1a; }
-        .modal-title { color: #00ff7f; font-weight: 800; }
-        .modal-body-img { width: 100%; height: 300px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; }
-        .modal-feature { background: #222; padding: 10px 15px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #00ff7f; margin-right: 10px; margin-bottom: 10px; display: inline-block; border: 1px solid #333; }
-        .btn-book-modal { background: #00ff7f; color: #000; font-weight: 800; width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 1.1rem; transition: 0.3s; margin-top: 20px; }
-        .btn-book-modal:hover { background: #00cc66; box-shadow: 0 0 20px rgba(0,255,127,0.4); transform: scale(1.02); }
+        .search-result-card { background: #111; border: 1px solid #333; border-radius: 16px; overflow: hidden; transition: 0.3s; }
+        .search-result-card:hover { border-color: #00ff7f; transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,255,127,0.15); }
+
+        .category-card { background: #111; border: 1px solid #333; border-radius: 16px; padding: 30px 20px; text-align: center; transition: 0.3s; cursor: pointer; text-decoration: none; display: block; color: #fff; }
+        .category-card:hover { border-color: #00ff7f; transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,255,127,0.15); color: #00ff7f; }
+        .category-icon { font-size: 3rem; color: #00ff7f; margin-bottom: 15px; transition: 0.3s; }
+        .category-card:hover .category-icon { transform: scale(1.1); text-shadow: 0 0 15px rgba(0,255,127,0.5); }
+        .category-title { font-weight: 800; font-size: 1.2rem; margin: 0; }
+
+        .step-box { text-align: center; padding: 30px 20px; position: relative; }
+        .step-number { background: #00ff7f; color: #000; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; margin: 0 auto 15px auto; box-shadow: 0 0 15px rgba(0,255,127,0.5); }
+        .step-title { font-weight: 800; color: #fff; margin-bottom: 10px; }
+        .step-desc { color: #aaa; font-size: 0.95rem; }
+
+        .trust-section { background: rgba(0, 255, 127, 0.05); padding: 80px 0; border-top: 1px solid rgba(0, 255, 127, 0.1); border-bottom: 1px solid rgba(0, 255, 127, 0.1); margin-top: 80px; }
+        .trust-box { text-align: center; padding: 20px; }
+        .trust-icon { width: 70px; height: 70px; background: rgba(0,255,127,0.1); color: #00ff7f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px auto; border: 1px solid rgba(0,255,127,0.3); }
+        .trust-title { font-weight: 800; font-size: 1.3rem; margin-bottom: 10px; color: #fff; }
+        .trust-desc { color: #aaa; font-size: 0.95rem; line-height: 1.6; }
+
+        .partner-cta { margin: 80px auto; background: linear-gradient(45deg, #0a0a0a, #1a1a1a); border: 1px solid #333; border-radius: 24px; padding: 60px 40px; display: flex; align-items: center; justify-content: space-between; max-width: 1200px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden; }
+        .partner-cta::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0,255,127,0.1) 0%, transparent 50%); z-index: 0; pointer-events: none; }
+        .partner-content { position: relative; z-index: 1; max-width: 60%; }
+        .partner-content h2 { font-weight: 900; font-size: 2.5rem; color: #fff; margin-bottom: 15px; }
+        .partner-content p { color: #aaa; font-size: 1.1rem; margin-bottom: 0; }
+        .btn-partner { position: relative; z-index: 1; background: #00ff7f; color: #000; font-weight: 800; padding: 15px 40px; border-radius: 50px; font-size: 1.2rem; text-decoration: none; transition: 0.3s; box-shadow: 0 0 20px rgba(0,255,127,0.3); }
+        .btn-partner:hover { background: #00cc66; transform: scale(1.05); box-shadow: 0 0 30px rgba(0,255,127,0.5); color: #000; }
     </style>
 </head>
 <body>
 
     <nav class="custom-navbar">
-        <img src="/images/logo.png" alt="Nexus Arena" class="logo-img" onerror="this.src='https://via.placeholder.com/150x50/111/00ff7f?text=NEXUS+ARENA'">
+        <img src="/images/logo.jpg" alt="Nexus Arena" class="logo-img" onerror="this.src='https://via.placeholder.com/150x50/111/00ff7f?text=NEXUS+ARENA'">
         <div class="nav-btns">
             <a href="/Account/Login" class="btn-login">Log In</a>
             <a href="/Account/Register" class="btn-register">Register</a>
@@ -133,81 +97,139 @@
         <h1 class="hero-title">Unleash Your <span class="text-glow">Game</span></h1>
         <p class="hero-sub">Book the best turfs instantly, or partner with us to manage your arena like a pro.<br>The ultimate sports ecosystem is here.</p>
 
-        <div class="search-glass">
+        <form action="/" method="get" class="search-glass">
             <div class="search-item">
-                <div class="search-label">City</div>
-                <input type="text" class="search-input" value="Surat" placeholder="Enter City">
+                <div class="search-label">Area</div>
+                <select name="area" class="search-input">
+                    <option value="">All Areas</option>
+                    <!option value="Vesu" @(ViewBag.SelectedArea == "Vesu" ? "selected" : "")>Vesu</!option>
+                    <!option value="Adajan" @(ViewBag.SelectedArea == "Adajan" ? "selected" : "")>Adajan</!option>
+                    <!option value="Piplod" @(ViewBag.SelectedArea == "Piplod" ? "selected" : "")>Piplod</!option>
+                    <!option value="Rander" @(ViewBag.SelectedArea == "Rander" ? "selected" : "")>Rander</!option>
+                    <!option value="Varachha" @(ViewBag.SelectedArea == "Varachha" ? "selected" : "")>Varachha</!option>
+                    <!option value="Dumas" @(ViewBag.SelectedArea == "Dumas" ? "selected" : "")>Dumas</!option>
+                </select>
             </div>
             <div class="search-item">
                 <div class="search-label">Sport</div>
-                <input type="text" class="search-input" placeholder="Any Sport">
+                <select name="sport" class="search-input">
+                    <option value="">Any Sport</option>
+                    <!option value="Box Cricket" @(ViewBag.SelectedSport == "Box Cricket" ? "selected" : "")>Box Cricket</!option>
+                    <!option value="Football" @(ViewBag.SelectedSport == "Football" ? "selected" : "")>Football</!option>
+                    <!option value="Tennis" @(ViewBag.SelectedSport == "Tennis" ? "selected" : "")>Tennis</!option>
+                    <!option value="Basketball" @(ViewBag.SelectedSport == "Basketball" ? "selected" : "")>Basketball</!option>
+                </select>
             </div>
             <div class="search-item">
                 <div class="search-label">Date</div>
-                <input type="date" class="search-input" style="color-scheme: dark;">
+                <input type="date" name="date" class="search-input" value="@ViewBag.SelectedDate" style="color-scheme: dark;">
             </div>
-            <button class="btn-search-icon"><i class="fas fa-search"></i></button>
-        </div>
+            <button type="submit" class="btn-search-icon"><i class="fas fa-search"></i></button>
+        </form>
     </div>
 
-    <div class="showcase-section">
+    @if (ViewBag.IsSearchActive == true)
+    {
+        <div class="showcase-section" style="margin-top: 60px;">
+            <h3 class="showcase-title">Search Results</h3>
+            
+            @{ var results = ViewBag.SearchResults as List<NexusArena.Web.Controllers.ExploreArenaViewModel>; }
+            
+            @if (results != null && results.Any())
+            {
+                var defaultImages = new string[] {
+                    "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80", 
+                    "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=800&q=80", 
+                    "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=800&q=80"
+                };
+
+                <div class="row g-4 mt-2">
+                    @foreach (var turf in results)
+                    {
+                        var fallbackImg = defaultImages[turf.arenaId % defaultImages.Length];
+                        var imageUrl = string.IsNullOrEmpty(turf.ImagePaths) ? fallbackImg : turf.ImagePaths.Split(',')[0];
+
+                        <div class="col-md-4">
+                            <div class="search-result-card">
+                                <img src="@imageUrl" style="height: 220px; object-fit: cover; width: 100%;" alt="@turf.name">
+                                <div style="padding: 20px;">
+                                    <h4 style="font-weight: 800; color: #fff; margin-bottom: 5px;">@turf.name</h4>
+                                    <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 15px;">
+                                        <i class="fas fa-map-marker-alt" style="color: #00ff7f;"></i> @turf.location, @turf.city
+                                    </p>
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="color: #00ff7f; font-weight: 900; font-size: 1.3rem;">₹ @turf.HourlyRegularPrice</span>
+                                        <a href="/Account/Login" style="background: #00ff7f; color: #000; font-weight: 800; padding: 8px 20px; border-radius: 8px; text-decoration: none; transition: 0.3s;">
+                                            Book Now <i class="fas fa-bolt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="background: rgba(255,0,0,0.1); border: 1px solid red; padding: 20px; border-radius: 12px; text-align: center; margin-top: 20px;">
+                    <p style="color: #ff4444; font-weight: 600; font-size: 1.1rem; margin: 0;">No arenas found matching your search. Try a different area or sport!</p>
+                </div>
+            }
+        </div>
+        <hr style="border-color: #333; margin: 0 80px 20px 80px;">
+    }
+
+    <div class="showcase-section" style="@(ViewBag.IsSearchActive == true ? "margin-top: 20px;" : "")">
         <h3 class="showcase-title">Featured Arenas</h3>
         
         <div id="arenaCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
             <div class="carousel-inner" style="border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
                 
-                <div class="carousel-item active" data-bs-interval="7000">
-                    <div class="iconic-card" onclick="openDetails('Surat Premium Arena', 'Surat, Gujarat', '₹ 1200/hr', 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
-                        <img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
-                        <div class="iconic-overlay">
-                            <div class="iconic-info">
-                                <h3>Surat Premium Arena</h3>
-                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Surat, Gujarat</p>
+                @if (Model != null && Model.Any())
+                {
+                    bool isFirst = true;
+                    var defaultImages = new string[] {
+                        "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1600&q=80", 
+                        "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=1600&q=80", 
+                        "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=1600&q=80", 
+                        "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1600&q=80"  
+                    };
+
+                    foreach (var turf in Model)
+                    {
+                        var activeClass = isFirst ? "active" : "";
+                        isFirst = false;
+                        
+                        var fallbackImg = defaultImages[turf.arenaId % defaultImages.Length];
+                        var imageUrl = string.IsNullOrEmpty(turf.ImagePaths) ? fallbackImg : turf.ImagePaths.Split(',')[0];
+                        
+                        <div class="carousel-item @activeClass" data-bs-interval="7000">
+                            <div class="iconic-card">
+                                <img src="@imageUrl" class="iconic-img" alt="@turf.name">
+                                <div class="iconic-overlay">
+                                    <div class="iconic-info">
+                                        <h3>@turf.name</h3>
+                                        <p><i class="fas fa-map-marker-alt text-glow me-2"></i> @turf.location, @turf.city</p>
+                                    </div>
+                                    <div class="iconic-price-tag">₹ @turf.HourlyRegularPrice / hr</div>
+                                </div>
                             </div>
-                            <div class="iconic-price-tag">₹ 1200 / hr</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="carousel-item active">
+                        <div style="height: 500px; display:flex; flex-direction: column; justify-content:center; align-items:center; border: 1px solid #333; border-radius: 24px;">
+                            <p style="color: #aaa; font-size: 1.2rem;">Loading amazing arenas for you...</p>
+                            @if(ViewBag.ErrorMessage != null)
+                            {
+                                <p style="color: #ff4444; margin-top: 15px; font-weight: bold;">🚨 @ViewBag.ErrorMessage</p>
+                            }
                         </div>
                     </div>
-                </div>
-
-                <div class="carousel-item" data-bs-interval="7000">
-                    <div class="iconic-card" onclick="openDetails('Nexus Box Cricket', 'Vesu, Surat', '₹ 1000/hr', 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
-                        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
-                        <div class="iconic-overlay">
-                            <div class="iconic-info">
-                                <h3>Nexus Box Cricket</h3>
-                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Vesu, Surat</p>
-                            </div>
-                            <div class="iconic-price-tag">₹ 1000 / hr</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="carousel-item" data-bs-interval="7000">
-                    <div class="iconic-card" onclick="openDetails('Elite Football Ground', 'Adajan, Surat', '₹ 1500/hr', 'https://images.unsplash.com/photo-1459865264687-595d652de67e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
-                        <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
-                        <div class="iconic-overlay">
-                            <div class="iconic-info">
-                                <h3>Elite Football Ground</h3>
-                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Adajan, Surat</p>
-                            </div>
-                            <div class="iconic-price-tag">₹ 1500 / hr</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="carousel-item" data-bs-interval="7000">
-                    <div class="iconic-card" onclick="openDetails('Pro Tennis Court', 'Piplod, Surat', '₹ 800/hr', 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')">
-                        <img src="https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="iconic-img" alt="Turf">
-                        <div class="iconic-overlay">
-                            <div class="iconic-info">
-                                <h3>Pro Tennis Court</h3>
-                                <p><i class="fas fa-map-marker-alt text-glow me-2"></i> Piplod, Surat</p>
-                            </div>
-                            <div class="iconic-price-tag">₹ 800 / hr</div>
-                        </div>
-                    </div>
-                </div>
-
+                }
             </div>
             
             <button class="carousel-control-prev" type="button" data-bs-target="#arenaCarousel" data-bs-slide="prev" style="left: -30px;">
@@ -221,43 +243,107 @@
         </div>
     </div>
 
-    <div class="modal fade" id="turfModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Turf Name</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="showcase-section">
+        <h3 class="showcase-title">Explore By Sport</h3>
+        <div class="row g-4 mt-2">
+            <div class="col-md-3 col-6">
+                <a href="/?sport=Box+Cricket" class="category-card">
+                    <i class="fas fa-baseball-ball category-icon"></i>
+                    <h4 class="category-title">Box Cricket</h4>
+                </a>
+            </div>
+            <div class="col-md-3 col-6">
+                <a href="/?sport=Football" class="category-card">
+                    <i class="fas fa-futbol category-icon"></i>
+                    <h4 class="category-title">Football</h4>
+                </a>
+            </div>
+            <div class="col-md-3 col-6">
+                <a href="/?sport=Tennis" class="category-card">
+                    <i class="fas fa-table-tennis category-icon"></i>
+                    <h4 class="category-title">Tennis</h4>
+                </a>
+            </div>
+            <div class="col-md-3 col-6">
+                <a href="/?sport=Basketball" class="category-card">
+                    <i class="fas fa-basketball-ball category-icon"></i>
+                    <h4 class="category-title">Basketball</h4>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="showcase-section" style="margin-top: 40px;">
+        <h3 class="showcase-title">How It Works</h3>
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="step-box">
+                    <div class="step-number">1</div>
+                    <h4 class="step-title">Find Your Arena</h4>
+                    <p class="step-desc">Search by location, sport, and date. Browse through high-quality photos and reviews.</p>
                 </div>
-                <div class="modal-body p-4">
-                    <img src="" id="modalImg" class="modal-body-img" alt="Turf Image">
-                    
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h4 style="font-weight: 800; color: #fff; margin-bottom: 5px;" id="modalLocation">Location</h4>
-                            
-                            <p style="color: #e0e0e0; font-size: 1rem; line-height: 1.6; margin-bottom: 20px; font-weight: 500;">
-                                Experience the best sporting action on our premium quality artificial grass. Equipped with floodlights and excellent seating arrangements. Perfect for your next match!
-                            </p>
-                            
-                            <div>
-                                <span class="modal-feature"><i class="fas fa-parking"></i> Free Parking</span>
-                                <span class="modal-feature"><i class="fas fa-tint"></i> Drinking Water</span>
-                                <span class="modal-feature"><i class="fas fa-lightbulb"></i> Floodlights</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <h2 style="color: #00ff7f; font-weight: 900;" id="modalPrice">₹ 0/hr</h2>
-                            <p style="color: #aaa; font-weight: 600;">Available Today</p>
-                        </div>
-                    </div>
-                    
-                    <button class="btn-book-modal" onclick="window.location.href='/Account/Login'">
-                        Book Now <i class="fas fa-arrow-right ms-2"></i>
-                    </button>
+            </div>
+            <div class="col-md-4">
+                <div class="step-box">
+                    <div class="step-number">2</div>
+                    <h4 class="step-title">Book Your Slot</h4>
+                    <p class="step-desc">Check real-time availability and lock your preferred time slot instantly.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-box">
+                    <div class="step-number">3</div>
+                    <h4 class="step-title">Play the Game</h4>
+                    <p class="step-desc">Gather your team, reach the venue, and unleash your game without any wait time.</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="trust-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="trust-box">
+                        <div class="trust-icon"><i class="fas fa-bolt"></i></div>
+                        <h4 class="trust-title">Instant Booking</h4>
+                        <p class="trust-desc">No more waiting for calls. View live availability and book your slot instantly in just 2 clicks.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="trust-box">
+                        <div class="trust-icon"><i class="fas fa-shield-alt"></i></div>
+                        <h4 class="trust-title">Verified Arenas</h4>
+                        <p class="trust-desc">Every turf on Nexus Arena is physically verified for quality, lighting, and premium amenities.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="trust-box">
+                        <div class="trust-icon"><i class="fas fa-wallet"></i></div>
+                        <h4 class="trust-title">Secure Payments</h4>
+                        <p class="trust-desc">Pay safely via UPI, Cards, or Net Banking. Split payments with your teammates coming soon!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="partner-cta">
+            <div class="partner-content">
+                <h2>Own a Premium Turf?</h2>
+                <p>Join Nexus Arena and digitize your bookings. Get a dedicated dashboard, manage slots, track revenue, and increase your footfall effortlessly.</p>
+            </div>
+            <a href="/Landing/OwnerApplication" class="btn-partner">
+                Partner With Us <i class="fas fa-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+
+    <footer style="background: #050505; padding: 40px 0; text-align: center; border-top: 1px solid #222;">
+        <img src="/images/logo.png" alt="Nexus Arena" style="height: 40px; margin-bottom: 20px; opacity: 0.7;" onerror="this.src='https://via.placeholder.com/150x50/111/00ff7f?text=NEXUS+ARENA'">
+        <p style="color: #666; font-size: 0.9rem;">&copy; @DateTime.Now.Year Nexus Arena. All rights reserved.<br>Built for the players, by the players in Surat.</p>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -268,16 +354,6 @@
                 ride: 'carousel'
             });
         });
-
-        function openDetails(name, location, price, imgUrl) {
-            document.getElementById('modalTitle').innerText = name;
-            document.getElementById('modalLocation').innerText = location;
-            document.getElementById('modalPrice').innerText = price;
-            document.getElementById('modalImg').src = imgUrl;
-
-            var myModal = new bootstrap.Modal(document.getElementById('turfModal'));
-            myModal.show();
-        }
     </script>
 </body>
 </html>

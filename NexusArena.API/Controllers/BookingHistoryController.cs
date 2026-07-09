@@ -23,7 +23,13 @@ namespace NexusArena.API.Controllers
             {
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-                    return Unauthorized(new { Message = "Invalid Token." }); // 🌟 FIX: IDE1006 (Message)
+                    return Unauthorized(new { Message = "Invalid Token." });
+
+                // 🌟 WARNING FIX (CS8629): Null-forgiving operator (!) add kiya
+                var ratedBookingIds = await _context.Reviews
+                    .Where(r => r.UserId == userId && r.BookingId != null)
+                    .Select(r => r.BookingId!.Value)
+                    .ToListAsync();
 
                 var rawBookings = await _context.Bookings
                     .Include(b => b.Resource).ThenInclude(r => r.Arena)
@@ -58,7 +64,10 @@ namespace NexusArena.API.Controllers
                                         ? (b.TotalAmount - b.AmountPaid) : 0,
                         PaymentStatus = b.PaymentStatus ?? "Pending",
                         Status = currentStatus,
-                        CanCancel = !isPast && currentStatus != "Cancelled" && currentStatus != "Completed" && currentStatus != "Expired"
+                        CanCancel = !isPast && currentStatus != "Cancelled" && currentStatus != "Completed" && currentStatus != "Expired",
+
+                        // 🌟 THE FINAL FIX: Agar is Booking ID ka review DB mein mil gaya, toh true bhejo
+                        IsRated = ratedBookingIds.Contains(b.BookingId)
                     };
                 }).ToList();
 

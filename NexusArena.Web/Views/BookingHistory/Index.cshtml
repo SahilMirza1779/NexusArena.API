@@ -8,7 +8,6 @@
 <style>
     .history-container { max-width: 1100px; margin: 40px auto; padding-bottom: 50px; }
     
-    /* 🌟 FIX: Header, Tabs aur Custom Search ko premium look mein align kiya */
     .page-header-wrapper { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; margin-bottom: 25px; }
     .page-header h2 { color: #fff; font-weight: 800; font-size: 32px; margin: 0; }
     .page-header h2 span { color: #00ff7f; }
@@ -24,7 +23,6 @@
     .custom-search { background: #0a0a0a; border: 1px solid #2a2a2a; color: #fff; padding: 10px 15px; border-radius: 8px; outline: none; font-size: 13px; min-width: 200px; transition: 0.3s; }
     .custom-search:focus { border-color: #00ff7f; }
 
-    /* Tera Original Premium Table CSS */
     .table-container { background: #111; border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #222; overflow-x: auto; }
     .custom-table { width: 100%; border-collapse: collapse; color: #ccc; }
     .custom-table th { background: #1a1a1a; color: #00ff7f; padding: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; text-align: left; border-bottom: 2px solid #333; }
@@ -51,6 +49,11 @@
 
     .btn-rate { background: #ffcc00; color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; margin-top: 5px; }
     .btn-rate:hover { background: #e6b800; box-shadow: 0 0 10px rgba(255, 204, 0, 0.4); }
+
+    .pagination-container { margin-top: 25px; display: flex; justify-content: center; gap: 8px; }
+    .page-btn { background: #111; color: #fff; border: 1px solid #333; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .page-btn.active { background: #00ff7f; color: #000; border-color: #00ff7f; }
+    .page-btn:hover:not(.active) { background: #1a1a1a; border-color: #00ff7f; }
 </style>
 
 <div class="history-container">
@@ -61,7 +64,6 @@
             <p>Track your matches, payments, and digital tickets.</p>
         </div>
         
-        <!-- 🌟 THE UPGRADE: Custom Pure JS Filters (No ugly plugins) -->
         <div class="controls-wrapper">
             <input type="text" id="customSearch" class="custom-search" placeholder="Search turf, date, ID...">
             <div class="status-tabs">
@@ -101,9 +103,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @foreach (var item in Model.OrderByDescending(m => m.BookingId))
                     {
-                        // Hidden data attribute for clean JS filtering
                         string filterCategory = "Upcoming";
                         if (item.Status == "Cancelled" || item.Status == "Expired") filterCategory = "Cancelled";
                         else if (item.Status == "Completed") filterCategory = "Completed";
@@ -164,9 +165,20 @@
                                         <i class="fas fa-ticket-alt"></i> View Ticket
                                     </a>
                                     <br/>
-                                    <button type="button" class="btn-rate" onclick="openRateModal(@item.ArenaId, '@item.ArenaName')" style="display:inline-block;">
-                                        <i class="fas fa-star"></i> Rate Turf
-                                    </button>
+                                    
+                                    <!-- 🌟 THE FIX: Agar IsRated sach hai, toh RATED dikhao, warna Button dikhao -->
+                                    @if (item.IsRated)
+                                    {
+                                        <span style="display:inline-block; margin-top: 5px; color: #00ff66; font-size: 12px; font-weight: 700; background: rgba(0, 255, 102, 0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0, 255, 102, 0.3);">
+                                            <i class="fas fa-check-circle"></i> Rated
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn-rate" onclick="openRateModal(@item.ArenaId, '@item.ArenaName', @item.BookingId)" style="display:inline-block;">
+                                            <i class="fas fa-star"></i> Rate Turf
+                                        </button>
+                                    }
                                 }
                                 else if (!item.CanCancel)
                                 {
@@ -182,6 +194,8 @@
                 <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px;"></i>
                 <p>No bookings match your filter.</p>
             </div>
+
+            <div id="paginationControls" class="pagination-container"></div>
         }
         else
         {
@@ -199,25 +213,30 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
-        // 🌟 PURE JAVASCRIPT FILTERING - NO EXTERNAL PLUGINS
+        // JAVASCRIPT: FILTERING + PAGINATION COMBO
         let currentTab = 'All';
-
+        let currentPage = 1;
+        const itemsPerPage = 5; 
+        
         function filterTable(category, btnElement) {
             currentTab = category;
+            currentPage = 1; 
             
-            // Update Active Tab Button
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
 
             applyFilters();
         }
 
-        document.getElementById('customSearch')?.addEventListener('keyup', applyFilters);
+        document.getElementById('customSearch')?.addEventListener('keyup', () => {
+            currentPage = 1; 
+            applyFilters();
+        });
 
         function applyFilters() {
             const searchText = document.getElementById('customSearch')?.value.toLowerCase() || '';
             const rows = document.querySelectorAll('.table-row');
-            let visibleCount = 0;
+            let filteredRows = [];
 
             rows.forEach(row => {
                 const category = row.getAttribute('data-category');
@@ -227,8 +246,21 @@
                 const matchesSearch = textContent.includes(searchText);
 
                 if (matchesTab && matchesSearch) {
+                    filteredRows.push(row);
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const totalPages = Math.ceil(filteredRows.length / itemsPerPage) || 1;
+            if(currentPage > totalPages) currentPage = totalPages;
+
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = startIdx + itemsPerPage;
+
+            filteredRows.forEach((row, index) => {
+                if (index >= startIdx && index < endIdx) {
                     row.style.display = '';
-                    visibleCount++;
                 } else {
                     row.style.display = 'none';
                 }
@@ -236,30 +268,38 @@
 
             const noResultsMsg = document.getElementById('noResultsMsg');
             if (noResultsMsg) {
-                noResultsMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+                noResultsMsg.style.display = filteredRows.length === 0 ? 'block' : 'none';
+            }
+
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const paginationContainer = document.getElementById('paginationControls');
+            if (!paginationContainer) return;
+            
+            paginationContainer.innerHTML = '';
+            if (totalPages <= 1) return; 
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.className = 'page-btn ' + (i === currentPage ? 'active' : '');
+                btn.onclick = () => {
+                    currentPage = i;
+                    applyFilters();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                paginationContainer.appendChild(btn);
             }
         }
 
-        // SweetAlert Functions (Same as your original perfectly working code)
-        function confirmCancel(bookingId) {
-            Swal.fire({
-                title: 'Are you sure? 😟',
-                text: "Do you really want to cancel this turf booking?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ff4757',
-                cancelButtonColor: '#333',
-                confirmButtonText: 'Yes, Cancel it!',
-                background: '#1a1a1a',
-                color: '#fff'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('cancel-form-' + bookingId).submit();
-                }
-            })
-        }
+        document.addEventListener("DOMContentLoaded", function() {
+            applyFilters();
+        });
 
-        async function openRateModal(arenaId, arenaName) {
+        // RATE TURF FUNCTION
+        async function openRateModal(arenaId, arenaName, bookingId) {
             const { value: formValues } = await Swal.fire({
                 title: 'Rate ' + arenaName + ' ⭐',
                 html:
@@ -293,27 +333,43 @@
                 form.method = 'POST';
                 form.action = '/Review/Add';
 
-                const arenaInput = document.createElement('input');
-                arenaInput.type = 'hidden';
-                arenaInput.name = 'arenaId';
-                arenaInput.value = arenaId;
-                form.appendChild(arenaInput);
+                const inputs = [
+                    { name: 'arenaId', value: arenaId },
+                    { name: 'bookingId', value: bookingId },
+                    { name: 'rating', value: formValues.rating },
+                    { name: 'comment', value: formValues.comment }
+                ];
 
-                const ratingInput = document.createElement('input');
-                ratingInput.type = 'hidden';
-                ratingInput.name = 'rating';
-                ratingInput.value = formValues.rating;
-                form.appendChild(ratingInput);
-
-                const commentInput = document.createElement('input');
-                commentInput.type = 'hidden';
-                commentInput.name = 'comment';
-                commentInput.value = formValues.comment;
-                form.appendChild(commentInput);
+                inputs.forEach(data => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = data.name;
+                    input.value = data.value;
+                    form.appendChild(input);
+                });
 
                 document.body.appendChild(form);
                 form.submit();
             }
+        }
+
+        // Cancel Booking Alert
+        function confirmCancel(bookingId) {
+            Swal.fire({
+                title: 'Are you sure? 😟',
+                text: "Do you really want to cancel this turf booking?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff4757',
+                cancelButtonColor: '#333',
+                confirmButtonText: 'Yes, Cancel it!',
+                background: '#1a1a1a',
+                color: '#fff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('cancel-form-' + bookingId).submit();
+                }
+            })
         }
     </script>
 }

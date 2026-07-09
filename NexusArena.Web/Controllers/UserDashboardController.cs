@@ -5,41 +5,42 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System;
+using System.Linq;
 
-namespace NexusArena.Web.Controllers
+namespace NexusArena.Web.Controllers;
+
+[ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
+public class UserDashboardController : Controller
 {
-    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
-    public class UserDashboardController : Controller
+    private readonly HttpClient _httpClient;
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
     {
-        private readonly HttpClient _httpClient;
+        PropertyNameCaseInsensitive = true
+    };
 
-        // 🌟 ENTERPRISE FIX: Caching serializer options (Solves CA1869 & IDE0090)
-        private static readonly JsonSerializerOptions _jsonOptions = new()
+    public UserDashboardController()
+    {
+        _httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5092/") };
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Index()
+    {
+        var token = Request.Cookies["JWToken"];
+        if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
+
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var viewModel = new PlayerDashboardMainViewModel();
+
+        try
         {
-            PropertyNameCaseInsensitive = true
-        };
-
-        public UserDashboardController()
-        {
-            _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Index()
-        {
-            var token = Request.Cookies["JWToken"];
-            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login", "Account");
-
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var viewModel = new PlayerDashboardMainViewModel();
-
-            try
+            var response = await _httpClient.GetAsync("api/UserDashboard/stats");
+            if (response.IsSuccessStatusCode)
             {
-                var response = await _httpClient.GetAsync("api/UserDashboard/stats");
-                if (response.IsSuccessStatusCode)
+                var jsonString = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrWhiteSpace(jsonString))
                 {
-                    var jsonString = await response.Content.ReadAsStringAsync();
                     var apiResult = JsonSerializer.Deserialize<PlayerDashboardOuterResponse>(jsonString, _jsonOptions);
                     if (apiResult?.Data != null)
                     {
@@ -47,36 +48,45 @@ namespace NexusArena.Web.Controllers
                     }
                 }
             }
-            catch (Exception ex)
+            else
             {
-                ViewBag.Error = "Dashboard connection error: " + ex.Message;
+                ViewBag.Error = "Could not fetch the latest dashboard data.";
             }
-
-            return View(viewModel);
         }
-    }
+        catch (Exception)
+        {
+            ViewBag.Error = "Dashboard service is currently offline. Showing cached data.";
+        }
 
-    public class PlayerDashboardOuterResponse
-    {
-        public string? Message { get; set; }
-        public PlayerDashboardMainViewModel? Data { get; set; }
-    }
+        // 🌟 FIX: Getting the ACTUAL User Name from Claims securely
+        var nameClaim = User.Claims.FirstOrDefault(c => c.Type == "name" || c.Type == "Name" || c.Type == System.Security.Claims.ClaimTypes.Name)?.Value;
+        ViewBag.UserName = !string.IsNullOrEmpty(nameClaim) ? nameClaim : (User.Identity?.Name ?? "Player");
 
-    public class PlayerDashboardMainViewModel
-    {
-        public int TotalMatches { get; set; }
-        public int UpcomingMatches { get; set; }
-        public int LoyaltyPoints { get; set; }
-        public List<PlayerDashboardGameItem>? NextGames { get; set; }
+        return View(viewModel);
     }
+}
 
-    public class PlayerDashboardGameItem
-    {
-        public int BookingId { get; set; }
-        public string? ArenaName { get; set; }
-        public string? PlayDate { get; set; }
-        public string? TimeSlot { get; set; }
-        public string? Status { get; set; }
-        public string? TargetDateTime { get; set; }
-    }
+public class PlayerDashboardOuterResponse
+{
+    public string? Message { get; set; }
+    public PlayerDashboardMainViewModel? Data { get; set; }
+}
+
+public class PlayerDashboardMainViewModel
+{
+    public int TotalMatches { get; set; }
+    public int UpcomingMatches { get; set; }
+    public int LoyaltyPoints { get; set; }
+    public decimal TotalSpent { get; set; }
+    public List<PlayerDashboardGameItem> NextGames { get; set; } = [];
+}
+
+public class PlayerDashboardGameItem
+{
+    public int BookingId { get; set; }
+    public string? ArenaName { get; set; }
+    public string? PlayDate { get; set; }
+    public string? TimeSlot { get; set; }
+    public string? Status { get; set; }
+    public string? TargetDateTime { get; set; }
 }

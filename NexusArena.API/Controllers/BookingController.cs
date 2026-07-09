@@ -9,21 +9,14 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net;
-using System.Net.Mail;
 
 namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BookingController : ControllerBase
+    public class BookingController(NexusArenaDbContext context) : ControllerBase
     {
-        private readonly NexusArenaDbContext _context;
-
-        public BookingController(NexusArenaDbContext context)
-        {
-            _context = context;
-        }
+        private readonly NexusArenaDbContext _context = context;
 
         [AllowAnonymous]
         [HttpGet("booked-times")]
@@ -59,11 +52,6 @@ namespace NexusArena.API.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(request.BookingMode))
-                {
-                    request.BookingMode = "Hourly";
-                }
-
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
@@ -126,7 +114,10 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
-                if (totalAmount <= 0) totalAmount = 800;
+                if (totalAmount <= 0)
+                {
+                    return BadRequest(new { message = "Pricing Error: Calculated amount is ₹0. Please check Turf prices in the Database." });
+                }
 
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
@@ -149,6 +140,13 @@ namespace NexusArena.API.Controllers
                 _context.Bookings.Add(newBooking);
                 await _context.SaveChangesAsync();
 
+                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
+                {
+                    newBooking.Status = "Confirmed";
+                    await _context.SaveChangesAsync();
+                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
+                }
+
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
@@ -156,10 +154,10 @@ namespace NexusArena.API.Controllers
 
                     try
                     {
-                        RazorpayClient client = new RazorpayClient(key, secret);
+                        RazorpayClient client = new(key, secret);
                         int amountInPaisa = Convert.ToInt32(amountToPay * 100);
 
-                        Dictionary<string, object> options = new Dictionary<string, object>
+                        Dictionary<string, object> options = new()
                         {
                             { "amount", amountInPaisa },
                             { "currency", "INR" },
@@ -185,26 +183,18 @@ namespace NexusArena.API.Controllers
                     }
                 }
 
-                newBooking.Status = "Confirmed";
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Booking successful!", bookingId = newBooking.BookingId, requiresPayment = false });
+                return BadRequest(new { message = "Invalid Payment Mode or Amount." });
             }
             catch (DbUpdateException dbEx)
             {
                 Exception inner = dbEx;
-                while (inner.InnerException != null)
-                {
-                    inner = inner.InnerException;
-                }
+                while (inner.InnerException != null) inner = inner.InnerException;
                 return StatusCode(500, new { message = "SQL DATABASE ERROR: " + inner.Message });
             }
             catch (Exception ex)
             {
                 Exception inner = ex;
-                while (inner.InnerException != null)
-                {
-                    inner = inner.InnerException;
-                }
+                while (inner.InnerException != null) inner = inner.InnerException;
                 return StatusCode(500, new { message = "SERVER CRASH ERROR: " + inner.Message });
             }
         }
@@ -217,12 +207,12 @@ namespace NexusArena.API.Controllers
             {
                 string secret = "R4wy1mnJL59R0z76VKetdkGM";
                 string payload = $"{request.RazorpayOrderId}|{request.RazorpayPaymentId}";
-                string generatedSignature = "";
+                string generatedSignature;
 
                 using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret)))
                 {
                     var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-                    generatedSignature = BitConverter.ToString(hash).Replace("-", "").ToLower();
+                    generatedSignature = Convert.ToHexStringLower(hash);
                 }
 
                 if (generatedSignature != request.RazorpaySignature?.ToLower())
@@ -247,10 +237,7 @@ namespace NexusArena.API.Controllers
             catch (Exception ex)
             {
                 Exception inner = ex;
-                while (inner.InnerException != null)
-                {
-                    inner = inner.InnerException;
-                }
+                while (inner.InnerException != null) inner = inner.InnerException;
                 return StatusCode(500, new { message = "Verification Error: " + inner.Message });
             }
         }
