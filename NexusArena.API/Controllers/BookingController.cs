@@ -14,19 +14,10 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // 🌟 IDE0290 FIX: Primary Constructor use kiya (Modern C# Standard)
     public class BookingController(NexusArenaDbContext context) : ControllerBase
     {
         private readonly NexusArenaDbContext _context = context;
 
-        public BookingController(NexusArenaDbContext context)
-        {
-            _context = context;
-        }
-
-        // =========================================================
-        // 1. GET BOOKED SLOTS
-        // =========================================================
         [AllowAnonymous]
         [HttpGet("booked-times")]
         public async Task<IActionResult> GetBookedTimes(int resourceId, string date)
@@ -55,20 +46,12 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // =========================================================
-        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
-        // =========================================================
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
         {
             try
             {
-                if (string.IsNullOrEmpty(request.BookingMode))
-                {
-                    request.BookingMode = "Hourly";
-                }
-
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
@@ -131,6 +114,11 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
+                if (totalAmount <= 0)
+                {
+                    return BadRequest(new { message = "Pricing Error: Calculated amount is ₹0. Please check Turf prices in the Database." });
+                }
+
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
                 var newBooking = new Booking
@@ -150,11 +138,15 @@ namespace NexusArena.API.Controllers
                 };
 
                 _context.Bookings.Add(newBooking);
-
-                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
                 await _context.SaveChangesAsync();
 
-                // ONLINE PAYMENT LOGIC
+                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
+                {
+                    newBooking.Status = "Confirmed";
+                    await _context.SaveChangesAsync();
+                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
+                }
+
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
@@ -162,11 +154,9 @@ namespace NexusArena.API.Controllers
 
                     try
                     {
-                        // 🌟 IDE0090 FIX: Simplified 'new' expression
                         RazorpayClient client = new(key, secret);
                         int amountInPaisa = Convert.ToInt32(amountToPay * 100);
 
-                        // 🌟 IDE0090 FIX: Simplified 'new' expression
                         Dictionary<string, object> options = new()
                         {
                             { "amount", amountInPaisa },
@@ -222,8 +212,6 @@ namespace NexusArena.API.Controllers
                 using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret)))
                 {
                     var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-
-                    // 🌟 CA1872 WARNING FIX: Modern way to convert Hash to Hex String
                     generatedSignature = Convert.ToHexStringLower(hash);
                 }
 
