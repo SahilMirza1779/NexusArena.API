@@ -34,6 +34,7 @@ namespace NexusArena.Web.Controllers
 
                 try
                 {
+                    // 🌟 FIX: Clean URL
                     HttpResponseMessage response = await client.GetAsync("http://localhost:5092/api/Receptionist/GetLiveDashboard");
 
                     if (response.IsSuccessStatusCode)
@@ -86,6 +87,7 @@ namespace NexusArena.Web.Controllers
                     };
 
                     var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+                    // 🌟 FIX: Clean URL
                     HttpResponseMessage response = await client.PostAsync("http://localhost:5092/api/Receptionist/walk-in-booking", content);
 
                     if (response.IsSuccessStatusCode)
@@ -104,7 +106,7 @@ namespace NexusArena.Web.Controllers
                 TempData["ErrorMessage"] = "Connection Error: " + ex.Message;
             }
 
-            return RedirectToAction("Index"); 
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
@@ -124,12 +126,12 @@ namespace NexusArena.Web.Controllers
                     }
 
                     var content = new StringContent(System.Text.Json.JsonSerializer.Serialize("Completed"), System.Text.Encoding.UTF8, "application/json");
+                    // 🌟 FIX: Clean URL
                     HttpResponseMessage response = await client.PutAsync($"http://localhost:5092/api/Receptionist/update-status/{bookingId}", content);
 
-                     if (response.IsSuccessStatusCode)
+                    if (response.IsSuccessStatusCode)
                     {
                         TempData["SuccessMessage"] = $"Booking #{bookingId} successfully checked out! 🏏";
-
                         Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
                     }
                     else
@@ -161,12 +163,12 @@ namespace NexusArena.Web.Controllers
 
                 try
                 {
+                    // 🌟 FIX: Clean URL
                     HttpResponseMessage response = await client.GetAsync("http://localhost:5092/api/Receptionist/booking-history");
 
                     if (response.IsSuccessStatusCode)
                     {
                         string data = await response.Content.ReadAsStringAsync();
-
                         var history = System.Text.Json.JsonSerializer.Deserialize<List<NexusArena.Web.Models.ReceptionistBookingHistoryViewModel>>(data, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         return View(history);
                     }
@@ -201,12 +203,12 @@ namespace NexusArena.Web.Controllers
                     }
 
                     var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+                    // 🌟 FIX: Clean URL
                     HttpResponseMessage response = await client.PutAsync($"http://localhost:5092/api/Receptionist/collect-payment/{bookingId}", content);
 
                     if (response.IsSuccessStatusCode)
                     {
                         TempData["SuccessMessage"] = $"Got the money! Booking #{bookingId} The payment has been cleared. 💸";
-
                         Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
                     }
                     else
@@ -238,13 +240,13 @@ namespace NexusArena.Web.Controllers
 
                 try
                 {
+                    // 🌟 FIX: Clean URL
                     HttpResponseMessage response = await client.GetAsync("http://localhost:5092/api/Receptionist/available-turfs");
 
                     if (response.IsSuccessStatusCode)
                     {
                         string data = await response.Content.ReadAsStringAsync();
                         var turfs = System.Text.Json.JsonSerializer.Deserialize<List<NexusArena.Web.Models.AvailableTurfViewModel>>(data, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
                         return View(turfs);
                     }
                     else
@@ -277,6 +279,7 @@ namespace NexusArena.Web.Controllers
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
+                // 🌟 FIX: Clean URL
                 string apiUrl = "http://localhost:5092/api/Auth/GetProfile";
 
                 var response = await _httpClient.GetAsync(apiUrl);
@@ -333,6 +336,7 @@ namespace NexusArena.Web.Controllers
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
+                // 🌟 FIX: Clean URL
                 var response = await _httpClient.PostAsync("http://localhost:5092/api/Auth/UpdateProfile", content);
 
                 if (response.IsSuccessStatusCode)

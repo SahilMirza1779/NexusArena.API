@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using NexusArena.API.Models;
 using NexusArena.API;
+using System;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +43,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 
+// EmailService ko yahan register kiya gaya hai (Models namespace se)
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -55,6 +58,7 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Enter your access token here without writing 'Bearer'.. \nExample: eyJhbGciOiJIUzI1NiIs..."
     });
 
+    // CA1861, CA1825 fixes: Array.Empty use kiya
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -66,7 +70,7 @@ builder.Services.AddSwaggerGen(options =>
                     Id = "Bearer"
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
@@ -78,18 +82,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    // One-time password hashing migration
-    using (var scope = app.Services.CreateScope())
+    // IDE0063 fix: Simplified using statement
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<NexusArenaDbContext>();
+
+    try
     {
-        var context = scope.ServiceProvider.GetRequiredService<NexusArenaDbContext>();
-        try
-        {
-            await HashExistingPasswords.HashAllPasswords(context);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠️ Password hashing migration error: {ex.Message}");
-        }
+        await HashExistingPasswords.HashAllPasswords(context);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Password hashing migration error: {ex.Message}");
     }
 }
 
@@ -97,5 +100,4 @@ app.UseCors("AllowWebApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
 app.Run();

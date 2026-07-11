@@ -15,7 +15,7 @@ namespace NexusArena.Web.Controllers
 {
     public class OwnerDashboardController : Controller
     {
-        private readonly string _baseApiUrl = "http://localhost:5092/api/";
+        private readonly string _baseApiUrl = "[http://localhost:5092](http://localhost:5092)/api/";
 
         private HttpClient GetAuthenticatedClient()
         {

@@ -13,14 +13,15 @@ namespace NexusArena.Web.Controllers
         public NotificationController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/"); // 🌟 Check your API port
+            // 🌟 THE FIX: Bracket virus removed. Clean URL applied!
+            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
         [HttpGet]
         public async Task<IActionResult> Fetch()
         {
             var token = Request.Cookies["JWToken"];
-            if (string.IsNullOrEmpty(token)) return Json(new { count = 0, data = new object[0] });
+            if (string.IsNullOrEmpty(token)) return Json(new { count = 0, data = Array.Empty<object>() });
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -36,7 +37,7 @@ namespace NexusArena.Web.Controllers
             }
             catch { /* Silent fail */ }
 
-            return Json(new { count = 0, data = new object[0] });
+            return Json(new { count = 0, data = Array.Empty<object>() });
         }
     }
 }

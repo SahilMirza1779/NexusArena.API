@@ -24,6 +24,7 @@ namespace NexusArena.Web.Controllers
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
+            // 🌟 THE FIX: Clean URL without brackets
             _httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5092/") };
         }
 

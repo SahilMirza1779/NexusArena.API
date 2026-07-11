@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace NexusArena.Web.Controllers
 {
@@ -10,8 +13,8 @@ namespace NexusArena.Web.Controllers
 
         public AccountController()
         {
-            _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/");
+            // 🌟 THE FIX: Clean URL & Simplified Object Initialization
+            _httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5092/") };
         }
 
         [HttpGet]
@@ -109,7 +112,7 @@ namespace NexusArena.Web.Controllers
                 Email = email,
                 Phone = phone,
                 Password = rawPassword,
-                RoleName = "Customer" 
+                RoleName = "Customer"
             };
 
             var content = new StringContent(JsonSerializer.Serialize(registerData), Encoding.UTF8, "application/json");
@@ -138,7 +141,8 @@ namespace NexusArena.Web.Controllers
             }
         }
 
-        private bool SendPlayerEmail(string toEmail, string playerName, string password)
+        // 🌟 FIX: CA1822 - Made method static
+        private static bool SendPlayerEmail(string toEmail, string playerName, string password)
         {
             try
             {
@@ -285,7 +289,8 @@ namespace NexusArena.Web.Controllers
             return View();
         }
 
-        private void SendOtpEmail(string toEmail, string otp)
+        // 🌟 FIX: CA1822 - Made method static
+        private static void SendOtpEmail(string toEmail, string otp)
         {
             try
             {
@@ -318,10 +323,8 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
         }
-
 
         [HttpPost]
         public async Task<IActionResult> SaveNewPassword(string email, string newPassword, string confirmPassword)
@@ -361,7 +364,8 @@ namespace NexusArena.Web.Controllers
             }
         }
 
-        private void SendPasswordChangedEmail(string toEmail, string newPassword)
+        // 🌟 FIX: CA1822 - Made method static
+        private static void SendPasswordChangedEmail(string toEmail, string newPassword)
         {
             try
             {
@@ -395,9 +399,7 @@ namespace NexusArena.Web.Controllers
             }
             catch (Exception)
             {
-
             }
         }
-
     }
 }

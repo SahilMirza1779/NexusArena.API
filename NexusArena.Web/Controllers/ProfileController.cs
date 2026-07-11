@@ -14,7 +14,7 @@ namespace NexusArena.Web.Controllers
         public ProfileController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("http://localhost:5092/"); // Make sure ye port API ka ho
+            _httpClient.BaseAddress = new Uri("http://localhost:5092/");// Make sure ye port API ka ho
         }
 
         [HttpGet]

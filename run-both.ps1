@@ -17,7 +17,7 @@ Start-Process -NoNewWindow -FilePath "dotnet" -ArgumentList "run --project Nexus
 Write-Host ""
 Write-Host "✅ Both projects are now running!" -ForegroundColor Green
 Write-Host ""
-Write-Host "API:  http://localhost:5092/swagger" -ForegroundColor Yellow
+Write-Host "API:  (http://localhost:5092)/swagger" -ForegroundColor Yellow
 Write-Host "Web:  http://localhost:5046" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Press Ctrl+C in each window to stop the projects" -ForegroundColor Gray

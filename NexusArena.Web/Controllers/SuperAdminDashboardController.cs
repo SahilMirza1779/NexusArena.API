@@ -31,7 +31,7 @@ namespace NexusArena.Web.Controllers
             var dashboardData = new DashboardStatsViewModel();
             dashboardData.PendingApprovals = new List<PendingArenaViewModel>();
 
-            string statsApiUrl = "http://localhost:5092/api/Dashboard/Stats";
+            string statsApiUrl = "[http://localhost:5092](http://localhost:5092)/api/Dashboard/Stats";
 
             try
             {
@@ -199,7 +199,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Arenas()
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/Arena/GetAll";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/Arena/GetAll";
             var arenaList = new List<ArenaListViewModel>();
 
             try
@@ -227,7 +227,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Manage(int id)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/Arena/GetDetails/{id}";
+            string apiUrl = $"[http://localhost:5092](http://localhost:5092)/api/Arena/GetDetails/{id}";
             var arenaDetails = new ArenaDetailsViewModel();
 
             try
@@ -301,7 +301,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Categories()
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/SportCategory/GetAll";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/SportCategory/GetAll";
             var categoryList = new List<CategoryViewModel>();
 
             try
@@ -328,7 +328,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> CreateCategory([FromBody] CategoryViewModel newCategory)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/SportCategory/Create";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/SportCategory/Create";
             var jsonContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(newCategory), System.Text.Encoding.UTF8, "application/json");
 
             try
@@ -349,7 +349,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/SportCategory/Delete/{id}";
+            string apiUrl = $"[http://localhost:5092](http://localhost:5092)/api/SportCategory/Delete/{id}";
 
             try
             {
@@ -369,7 +369,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> EditCategory(int id, [FromBody] CategoryViewModel upadatedCategory)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/SportCategory/Update/{id}";
+            string apiUrl = $"[http://localhost:5092](http://localhost:5092)/api/SportCategory/Update/{id}";
             var jsonContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(upadatedCategory), System.Text.Encoding.UTF8, "application/json");
 
             try
@@ -390,7 +390,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Owners()
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/ManageOwners/GetAll";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/ManageOwners/GetAll";
             var ownerList = new List<ManageOwnerViewModel>();
 
             try
@@ -417,7 +417,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> ToggleOwnerStatus(int id)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/ManageOwners/ToggleStatus/{id}";
+            string apiUrl = $"[http://localhost:5092](http://localhost:5092)/api/ManageOwners/ToggleStatus/{id}";
             var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
 
             try
@@ -438,7 +438,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Users()
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/ManageUsers/GetAll";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/ManageUsers/GetAll";
             var userList = new List<ManageUserViewModel>();
 
             try
@@ -465,7 +465,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> ToggleUserStatus(int id)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/ManageUsers/ToggleStatus/{id}";
+            string apiUrl = $"[http://localhost:5092](http://localhost:5092)/api/ManageUsers/ToggleStatus/{id}";
             var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
 
             try
@@ -486,7 +486,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Receptionists()
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/ManageReceptionists/GetAll";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/ManageReceptionists/GetAll";
             var receptionistList = new List<ManageReceptionistViewModel>();
 
             try
@@ -512,7 +512,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> ToggleReceptionistStatus(int id)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/ManageReceptionists/ToggleStatus/{id}";
+            string apiUrl = $"[http://localhost:5092](http://localhost:5092)/api/ManageReceptionists/ToggleStatus/{id}";
             var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
 
             try
@@ -533,7 +533,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Reviews()
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/ManageReviews/GetAll";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/ManageReviews/GetAll";
             var reviewList = new List<ManageReviewViewModel>();
 
             try
@@ -561,7 +561,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> DeletePlatformReview(int id)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = $"http://localhost:5092/api/ManageReviews/Delete/{id}";
+            string apiUrl = $"[http://localhost:5092](http://localhost:5092)/api/ManageReviews/Delete/{id}";
 
             try
             {
@@ -582,7 +582,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> Revenue()
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/ManageRevenue/GetAll";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/ManageRevenue/GetAll";
             var transactionList = new List<ManageRevenueViewModel>();
             try
             {
@@ -613,7 +613,7 @@ namespace NexusArena.Web.Controllers
         public async Task<IActionResult> SendPlatformBroadcast(string targetAudience, string message)
         {
             var client = _httpClientFactory.CreateClient();
-            string apiUrl = "http://localhost:5092/api/ManageNotifications/SendBroadcast";
+            string apiUrl = "[http://localhost:5092](http://localhost:5092)/api/ManageNotifications/SendBroadcast";
             var payload = new
             {
                 TargetAudience = targetAudience,
@@ -643,7 +643,7 @@ namespace NexusArena.Web.Controllers
             if (currentAdminId == 0) return RedirectToAction("Login", "Account");
 
             var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync($"http://localhost:5092/api/AdminProfile/GetAdmin/{currentAdminId}");
+            var response = await client.GetAsync($"[http://localhost:5092](http://localhost:5092)/api/AdminProfile/GetAdmin/{currentAdminId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -664,7 +664,7 @@ namespace NexusArena.Web.Controllers
             if (currentAdminId == 0) return RedirectToAction("Login", "Account");
 
             var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync($"http://localhost:5092/api/AdminProfile/GetAdmin/{currentAdminId}");
+            var response = await client.GetAsync($"[http://localhost:5092](http://localhost:5092)/api/AdminProfile/GetAdmin/{currentAdminId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -687,7 +687,7 @@ namespace NexusArena.Web.Controllers
             var client = _httpClientFactory.CreateClient();
             var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
 
-            var response = await client.PutAsync($"http://localhost:5092/api/AdminProfile/UpdateAdmin/{currentAdminId}", content);
+            var response = await client.PutAsync($"[http://localhost:5092](http://localhost:5092)/api/AdminProfile/UpdateAdmin/{currentAdminId}", content);
 
             if (response.IsSuccessStatusCode)
             {

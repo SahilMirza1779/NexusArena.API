@@ -21,6 +21,7 @@ public class UserDashboardController : Controller
 
     public UserDashboardController()
     {
+        // 🌟 THE FIX: Cleaned the URL, removed the brackets and duplicate text
         _httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5092/") };
     }
 

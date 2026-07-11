@@ -246,11 +246,27 @@
         return isBooked;
         }
 
+        function isBoxPastOrBuffer(boxHour) {
+        let today = new Date();
+        let yyyy = today.getFullYear();
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
+        let dd = String(today.getDate()).padStart(2, '0');
+        let todayStr = `${yyyy}-${mm}-${dd}`;
+
+        if (selectedDateRaw === todayStr) {
+        let currentHour = today.getHours();
+        if (boxHour <= currentHour + 1) {
+        return true;
+        }
+        }
+        return false;
+        }
+
         function generateTimeGrid() {
         timeGridContainer.innerHTML = '';
         allTimes.forEach((t, index) => {
-        let isBookedClass = isBoxBooked(t.hour) ? 'booked' : '';
-        if (t.hour === 24) isBookedClass = '';
+        let isBookedClass = (isBoxBooked(t.hour) || isBoxPastOrBuffer(t.hour)) ? 'booked' : '';
+        if (t.hour === 24 && !isBoxPastOrBuffer(t.hour)) isBookedClass = '';
 
         let boxHtml = `
         <div class="time-box ${isBookedClass}" id="box-${index}" data-idx="${index}" onclick="handleBoxClick(${index})">
@@ -273,7 +289,7 @@
 
         if (selectionStep === 0 || selectionStep === 2) {
         if (isBooked) {
-        Swal.fire({ icon: 'error', title: 'Slot Booked', text: 'You cannot start on a booked slot.', background: '#1a1a1a', color: '#fff' });
+        Swal.fire({ icon: 'error', title: 'Slot Unavailable', text: 'This slot is already booked or the buffer time has passed.', background: '#1a1a1a', color: '#fff' });
         return;
         }
         if (idx === allTimes.length - 1) {
@@ -309,7 +325,7 @@
         }
 
         if (hasBookedInBetween) {
-        Swal.fire({ icon: 'error', title: 'Slot Unavailable', text: 'Some slots in your selection are already booked!', background: '#1a1a1a', color: '#fff' });
+        Swal.fire({ icon: 'error', title: 'Slot Unavailable', text: 'Some slots in your selection are already booked or past the buffer time!', background: '#1a1a1a', color: '#fff' });
         resetSelection();
         return;
         }
@@ -417,6 +433,44 @@
         });
         return;
         }
+
+        // 🌟 FIX: NEW TOURNAMENT CLASH CHECK (UI Level)
+        let pkg = document.getElementById('tournamentPackage').value;
+        if (!pkg) {
+        Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please select a Tournament Package.', background: '#1a1a1a', color: '#fff' });
+        return;
+        }
+
+        let pkgStart = 6, pkgEnd = 24;
+        if (pkg === 'HalfDayMorning') { pkgStart = 7; pkgEnd = 14; }
+        if (pkg === 'HalfDayEvening') { pkgStart = 14; pkgEnd = 21; }
+
+        let hasClash = false;
+        for (let i = 0; i < bookedRanges.length; i++) {
+        let s = bookedRanges[i].start || bookedRanges[i].Start;
+        let e = bookedRanges[i].end || bookedRanges[i].End;
+        if (!s || !e) continue;
+
+        let startHour = parseInt(s.split(':')[0], 10);
+        let endHour = parseInt(e.split(':')[0], 10);
+        if (e.includes("59") || e === "00:00" || e === "24:00") endHour = 24;
+        else if (endHour < startHour) endHour += 24;
+
+        if (startHour < pkgEnd && endHour > pkgStart) {
+        hasClash = true;
+        break;
+        }
+        }
+
+        if (hasClash) {
+        Swal.fire({
+        icon: 'error',
+        title: 'Slot Unavailable',
+        text: 'Aapka Tournament package is din ki pehle se booked Hourly slots ke saath clash kar raha hai. Kripya doosra din chunein.',
+        background: '#1a1a1a', color: '#fff'
+        });
+        return;
+        }
         }
 
         if (mode === 'Hourly' && (startIndex === -1 || endIndex === -1)) {
@@ -428,17 +482,15 @@
         return;
         }
 
-        // 🌟 36,600 REVERSE MATH BUG FIX
         if (mode === 'Hourly') {
         let sTime = allTimes[startIndex].value;
         let eTime = allTimes[endIndex].value;
         if (eTime === "00:00") {
-        eTime = "24:00"; // 24:00 bhejenge taaki C# backend 1 ghanta calculate kare
+        eTime = "24:00";
         }
         document.getElementById('startTime').value = sTime;
         document.getElementById('endTime').value = eTime;
         }
-        // 🌟 TOURNAMENT UI BUG FIX (Blank time fix)
         else if (mode === 'Tournament') {
         let pkg = document.getElementById('tournamentPackage').value;
         if (pkg === 'HalfDayMorning') {
@@ -449,7 +501,7 @@
         document.getElementById('endTime').value = "21:00";
         } else {
         document.getElementById('startTime').value = "06:00";
-        document.getElementById('endTime').value = "23:59"; // Tournament ke liye DB mein exact save hoga aur UI block karega
+        document.getElementById('endTime').value = "23:59";
         }
         }
 

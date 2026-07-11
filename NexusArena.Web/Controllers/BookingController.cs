@@ -13,13 +13,16 @@ namespace NexusArena.Web.Controllers
     public class BookingController : Controller
     {
         private readonly HttpClient _httpClient;
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+
+        // 🌟 FIX: IDE0090 - Simplified 'new' expression
+        private static readonly JsonSerializerOptions _jsonOptions = new()
         {
             PropertyNameCaseInsensitive = true
         };
 
         public BookingController()
         {
+            // 🌟 THE FIX: Removed the markdown brackets. Clean URL applied.
             _httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5092/") };
         }
 
@@ -42,7 +45,9 @@ namespace NexusArena.Web.Controllers
                 {
                     var json = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<BookedTimesResponse>(json, _jsonOptions);
-                    ViewBag.BookedTimesJson = JsonSerializer.Serialize(result?.Data ?? new List<BookedTimeRange>());
+
+                    // 🌟 FIX: IDE0028 - Collection initialization simplified
+                    ViewBag.BookedTimesJson = JsonSerializer.Serialize(result?.Data ?? []);
                 }
             }
             catch (Exception ex)
@@ -75,21 +80,18 @@ namespace NexusArena.Web.Controllers
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // 🌟 MASTER FIX: C# ab time ko bilkul nahi chhedega! 
-            // JavaScript se jo ekdum perfect time aayega (jaise 23:59 ya actual Tournament hours), 
-            // hum wahi direct API ko bhejenge taaki DB aur Booking History mein exact time save ho.
-
+            // 🌟 FIX: IDE0037 - Simplified member names (Jaise playDate = playDate ko sirf playDate likha)
             var bookingData = new
             {
                 resourceId = arenaId,
-                playDate = playDate,
-                startTime = startTime,
-                endTime = endTime,
-                bookingMode = bookingMode,
+                playDate,
+                startTime,
+                endTime,
+                bookingMode,
                 tournamentPackage = string.IsNullOrWhiteSpace(tournamentPackage) ? null : tournamentPackage,
-                paymentMode = paymentMode,
-                amount = totalBill,        // 🌟 FORCE Exact Price
-                totalBill = totalBill      // 🌟 FORCE Exact Price
+                paymentMode,
+                amount = totalBill,
+                totalBill
             };
 
             var content = new StringContent(JsonSerializer.Serialize(bookingData), Encoding.UTF8, "application/json");
@@ -144,6 +146,7 @@ namespace NexusArena.Web.Controllers
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
+            // 🌟 FIX: IDE0037 applied here as well
             var verifyData = new { BookingId = bookingId, RazorpayPaymentId = paymentId, RazorpayOrderId = orderId, RazorpaySignature = signature };
             var content = new StringContent(JsonSerializer.Serialize(verifyData), Encoding.UTF8, "application/json");
 

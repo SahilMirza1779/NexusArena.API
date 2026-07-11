@@ -1,4 +1,4 @@
-@NexusArena.API_HostAddress = http://localhost:5092
+@NexusArena.API_HostAddress = [http://localhost:5092](http://localhost:5092)
 
 GET {{NexusArena.API_HostAddress}}/weatherforecast/
 Accept: application/json

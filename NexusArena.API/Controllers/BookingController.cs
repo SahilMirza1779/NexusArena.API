@@ -14,18 +14,13 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // 🌟 IDE0290 FIX: Primary Constructor use kiya (Modern C# Standard)
-    public class BookingController(NexusArenaDbContext context) : ControllerBase
+    public class BookingController(NexusArenaDbContext context, IEmailService emailService) : ControllerBase
     {
         private readonly NexusArenaDbContext _context = context;
-
-        public BookingController(NexusArenaDbContext context)
-        {
-            _context = context;
-        }
+        private readonly IEmailService _emailService = emailService;
 
         // =========================================================
-        // 1. GET BOOKED SLOTS
+        // 1. GET BOOKED SLOTS (🌟 FIX: Returns Tournament Times too)
         // =========================================================
         [AllowAnonymous]
         [HttpGet("booked-times")]
@@ -36,18 +31,31 @@ namespace NexusArena.API.Controllers
                 if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateOnly playDate))
                     return BadRequest(new { message = "Invalid date format." });
 
-                var bookedRanges = await _context.Bookings
+                // Fetch minimal data to avoid EF Core translation errors
+                var dbBookings = await _context.Bookings
                     .Where(b => b.ResourceId == resourceId &&
                                 b.BookingDate == playDate &&
                                 b.Status != "Cancelled" &&
                                 b.Status != "Payment Failed")
-                    .Select(b => new {
-                        start = b.StartTime,
-                        end = b.EndTime
-                    })
+                    .Select(b => new { b.BookingMode, b.TournamentPackage, b.StartTime, b.EndTime })
                     .ToListAsync();
 
-                return Ok(new { success = true, data = bookedRanges });
+                // Convert Tournament packages to actual times so UI can grey out boxes
+                var normalizedRanges = dbBookings.Select(b => {
+                    if (b.BookingMode == "Tournament")
+                    {
+                        if (b.TournamentPackage == "HalfDayMorning") return new { Start = "07:00", End = "14:00" };
+                        if (b.TournamentPackage == "HalfDayEvening") return new { Start = "14:00", End = "21:00" };
+                        return new { Start = "06:00", End = "24:00" }; // FullDay
+                    }
+                    return new
+                    {
+                        Start = b.StartTime?.ToString("HH:mm"),
+                        End = b.EndTime?.ToString("HH:mm")
+                    };
+                }).ToList();
+
+                return Ok(new { success = true, data = normalizedRanges });
             }
             catch (Exception ex)
             {
@@ -56,7 +64,7 @@ namespace NexusArena.API.Controllers
         }
 
         // =========================================================
-        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
+        // 2. CREATE SMART BOOKING (🌟 FIX: Universal Clash Check)
         // =========================================================
         [Authorize]
         [HttpPost("create")]
@@ -64,11 +72,6 @@ namespace NexusArena.API.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(request.BookingMode))
-                {
-                    request.BookingMode = "Hourly";
-                }
-
                 var userIdString = User.Claims.FirstOrDefault(c => c.Type == "UserId" || c.Type == "id")?.Value;
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { message = "Invalid Token." });
@@ -76,12 +79,21 @@ namespace NexusArena.API.Controllers
                 if (!DateOnly.TryParseExact(request.PlayDate, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateOnly playDate))
                     return BadRequest(new { message = "Invalid play date format." });
 
+                DateTime currentUtc = DateTime.UtcNow;
+                TimeZoneInfo istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+                DateTime currentIst = TimeZoneInfo.ConvertTimeFromUtc(currentUtc, istZone);
+                DateOnly todayIst = DateOnly.FromDateTime(currentIst);
+
+                if (playDate < todayIst)
+                    return BadRequest(new { message = "Booking failed: You cannot book slots for past dates." });
+
                 var resource = await _context.Resources
                     .Include(r => r.Arena)
                     .FirstOrDefaultAsync(r => r.ResourceId == request.ResourceId || r.ArenaId == request.ResourceId);
 
                 if (resource == null) return NotFound(new { message = $"Turf with ID {request.ResourceId} not found in Database." });
 
+                // 🌟 FIX: Determine Exact Start/End for BOTH Hourly & Tournament
                 TimeOnly requestedStart = default;
                 TimeOnly requestedEnd = default;
 
@@ -92,21 +104,55 @@ namespace NexusArena.API.Controllers
 
                     if (!TimeOnly.TryParse(request.EndTime, out requestedEnd))
                         return BadRequest(new { message = $"Invalid End Time format: {request.EndTime}" });
-                }
 
-                if (request.BookingMode == "Hourly")
+                    if (playDate == todayIst && requestedStart.Hour <= currentIst.Hour + 1)
+                    {
+                        return BadRequest(new { message = "Booking failed: A minimum 1-Hour advance notice is required for today's bookings. Please select a later time slot." });
+                    }
+                }
+                else if (request.BookingMode == "Tournament")
                 {
-                    bool isClashing = await _context.Bookings.AnyAsync(b =>
-                        b.ResourceId == resource.ResourceId &&
-                        b.BookingDate == playDate &&
-                        b.Status != "Cancelled" && b.Status != "Payment Failed" &&
-                        b.BookingMode == "Hourly" &&
-                        b.StartTime != null && b.EndTime != null &&
-                        b.StartTime < requestedEnd && b.EndTime > requestedStart);
-
-                    if (isClashing)
-                        return BadRequest(new { message = "Selected time overlaps with an existing booking." });
+                    if (request.TournamentPackage == "HalfDayMorning") { requestedStart = new TimeOnly(7, 0); requestedEnd = new TimeOnly(14, 0); }
+                    else if (request.TournamentPackage == "HalfDayEvening") { requestedStart = new TimeOnly(14, 0); requestedEnd = new TimeOnly(21, 0); }
+                    else { requestedStart = new TimeOnly(6, 0); requestedEnd = new TimeOnly(23, 59, 59); } // Full Day
                 }
+
+                // 🌟 FIX: Universal Database Clash Check
+                var existingBookings = await _context.Bookings
+                    .Where(b => b.ResourceId == resource.ResourceId &&
+                                b.BookingDate == playDate &&
+                                b.Status != "Cancelled" && b.Status != "Payment Failed")
+                    .ToListAsync();
+
+                bool isClashing = false;
+                foreach (var b in existingBookings)
+                {
+                    TimeOnly bStart = default;
+                    TimeOnly bEnd = default;
+
+                    if (b.BookingMode == "Tournament")
+                    {
+                        if (b.TournamentPackage == "HalfDayMorning") { bStart = new TimeOnly(7, 0); bEnd = new TimeOnly(14, 0); }
+                        else if (b.TournamentPackage == "HalfDayEvening") { bStart = new TimeOnly(14, 0); bEnd = new TimeOnly(21, 0); }
+                        else { bStart = new TimeOnly(6, 0); bEnd = new TimeOnly(23, 59, 59); }
+                    }
+                    else
+                    {
+                        if (!b.StartTime.HasValue || !b.EndTime.HasValue) continue;
+                        bStart = b.StartTime.Value;
+                        bEnd = b.EndTime.Value;
+                    }
+
+                    // Strict overlap check
+                    if (bStart < requestedEnd && bEnd > requestedStart)
+                    {
+                        isClashing = true;
+                        break;
+                    }
+                }
+
+                if (isClashing)
+                    return BadRequest(new { message = "Booking Clash: This slot overlaps with an existing Hourly booking or Tournament event." });
 
                 decimal totalAmount = 0;
                 if (request.BookingMode == "Hourly")
@@ -118,10 +164,8 @@ namespace NexusArena.API.Controllers
                     for (int h = startHour; h < endHour; h++)
                     {
                         int currentHour = h % 24;
-                        if (currentHour >= 6 && currentHour < 17)
-                            totalAmount += resource.Arena.HourlyRegularPrice;
-                        else
-                            totalAmount += resource.Arena.HourlyPeakPrice;
+                        if (currentHour >= 6 && currentHour < 17) totalAmount += resource.Arena.HourlyRegularPrice;
+                        else totalAmount += resource.Arena.HourlyPeakPrice;
                     }
                 }
                 else if (request.BookingMode == "Tournament")
@@ -131,9 +175,11 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
+                if (totalAmount <= 0) return BadRequest(new { message = "Pricing Error: Calculated amount is ₹0." });
+
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
-                var newBooking = new Booking
+                Booking newBooking = new()
                 {
                     UserId = userId,
                     ResourceId = resource.ResourceId,
@@ -150,11 +196,24 @@ namespace NexusArena.API.Controllers
                 };
 
                 _context.Bookings.Add(newBooking);
-
-                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
                 await _context.SaveChangesAsync();
 
-                // ONLINE PAYMENT LOGIC
+                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
+                {
+                    newBooking.Status = "Confirmed";
+                    await _context.SaveChangesAsync();
+
+                    var user = await _context.Users.FindAsync(userId);
+                    if (user != null && !string.IsNullOrEmpty(user.Email))
+                    {
+                        string timeStr = request.BookingMode == "Hourly" ? $"{requestedStart:hh\\:mm tt} - {requestedEnd:hh\\:mm tt}" : request.TournamentPackage ?? "Full Day";
+                        string playerName = user.Email.Split('@')[0];
+                        _ = _emailService.SendBookingConfirmationAsync(user.Email, playerName, resource.Arena.Name, playDate.ToString("dd MMM yyyy"), timeStr, newBooking.BookingId.ToString());
+                    }
+
+                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
+                }
+
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
@@ -162,16 +221,14 @@ namespace NexusArena.API.Controllers
 
                     try
                     {
-                        // 🌟 IDE0090 FIX: Simplified 'new' expression
                         RazorpayClient client = new(key, secret);
                         int amountInPaisa = Convert.ToInt32(amountToPay * 100);
 
-                        // 🌟 IDE0090 FIX: Simplified 'new' expression
                         Dictionary<string, object> options = new()
                         {
-                            { "amount", amountInPaisa },
-                            { "currency", "INR" },
-                            { "receipt", "rcpt_" + newBooking.BookingId }
+                            ["amount"] = amountInPaisa,
+                            ["currency"] = "INR",
+                            ["receipt"] = "rcpt_" + newBooking.BookingId
                         };
 
                         Order order = client.Order.Create(options);
@@ -209,6 +266,9 @@ namespace NexusArena.API.Controllers
             }
         }
 
+        // =========================================================
+        // 3. SECURE PAYMENT VERIFICATION
+        // =========================================================
         [Authorize]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] PaymentVerificationDto request)
@@ -222,15 +282,17 @@ namespace NexusArena.API.Controllers
                 using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret)))
                 {
                     var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-
-                    // 🌟 CA1872 WARNING FIX: Modern way to convert Hash to Hex String
                     generatedSignature = Convert.ToHexStringLower(hash);
                 }
 
                 if (generatedSignature != request.RazorpaySignature?.ToLower())
                     return BadRequest(new { message = "Payment Verification Failed: Invalid Signature!" });
 
-                var booking = await _context.Bookings.FindAsync(request.BookingId);
+                var booking = await _context.Bookings
+                    .Include(b => b.User)
+                    .Include(b => b.Resource).ThenInclude(r => r.Arena)
+                    .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+
                 if (booking == null) return NotFound(new { message = "Booking not found" });
 
                 if (booking.PaymentStatus == "Paid" && booking.Status == "Confirmed")
@@ -244,6 +306,25 @@ namespace NexusArena.API.Controllers
                 else if (booking.PaymentMode == "Advance50") booking.AmountPaid = booking.TotalAmount / 2;
 
                 await _context.SaveChangesAsync();
+
+                if (booking.User != null && !string.IsNullOrEmpty(booking.User.Email))
+                {
+                    string timeStr = booking.BookingMode == "Hourly" && booking.StartTime != null && booking.EndTime != null
+                        ? $"{booking.StartTime.Value:hh\\:mm tt} - {booking.EndTime.Value:hh\\:mm tt}"
+                        : booking.TournamentPackage ?? "Full Day";
+
+                    string playerName = booking.User.Email.Split('@')[0];
+
+                    _ = _emailService.SendBookingConfirmationAsync(
+                        booking.User.Email,
+                        playerName,
+                        booking.Resource?.Arena?.Name ?? "Nexus Turf",
+                        booking.BookingDate.ToString("dd MMM yyyy"),
+                        timeStr,
+                        booking.BookingId.ToString()
+                    );
+                }
+
                 return Ok(new { message = "Payment verified successfully!" });
             }
             catch (Exception ex)

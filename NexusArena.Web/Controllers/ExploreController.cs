@@ -15,6 +15,7 @@ namespace NexusArena.Web.Controllers
         public ExploreController()
         {
             _httpClient = new HttpClient();
+            // 🌟 THE FIX: Cleaned the URL, removed the brackets
             _httpClient.BaseAddress = new Uri("http://localhost:5092/");
         }
 
@@ -30,8 +31,8 @@ namespace NexusArena.Web.Controllers
             {
                 var apiUrl = $"api/Explore/search?page={page}&pageSize=12";
                 if (!string.IsNullOrEmpty(searchTerm)) apiUrl += $"&query={Uri.EscapeDataString(searchTerm)}";
-                if (!string.IsNullOrEmpty(area)) apiUrl += $"&query={Uri.EscapeDataString(area)}"; 
-                if (!string.IsNullOrEmpty(sport)) apiUrl += $"&query={Uri.EscapeDataString(sport)}"; 
+                if (!string.IsNullOrEmpty(area)) apiUrl += $"&query={Uri.EscapeDataString(area)}";
+                if (!string.IsNullOrEmpty(sport)) apiUrl += $"&query={Uri.EscapeDataString(sport)}";
 
                 var response = await _httpClient.GetAsync(apiUrl);
 
