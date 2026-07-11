@@ -21,7 +21,6 @@ public class UserDashboardController : Controller
 
     public UserDashboardController()
     {
-        // 🌟 THE FIX: Cleaned the URL, removed the brackets and duplicate text
         _httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5092/") };
     }
 
@@ -59,7 +58,6 @@ public class UserDashboardController : Controller
             ViewBag.Error = "Dashboard service is currently offline. Showing cached data.";
         }
 
-        // 🌟 FIX: Getting the ACTUAL User Name from Claims securely
         var nameClaim = User.Claims.FirstOrDefault(c => c.Type == "name" || c.Type == "Name" || c.Type == System.Security.Claims.ClaimTypes.Name)?.Value;
         ViewBag.UserName = !string.IsNullOrEmpty(nameClaim) ? nameClaim : (User.Identity?.Name ?? "Player");
 
@@ -77,7 +75,6 @@ public class PlayerDashboardMainViewModel
 {
     public int TotalMatches { get; set; }
     public int UpcomingMatches { get; set; }
-    public int LoyaltyPoints { get; set; }
     public decimal TotalSpent { get; set; }
     public List<PlayerDashboardGameItem> NextGames { get; set; } = [];
 }

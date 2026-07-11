@@ -14,20 +14,11 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // 🌟 IDE0290 FIX: Primary Constructor use kiya (Modern C# Standard)
-    public class BookingController(NexusArenaDbContext context) : ControllerBase
+    public class BookingController(NexusArenaDbContext context, IEmailService emailService) : ControllerBase
     {
         private readonly NexusArenaDbContext _context = context;
         private readonly IEmailService _emailService = emailService;
 
-        public BookingController(NexusArenaDbContext context)
-        {
-            _context = context;
-        }
-
-        // =========================================================
-        // 1. GET BOOKED SLOTS
-        // =========================================================
         [AllowAnonymous]
         [HttpGet("booked-times")]
         public async Task<IActionResult> GetBookedTimes(int resourceId, string date)
@@ -37,7 +28,6 @@ namespace NexusArena.API.Controllers
                 if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateOnly playDate))
                     return BadRequest(new { message = "Invalid date format." });
 
-                // Fetch minimal data to avoid EF Core translation errors
                 var dbBookings = await _context.Bookings
                     .Where(b => b.ResourceId == resourceId &&
                                 b.BookingDate == playDate &&
@@ -46,18 +36,17 @@ namespace NexusArena.API.Controllers
                     .Select(b => new { b.BookingMode, b.TournamentPackage, b.StartTime, b.EndTime })
                     .ToListAsync();
 
-                // Convert Tournament packages to actual times so UI can grey out boxes
                 var normalizedRanges = dbBookings.Select(b => {
                     if (b.BookingMode == "Tournament")
                     {
-                        if (b.TournamentPackage == "HalfDayMorning") return new { Start = "07:00", End = "14:00" };
-                        if (b.TournamentPackage == "HalfDayEvening") return new { Start = "14:00", End = "21:00" };
-                        return new { Start = "06:00", End = "24:00" }; // FullDay
+                        if (b.TournamentPackage == "HalfDayMorning") return new { Start = (string?)"07:00", End = (string?)"14:00" };
+                        if (b.TournamentPackage == "HalfDayEvening") return new { Start = (string?)"14:00", End = (string?)"21:00" };
+                        return new { Start = (string?)"06:00", End = (string?)"24:00" }; // FullDay
                     }
                     return new
                     {
-                        Start = b.StartTime?.ToString("HH:mm"),
-                        End = b.EndTime?.ToString("HH:mm")
+                        Start = (string?)b.StartTime?.ToString("HH:mm"),
+                        End = (string?)b.EndTime?.ToString("HH:mm")
                     };
                 }).ToList();
 
@@ -69,9 +58,6 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // =========================================================
-        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
-        // =========================================================
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
@@ -99,7 +85,6 @@ namespace NexusArena.API.Controllers
 
                 if (resource == null) return NotFound(new { message = $"Turf with ID {request.ResourceId} not found in Database." });
 
-                // 🌟 FIX: Determine Exact Start/End for BOTH Hourly & Tournament
                 TimeOnly requestedStart = default;
                 TimeOnly requestedEnd = default;
 
@@ -123,7 +108,6 @@ namespace NexusArena.API.Controllers
                     else { requestedStart = new TimeOnly(6, 0); requestedEnd = new TimeOnly(23, 59, 59); } // Full Day
                 }
 
-                // 🌟 FIX: Universal Database Clash Check
                 var existingBookings = await _context.Bookings
                     .Where(b => b.ResourceId == resource.ResourceId &&
                                 b.BookingDate == playDate &&
@@ -149,7 +133,6 @@ namespace NexusArena.API.Controllers
                         bEnd = b.EndTime.Value;
                     }
 
-                    // Strict overlap check
                     if (bStart < requestedEnd && bEnd > requestedStart)
                     {
                         isClashing = true;
@@ -202,10 +185,6 @@ namespace NexusArena.API.Controllers
                 _context.Bookings.Add(newBooking);
                 await _context.SaveChangesAsync();
 
-                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
-                await _context.SaveChangesAsync();
-
-                // ONLINE PAYMENT LOGIC
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
@@ -258,9 +237,6 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // =========================================================
-        // 3. SECURE PAYMENT VERIFICATION
-        // =========================================================
         [Authorize]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] PaymentVerificationDto request)

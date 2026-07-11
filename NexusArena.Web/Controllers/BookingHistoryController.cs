@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NexusArena.API.Models;
-using NexusArena.Web.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +14,6 @@ namespace NexusArena.Web.Controllers
     {
         private readonly HttpClient _httpClient;
 
-        // 🌟 THE FIX: CA1869 - Cache JsonSerializerOptions taaki memory bache
         private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
         public BookingHistoryController()
@@ -33,26 +30,30 @@ namespace NexusArena.Web.Controllers
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // 🌟 THE FIX: IDE0028 - Naya C# 12 empty collection syntax
-            List<BookingHistoryViewModel> viewModel = [];
+            List<BookingHistoryViewModel> viewModel = new List<BookingHistoryViewModel>();
 
             try
             {
                 var response = await _httpClient.GetAsync("api/BookingHistory/my-history");
+                var jsonString = await response.Content.ReadAsStringAsync();
+
                 if (response.IsSuccessStatusCode)
                 {
-                    var jsonString = await response.Content.ReadAsStringAsync();
                     var apiResult = JsonSerializer.Deserialize<BookingHistoryApiResponse>(jsonString, _jsonOptions);
-                    viewModel = apiResult?.Data ?? []; // 🌟 THE FIX: Use uppercase Data & []
+                    viewModel = apiResult?.Data ?? new List<BookingHistoryViewModel>();
                 }
                 else
                 {
-                    ViewBag.Error = "Failed to fetch booking history.";
+                    TempData["Error"] = $"API Error ({response.StatusCode}): {jsonString}";
                 }
+            }
+            catch (JsonException jsonEx)
+            {
+                TempData["Error"] = $"Data Mapping Error: {jsonEx.Message}";
             }
             catch (Exception ex)
             {
-                ViewBag.Error = $"Connection Error: {ex.Message}";
+                TempData["Error"] = $"Connection Error: {ex.Message}";
             }
 
             return View(viewModel);
@@ -113,10 +114,26 @@ namespace NexusArena.Web.Controllers
         }
     }
 
-    // 🌟 THE FIX: IDE1006 - Naming Rules for JSON deserialization object
     public class BookingHistoryApiResponse
     {
         public string? Message { get; set; }
         public List<BookingHistoryViewModel>? Data { get; set; }
+    }
+
+    public class BookingHistoryViewModel
+    {
+        public int BookingId { get; set; }
+        public int ArenaId { get; set; }
+        public string? ArenaName { get; set; }
+        public string? City { get; set; }
+        public string? PlayDate { get; set; }
+        public string? TimeSlot { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal AmountPaid { get; set; }
+        public decimal PendingAmount { get; set; }
+        public string? PaymentStatus { get; set; }
+        public string? Status { get; set; }
+        public bool CanCancel { get; set; }
+        public bool IsRated { get; set; }
     }
 }
