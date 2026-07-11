@@ -14,13 +14,19 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BookingController(NexusArenaDbContext context, IEmailService emailService) : ControllerBase
+    // 🌟 IDE0290 FIX: Primary Constructor use kiya (Modern C# Standard)
+    public class BookingController(NexusArenaDbContext context) : ControllerBase
     {
         private readonly NexusArenaDbContext _context = context;
         private readonly IEmailService _emailService = emailService;
 
+        public BookingController(NexusArenaDbContext context)
+        {
+            _context = context;
+        }
+
         // =========================================================
-        // 1. GET BOOKED SLOTS (🌟 FIX: Returns Tournament Times too)
+        // 1. GET BOOKED SLOTS
         // =========================================================
         [AllowAnonymous]
         [HttpGet("booked-times")]
@@ -64,7 +70,7 @@ namespace NexusArena.API.Controllers
         }
 
         // =========================================================
-        // 2. CREATE SMART BOOKING (🌟 FIX: Universal Clash Check)
+        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
         // =========================================================
         [Authorize]
         [HttpPost("create")]
@@ -175,8 +181,6 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
-                if (totalAmount <= 0) return BadRequest(new { message = "Pricing Error: Calculated amount is ₹0." });
-
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
                 Booking newBooking = new()
@@ -198,22 +202,10 @@ namespace NexusArena.API.Controllers
                 _context.Bookings.Add(newBooking);
                 await _context.SaveChangesAsync();
 
-                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
-                {
-                    newBooking.Status = "Confirmed";
-                    await _context.SaveChangesAsync();
+                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
+                await _context.SaveChangesAsync();
 
-                    var user = await _context.Users.FindAsync(userId);
-                    if (user != null && !string.IsNullOrEmpty(user.Email))
-                    {
-                        string timeStr = request.BookingMode == "Hourly" ? $"{requestedStart:hh\\:mm tt} - {requestedEnd:hh\\:mm tt}" : request.TournamentPackage ?? "Full Day";
-                        string playerName = user.Email.Split('@')[0];
-                        _ = _emailService.SendBookingConfirmationAsync(user.Email, playerName, resource.Arena.Name, playDate.ToString("dd MMM yyyy"), timeStr, newBooking.BookingId.ToString());
-                    }
-
-                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
-                }
-
+                // ONLINE PAYMENT LOGIC
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
