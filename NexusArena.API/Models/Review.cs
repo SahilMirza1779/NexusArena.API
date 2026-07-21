@@ -13,7 +13,6 @@ public partial class Review
 
     public int ArenaId { get; set; }
 
-    // 🌟 ENTERPRISE FIX: Yahi missing tha! Iske bina match aur review link nahi ho sakte.
     public int? BookingId { get; set; }
 
     public int Rating { get; set; }

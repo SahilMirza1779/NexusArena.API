@@ -1,4 +1,4 @@
-﻿@model IEnumerable<NexusArena.Web.Models.BookingHistoryViewModel>
+﻿@model IEnumerable<NexusArena.Web.Controllers.BookingHistoryViewModel>
 
 @{
     ViewData["Title"] = "My Booking History";
@@ -166,18 +166,20 @@
                                     </a>
                                     <br/>
                                     
-                                    <!-- 🌟 THE FIX: Agar IsRated sach hai, toh RATED dikhao, warna Button dikhao -->
-                                    @if (item.IsRated)
+                                    @if (item.Status == "Completed")
                                     {
-                                        <span style="display:inline-block; margin-top: 5px; color: #00ff66; font-size: 12px; font-weight: 700; background: rgba(0, 255, 102, 0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0, 255, 102, 0.3);">
-                                            <i class="fas fa-check-circle"></i> Rated
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <button type="button" class="btn-rate" onclick="openRateModal(@item.ArenaId, '@item.ArenaName', @item.BookingId)" style="display:inline-block;">
-                                            <i class="fas fa-star"></i> Rate Turf
-                                        </button>
+                                        @if (item.IsRated)
+                                        {
+                                            <span style="display:inline-block; margin-top: 5px; color: #00ff66; font-size: 12px; font-weight: 700; background: rgba(0, 255, 102, 0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0, 255, 102, 0.3);">
+                                                <i class="fas fa-check-circle"></i> Rated
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn-rate" onclick="openRateModal(@item.ArenaId, '@item.ArenaName', @item.BookingId)" style="display:inline-block;">
+                                                <i class="fas fa-star"></i> Rate Turf
+                                            </button>
+                                        }
                                     }
                                 }
                                 else if (!item.CanCancel)
@@ -213,7 +215,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
-        // JAVASCRIPT: FILTERING + PAGINATION COMBO
         let currentTab = 'All';
         let currentPage = 1;
         const itemsPerPage = 5; 
@@ -298,7 +299,6 @@
             applyFilters();
         });
 
-        // RATE TURF FUNCTION
         async function openRateModal(arenaId, arenaName, bookingId) {
             const { value: formValues } = await Swal.fire({
                 title: 'Rate ' + arenaName + ' ⭐',
@@ -353,7 +353,6 @@
             }
         }
 
-        // Cancel Booking Alert
         function confirmCancel(bookingId) {
             Swal.fire({
                 title: 'Are you sure? 😟',

@@ -32,7 +32,6 @@ public class UserDashboardController(NexusArenaDbContext context) : ControllerBa
             int totalMatches = allBookings.Count;
             var currentDateTime = DateTime.Now;
 
-            // 🌟 NEW LOGIC: Sirf 'Paid' bookings ka total amount count karo
             decimal totalSpent = allBookings
                 .Where(b => b.PaymentStatus == "Paid")
                 .Sum(b => b.AmountPaid);
@@ -42,7 +41,10 @@ public class UserDashboardController(NexusArenaDbContext context) : ControllerBa
                     DateTime matchStart = b.StartTime.HasValue
                         ? b.BookingDate.ToDateTime(b.StartTime.Value)
                         : b.BookingDate.ToDateTime(new TimeOnly(8, 0));
-                    return matchStart.AddHours(1) >= currentDateTime;
+
+                    return matchStart.AddHours(1) >= currentDateTime &&
+                           b.Status != "Completed" &&
+                           b.Status != "Expired";
                 })
                 .OrderBy(b => b.BookingDate)
                 .ThenBy(b => b.StartTime ?? new TimeOnly(0, 0))
@@ -63,7 +65,6 @@ public class UserDashboardController(NexusArenaDbContext context) : ControllerBa
                     : b.BookingDate.ToDateTime(new TimeOnly(8, 0)).ToString("yyyy-MM-ddTHH:mm:ss")
             }).ToList();
 
-            // 🌟 Added 'totalSpent' to the API response
             return Ok(new { message = "Success", data = new { totalMatches, upcomingMatches, loyaltyPoints, totalSpent, nextGames } });
         }
         catch (Exception ex)

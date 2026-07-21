@@ -1,0 +1,1 @@
+﻿ALTER TABLE Reviews ADD BookingId INT NULL;

@@ -11,7 +11,6 @@ namespace NexusArena.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    // 🌟 THE FIX: IDE0290 - Use Primary Constructor
     public class BookingHistoryController(NexusArenaDbContext context) : ControllerBase
     {
         private readonly NexusArenaDbContext _context = context;
@@ -25,7 +24,6 @@ namespace NexusArena.API.Controllers
                 if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
                     return Unauthorized(new { Message = "Invalid Token." });
 
-                // 🌟 WARNING FIX (CS8629): Null-forgiving operator (!) add kiya
                 var ratedBookingIds = await _context.Reviews
                     .Where(r => r.UserId == userId && r.BookingId != null)
                     .Select(r => r.BookingId!.Value)
@@ -44,14 +42,16 @@ namespace NexusArena.API.Controllers
                     bool isPast = b.BookingDate < today;
                     string currentStatus = b.Status ?? "Confirmed";
 
-                    if (isPast && currentStatus != "Cancelled")
+                    if (isPast && currentStatus != "Cancelled" && currentStatus != "Completed")
                     {
-                        currentStatus = (b.PaymentStatus == "Paid") ? "Completed" : "Expired";
+                        if (b.PaymentStatus != "Paid")
+                        {
+                            currentStatus = "Expired";
+                        }
                     }
 
                     return new
                     {
-                        // 🌟 THE FIX: IDE0037 - Member names simplified
                         b.BookingId,
                         ArenaId = b.Resource?.ArenaId ?? 0,
                         ArenaName = b.Resource?.Arena?.Name ?? "Nexus Turf",
@@ -63,15 +63,12 @@ namespace NexusArena.API.Controllers
                         PendingAmount = (b.PaymentMode == "Advance50" && b.PaymentStatus == "Paid")
                                         ? (b.TotalAmount - b.AmountPaid) : 0,
                         PaymentStatus = b.PaymentStatus ?? "Pending",
-                        Status = currentStatus,
+                        Status = currentStatus, 
                         CanCancel = !isPast && currentStatus != "Cancelled" && currentStatus != "Completed" && currentStatus != "Expired",
-
-                        // 🌟 THE FINAL FIX: Agar is Booking ID ka review DB mein mil gaya, toh true bhejo
                         IsRated = ratedBookingIds.Contains(b.BookingId)
                     };
                 }).ToList();
 
-                // 🌟 THE FIX: IDE1006 - Uppercase Message & Data
                 return Ok(new { Message = "Success", Data = history });
             }
             catch (Exception ex)
@@ -80,7 +77,6 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // 🌟 THE FIX: CA1822 (Marked as Static) & IDE0071 (Simplified Interpolation)
         private static string FormatTimeSlot(TimeOnly? start, TimeOnly? end, string bookingMode, string? package)
         {
             if (bookingMode == "Tournament") return $"Tournament ({package})";

@@ -18,7 +18,6 @@ public class ReviewController : Controller
 
     public ReviewController()
     {
-        // 🌟 THE FIX: Removed the markdown brackets. Clean URL applied.
         _httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5092/") };
     }
 
@@ -67,7 +66,7 @@ public class ReviewController : Controller
         if (response.IsSuccessStatusCode) TempData["Success"] = "Your match review was submitted successfully! ⭐";
         else TempData["Error"] = "Failed to add review.";
 
-        return RedirectToAction("Index");
+        return RedirectToAction("Index", "BookingHistory");
     }
 
     [HttpPost]

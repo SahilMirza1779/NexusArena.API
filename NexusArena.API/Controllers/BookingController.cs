@@ -14,11 +14,16 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // 🌟 THE FIX: Single, Clean Primary Constructor. No duplicate constructors inside!
-    public class BookingController(NexusArenaDbContext context, IEmailService emailService) : ControllerBase
+    // 🌟 IDE0290 FIX: Primary Constructor use kiya (Modern C# Standard)
+    public class BookingController(NexusArenaDbContext context) : ControllerBase
     {
         private readonly NexusArenaDbContext _context = context;
         private readonly IEmailService _emailService = emailService;
+
+        public BookingController(NexusArenaDbContext context)
+        {
+            _context = context;
+        }
 
         // =========================================================
         // 1. GET BOOKED SLOTS
@@ -45,12 +50,12 @@ namespace NexusArena.API.Controllers
                     {
                         if (b.TournamentPackage == "HalfDayMorning") return new { Start = "07:00", End = "14:00" };
                         if (b.TournamentPackage == "HalfDayEvening") return new { Start = "14:00", End = "21:00" };
-                        return new { Start = "06:00", End = "24:00" };
+                        return new { Start = "06:00", End = "24:00" }; // FullDay
                     }
                     return new
                     {
-                        Start = b.StartTime?.ToString("HH:mm"),
-                        End = b.EndTime?.ToString("HH:mm")
+                        Start = (string?)b.StartTime?.ToString("HH:mm"),
+                        End = (string?)b.EndTime?.ToString("HH:mm")
                     };
                 }).ToList();
 
@@ -63,7 +68,7 @@ namespace NexusArena.API.Controllers
         }
 
         // =========================================================
-        // 2. CREATE SMART BOOKING (Universal Clash Check & 1-Hour Buffer)
+        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
         // =========================================================
         [Authorize]
         [HttpPost("create")]
@@ -194,22 +199,10 @@ namespace NexusArena.API.Controllers
                 _context.Bookings.Add(newBooking);
                 await _context.SaveChangesAsync();
 
-                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
-                {
-                    newBooking.Status = "Confirmed";
-                    await _context.SaveChangesAsync();
+                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
+                await _context.SaveChangesAsync();
 
-                    var user = await _context.Users.FindAsync(userId);
-                    if (user != null && !string.IsNullOrEmpty(user.Email))
-                    {
-                        string timeStr = request.BookingMode == "Hourly" ? $"{requestedStart:hh\\:mm tt} - {requestedEnd:hh\\:mm tt}" : request.TournamentPackage ?? "Full Day";
-                        string playerName = user.Email.Split('@')[0];
-                        _ = _emailService.SendBookingConfirmationAsync(user.Email, playerName, resource.Arena.Name, playDate.ToString("dd MMM yyyy"), timeStr, newBooking.BookingId.ToString());
-                    }
-
-                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
-                }
-
+                // ONLINE PAYMENT LOGIC
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
@@ -262,9 +255,6 @@ namespace NexusArena.API.Controllers
             }
         }
 
-        // =========================================================
-        // 3. SECURE PAYMENT VERIFICATION
-        // =========================================================
         [Authorize]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] PaymentVerificationDto request)
