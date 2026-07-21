@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 ﻿INSERT INTO [dbo].[Arenas] 
 (
     [OwnerId], 
@@ -22,7 +22,6 @@ VALUES
 
 
 SET IDENTITY_INSERT [dbo].[Arenas] OFF;
-=======
 ﻿-- Identity Insert ON kar rahe hain
 SET IDENTITY_INSERT [dbo].[SportCategories] ON;
 
@@ -33,5 +32,4 @@ VALUES
 (2, 'Pool / Snooker', 'fas fa-bullseye');
 
 -- Data insert hone ke baad wapas OFF kar diya
-SET IDENTITY_INSERT [dbo].[SportCategories] OFF;
->>>>>>> db2a57f8619bce9f5fb9ed3ac338d80d8688f9a9
+SET IDENTITY_INSERT [dbo].[SportCategories] OFF; 

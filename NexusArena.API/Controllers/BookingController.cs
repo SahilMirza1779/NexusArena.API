@@ -14,16 +14,11 @@ namespace NexusArena.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // 🌟 IDE0290 FIX: Primary Constructor use kiya (Modern C# Standard)
-    public class BookingController(NexusArenaDbContext context) : ControllerBase
+    // 🌟 THE FIX: Single, Clean Primary Constructor. No duplicate constructors inside!
+    public class BookingController(NexusArenaDbContext context, IEmailService emailService) : ControllerBase
     {
         private readonly NexusArenaDbContext _context = context;
         private readonly IEmailService _emailService = emailService;
-
-        public BookingController(NexusArenaDbContext context)
-        {
-            _context = context;
-        }
 
         // =========================================================
         // 1. GET BOOKED SLOTS
@@ -37,7 +32,6 @@ namespace NexusArena.API.Controllers
                 if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateOnly playDate))
                     return BadRequest(new { message = "Invalid date format." });
 
-                // Fetch minimal data to avoid EF Core translation errors
                 var dbBookings = await _context.Bookings
                     .Where(b => b.ResourceId == resourceId &&
                                 b.BookingDate == playDate &&
@@ -46,13 +40,12 @@ namespace NexusArena.API.Controllers
                     .Select(b => new { b.BookingMode, b.TournamentPackage, b.StartTime, b.EndTime })
                     .ToListAsync();
 
-                // Convert Tournament packages to actual times so UI can grey out boxes
                 var normalizedRanges = dbBookings.Select(b => {
                     if (b.BookingMode == "Tournament")
                     {
                         if (b.TournamentPackage == "HalfDayMorning") return new { Start = "07:00", End = "14:00" };
                         if (b.TournamentPackage == "HalfDayEvening") return new { Start = "14:00", End = "21:00" };
-                        return new { Start = "06:00", End = "24:00" }; // FullDay
+                        return new { Start = "06:00", End = "24:00" };
                     }
                     return new
                     {
@@ -70,7 +63,7 @@ namespace NexusArena.API.Controllers
         }
 
         // =========================================================
-        // 2. CREATE SMART BOOKING (WITH DEEP SQL ERROR TRACKER)
+        // 2. CREATE SMART BOOKING (Universal Clash Check & 1-Hour Buffer)
         // =========================================================
         [Authorize]
         [HttpPost("create")]
@@ -99,7 +92,6 @@ namespace NexusArena.API.Controllers
 
                 if (resource == null) return NotFound(new { message = $"Turf with ID {request.ResourceId} not found in Database." });
 
-                // 🌟 FIX: Determine Exact Start/End for BOTH Hourly & Tournament
                 TimeOnly requestedStart = default;
                 TimeOnly requestedEnd = default;
 
@@ -120,10 +112,9 @@ namespace NexusArena.API.Controllers
                 {
                     if (request.TournamentPackage == "HalfDayMorning") { requestedStart = new TimeOnly(7, 0); requestedEnd = new TimeOnly(14, 0); }
                     else if (request.TournamentPackage == "HalfDayEvening") { requestedStart = new TimeOnly(14, 0); requestedEnd = new TimeOnly(21, 0); }
-                    else { requestedStart = new TimeOnly(6, 0); requestedEnd = new TimeOnly(23, 59, 59); } // Full Day
+                    else { requestedStart = new TimeOnly(6, 0); requestedEnd = new TimeOnly(23, 59, 59); }
                 }
 
-                // 🌟 FIX: Universal Database Clash Check
                 var existingBookings = await _context.Bookings
                     .Where(b => b.ResourceId == resource.ResourceId &&
                                 b.BookingDate == playDate &&
@@ -149,7 +140,6 @@ namespace NexusArena.API.Controllers
                         bEnd = b.EndTime.Value;
                     }
 
-                    // Strict overlap check
                     if (bStart < requestedEnd && bEnd > requestedStart)
                     {
                         isClashing = true;
@@ -181,6 +171,8 @@ namespace NexusArena.API.Controllers
                     else if (request.TournamentPackage == "FullDay") totalAmount = resource.Arena.FullDayPrice;
                 }
 
+                if (totalAmount <= 0) return BadRequest(new { message = "Pricing Error: Calculated amount is ₹0." });
+
                 decimal amountToPay = request.PaymentMode == "Advance50" ? (totalAmount / 2) : totalAmount;
 
                 Booking newBooking = new()
@@ -202,10 +194,22 @@ namespace NexusArena.API.Controllers
                 _context.Bookings.Add(newBooking);
                 await _context.SaveChangesAsync();
 
-                // 🚨 DATABASE SAVE COMMAND (YAHI PAR CRASH HOTA THA)
-                await _context.SaveChangesAsync();
+                if (request.PaymentMode == "PayAtTurf" || request.PaymentMode == "Offline")
+                {
+                    newBooking.Status = "Confirmed";
+                    await _context.SaveChangesAsync();
 
-                // ONLINE PAYMENT LOGIC
+                    var user = await _context.Users.FindAsync(userId);
+                    if (user != null && !string.IsNullOrEmpty(user.Email))
+                    {
+                        string timeStr = request.BookingMode == "Hourly" ? $"{requestedStart:hh\\:mm tt} - {requestedEnd:hh\\:mm tt}" : request.TournamentPackage ?? "Full Day";
+                        string playerName = user.Email.Split('@')[0];
+                        _ = _emailService.SendBookingConfirmationAsync(user.Email, playerName, resource.Arena.Name, playDate.ToString("dd MMM yyyy"), timeStr, newBooking.BookingId.ToString());
+                    }
+
+                    return Ok(new { message = "Booking successful! Pay at the turf.", bookingId = newBooking.BookingId, requiresPayment = false });
+                }
+
                 if (amountToPay > 0)
                 {
                     string key = "rzp_test_Sx2ANZO6KtKqPv";
